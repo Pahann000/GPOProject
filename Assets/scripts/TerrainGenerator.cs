@@ -1,19 +1,19 @@
-using NUnit.Framework;
 using UnityEngine;
 
 /// <summary>
 /// Класс для генерации карты мира.
 /// </summary>
-public class TerrainGenerator : MonoBehaviour
+public class WorldManager : MonoBehaviour
 {
+    public static WorldManager Instance;
     /// <summary>
     /// Хранит текстуру шума мира.
     /// </summary>
-    public Texture2D _worldNoise;
+    private Texture2D _worldNoise;
     /// <summary>
     /// Хранит текстуру шума золота.
     /// </summary>
-    public Texture2D _goldNoise;
+    private Texture2D _goldNoise;
     /// <summary>
     /// Список всех чанков.
     /// </summary>
@@ -23,7 +23,7 @@ public class TerrainGenerator : MonoBehaviour
     /// <summary>
     /// Атлас со всеми видами блоков.
     /// </summary>
-    public TileAtlas tileAtlas;
+    public BlockAtlas blockAtlas;
 
     [Header("Noise settings")]
     /// <summary>
@@ -77,11 +77,7 @@ public class TerrainGenerator : MonoBehaviour
     /// </summary>
     public float GoldSize;
 
-    public void OnValidate()
-    {
-        _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
-        _goldNoise = GenerateNoiseTexture(GoldFrequency, GoldSize);
-    }
+    void Awake() => Instance = this;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -119,19 +115,19 @@ public class TerrainGenerator : MonoBehaviour
             float height = Mathf.PerlinNoise((x + Seed) * TerrainFreq, Seed * TerrainFreq) * HighMultiplier + HighAddition;
             for (int y = 0; y < height; y++)
             {
-                Sprite tileSprite = tileAtlas.Rock.Sprite;
+                BlockType blockType = blockAtlas.Rock;
                 if (_goldNoise.GetPixel(x,y).r > 0.5f)
                 {
-                    tileSprite = tileAtlas.Gold.Sprite;
+                    blockType = blockAtlas.Gold;
                 }
                 else if (_worldNoise.GetPixel(x, y).r > 0.5f)
                 {
-                    tileSprite = tileAtlas.Rock.Sprite;
+                    blockType = blockAtlas.Rock;
                 }
 
                 if (_worldNoise.GetPixel(x,y).r>0.5f)
                 {
-                    PlaceTile(tileSprite, x, y);
+                    PlaceBlock(blockType, x, y);
                 }
             }
         }
@@ -166,7 +162,7 @@ public class TerrainGenerator : MonoBehaviour
         return noise;
     }
 
-    private void PlaceTile(Sprite tileSprite, int x, int y)
+    public void PlaceBlock(BlockType blockType, int x, int y)
     {
         GameObject newTile = new GameObject();
 
@@ -175,7 +171,22 @@ public class TerrainGenerator : MonoBehaviour
         newTile.transform.parent = _chunks[chunkCoord].transform;
 
         newTile.AddComponent<SpriteRenderer>();
-        newTile.GetComponent<SpriteRenderer>().sprite = tileSprite;
+        newTile.GetComponent<SpriteRenderer>().sprite = blockType.Sprite;
+
+        newTile.AddComponent<BoxCollider2D>();
+        newTile.GetComponent<BoxCollider2D>().size = Vector2.one;
+
+        newTile.AddComponent<Block>();
+        newTile.GetComponent<Block>().BlockType = blockType;
+
         newTile.transform.position = new Vector3(x, y, 0);
+    }
+
+    public void DestroyBlock(Block block)
+    {
+        if (block.BlockType == blockAtlas.Gold)
+        {
+            Debug.Log($"{block.CurrentHealth}/{block.BlockType.Hardness} hp at this {block.BlockType.Name}");
+        }
     }
 }

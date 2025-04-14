@@ -9,6 +9,7 @@ public class Block : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        Debug.Log($"блок уничтожается...({CurrentHealth}/{BlockType.Hardness})");
         CurrentHealth -= damage;
         if (CurrentHealth <= 0)
         {
@@ -16,7 +17,7 @@ public class Block : MonoBehaviour
         }
     }
 
-    void DestroyBlock()
+    public void DestroyBlock()
     {
         WorldManager.Instance.DestroyBlock(this);
         Destroy(gameObject);

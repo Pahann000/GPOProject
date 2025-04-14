@@ -170,23 +170,20 @@ public class WorldManager : MonoBehaviour
         chunkCoord /= chunkSize;
         newTile.transform.parent = _chunks[chunkCoord].transform;
 
+        newTile.AddComponent<Block>();
+        newTile.GetComponent<Block>().BlockType = blockType;
+
         newTile.AddComponent<SpriteRenderer>();
         newTile.GetComponent<SpriteRenderer>().sprite = blockType.Sprite;
 
         newTile.AddComponent<BoxCollider2D>();
         newTile.GetComponent<BoxCollider2D>().size = Vector2.one;
 
-        newTile.AddComponent<Block>();
-        newTile.GetComponent<Block>().BlockType = blockType;
-
         newTile.transform.position = new Vector3(x, y, 0);
     }
 
     public void DestroyBlock(Block block)
     {
-        if (block.BlockType == blockAtlas.Gold)
-        {
-            Debug.Log($"{block.CurrentHealth}/{block.BlockType.Hardness} hp at this {block.BlockType.Name}");
-        }
+        Debug.Log($"блок {block.BlockType.Name} уничтожен");
     }
 }

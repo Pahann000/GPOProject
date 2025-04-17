@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Sprites;
+using UnityEngine.UIElements;
 
 /// <summary>
 /// Класс для генерации карты мира.
@@ -19,11 +21,13 @@ public class WorldManager : MonoBehaviour
     /// </summary>
     private GameObject[] _chunks;
 
-    [Header("Tile atlas")]
+    [Header("Atlases")]
     /// <summary>
     /// Атлас со всеми видами блоков.
     /// </summary>
     public BlockAtlas blockAtlas;
+
+    public UnitAtlas unitAtlas;
 
     [Header("Noise settings")]
     /// <summary>
@@ -146,6 +150,7 @@ public class WorldManager : MonoBehaviour
             for (int y = 0; y < noise.height; y++)
             {
                 float v = Mathf.PerlinNoise((x + Seed) * frequency, (y + Seed) * frequency);
+
                 if (v > limit)
                 {
                     noise.SetPixel(x, y, Color.white);
@@ -180,6 +185,33 @@ public class WorldManager : MonoBehaviour
         newTile.GetComponent<BoxCollider2D>().size = Vector2.one;
 
         newTile.transform.position = new Vector3(x, y, 0);
+    }
+
+    public Unit PlaceUnit(UnitType unitType, int x, int y)
+    {
+        //Vector2 position = new Vector2(x, y);
+        //if (Physics2D.OverlapPoint(position))
+        //{
+        //    return null;
+        //}
+
+        GameObject newUnit = new GameObject();
+
+        newUnit.AddComponent<SpriteRenderer>();
+        newUnit.GetComponent<SpriteRenderer>().sprite = unitType.Sprite;
+
+        newUnit.AddComponent<BoxCollider2D>();
+        newUnit.GetComponent<BoxCollider2D>().size = Vector2.one;
+
+        newUnit.AddComponent<Rigidbody2D>();
+        newUnit.GetComponent<Rigidbody2D>().freezeRotation = true;
+
+        newUnit.AddComponent<Unit>();
+        newUnit.GetComponent<Unit>().unitType = unitType;
+
+        newUnit.transform.position = new Vector3(x, y, 0);
+
+        return newUnit.GetComponent<Unit>();
     }
 
     public void DestroyBlock(Block block)

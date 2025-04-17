@@ -3,89 +3,71 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     [Header("Unit Settings")]
-    [SerializeField] private float moveSpeed = 3f;
-    [SerializeField] private float attackCooldown = 1f;
-    [SerializeField] private int attackRange = 1;
-    [SerializeField] private int damagePerHit = 1;
+    public UnitType unitType;
 
-    [Header("References")]
-    [SerializeField] private Animator animator;
-    [SerializeField] private GameObject selectionIndicator;
+    //[Header("References")]
+    //public Animator animator;
+    //public GameObject selectionIndicator;
 
-    private Vector2 targetPosition;
-    private Transform targetBlock;
-    private bool isSelected = false;
-    private bool isMoving = false;
-    private bool isAttacking = false;
-    private float lastAttackTime;
+    private GameObject _target;
+    private float _lastAttackTime;
+    private UnitWork _currentUnitWork;
 
-    private void Update()
+    void FixedUpdate()
     {
-        if (isMoving)
+        if (Target != null)
         {
-            MoveToPosition();
-        }
-
-        if (targetBlock != null && !isMoving)
-        {
-            AttackBlock();
+            AttackBlock(Target);
         }
     }
 
-    public void Select()
-    {
-        isSelected = true;
-        selectionIndicator.SetActive(true);
-    }
+    //public void Select()
+    //{
+    //    selectionIndicator.SetActive(true);
+    //}
 
-    public void Deselect()
-    {
-        isSelected = false;
-        selectionIndicator.SetActive(false);
-    }
+    //public void Deselect()
+    //{
+    //    selectionIndicator.SetActive(false);
+    //}
 
-    public void SetMoveTarget(Vector2 position)
+    public GameObject Target
     {
-        targetPosition = position;
-        targetBlock = null;
-        isMoving = true;
-        isAttacking = false;
-
-        if (animator != null)
+        get
         {
-            animator.SetBool("IsWalking", true);
+            return _target;
+        }
+        set
+        {
+            if(value != null)
+            {
+                _target = value;
+            }
         }
     }
 
-    public void SetAttackTarget(Transform blockTransform)
+    //TODO: поиск пути - navmesh, Муравьи Лэнгтона
+    private void MoveToPosition(Vector2 position)
     {
-        targetBlock = blockTransform;
-        isMoving = false;
-        isAttacking = true;
+        transform.position = Vector2.right;
     }
 
-    private void MoveToPosition()
+    private void AttackBlock(GameObject target)
     {
-        //transform.position = Vector2.MoveTowards; 
-    }
-
-    private void AttackBlock()
-    {
-        if (targetBlock == null) return;
 
         // Проверка расстояния до блока
-        if (Vector2.Distance(transform.position, targetBlock.position) > attackRange)
+        if (Vector2.Distance(transform.position, target.transform.position) > unitType.AttackRange)
         {
             // Если слишком далеко - подойти ближе
-            SetMoveTarget(targetBlock.position);
+            MoveToPosition(target.transform.position);
             return;
         }
 
         // Проверка кулдауна атаки
-        if (Time.time - lastAttackTime < attackCooldown) return;
+        if (Time.time - _lastAttackTime < unitType.AttackCooldown) return;
 
         // Поворот к цели
-        if (targetBlock.position.x > transform.position.x)
+        if (target.transform.position.x > transform.position.x)
         {
             transform.localScale = new Vector3(1, 1, 1);
         }
@@ -94,19 +76,24 @@ public class Unit : MonoBehaviour
             transform.localScale = new Vector3(-1, 1, 1);
         }
 
-        // Анимация атаки
-        if (animator != null)
-        {
-            animator.SetTrigger("Attack");
-        }
+        //// Анимация атаки
+        //if (animator != null)
+        //{
+        //    animator.SetTrigger("Attack");
+        //}
 
         // Нанесение урона блоку
-        Block block = targetBlock.GetComponent<Block>();
-        if (block.CurrentHealth != 0)
+        Block block = target.GetComponent<Block>();
+        if (block.CurrentHealth - 1 != 0)
         {
-            block.TakeDamage(damagePerHit);
+            block.TakeDamage(unitType.DamagePerHit);
+        }
+        else
+        {
+            block.TakeDamage(unitType.DamagePerHit);
+            Target = null;
         }
 
-        lastAttackTime = Time.time;
+        _lastAttackTime = Time.time;
     }
 }

@@ -1,15 +1,22 @@
 using UnityEngine;
+using System.Collections.Generic;
+using Unity.VisualScripting;
 
 public class Player : MonoBehaviour
 {
+    public UnitAtlas unitAtlas;
+
+    private List<Unit> _units = new List<Unit>();
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        Unit newUnit = WorldManager.Instance.PlaceUnit(unitAtlas.Miner, 0, 200);
+        _units.Add(newUnit);
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         if (Input.GetMouseButtonDown(0))
         {
@@ -35,6 +42,6 @@ public class Player : MonoBehaviour
 
     public void SetDestoroyBlock(Block blockToDestroy)
     {
-        blockToDestroy.TakeDamage(1);
+        _units[0].Target = blockToDestroy.transform.gameObject;
     }
 }

@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Sprite: {fileID: 3452003437791708593, guid: e15b2a6d3d5903049b9d0a43b54f24bd, type: 3}
   Name: Rock
+  Hardness: 3

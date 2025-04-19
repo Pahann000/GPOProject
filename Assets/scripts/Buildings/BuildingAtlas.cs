@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// ќписывает атлас, содержащий все типы строений. 
+/// </summary>
 [CreateAssetMenu(fileName = "BuildingAtlas", menuName = "Building atlas")]
 public class BuildingAtlas : ScriptableObject
 {

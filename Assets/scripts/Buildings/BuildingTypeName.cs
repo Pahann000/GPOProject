@@ -1,3 +1,6 @@
+/// <summary>
+/// Наименование типа постройки.
+/// </summary>
 public enum BuildingTypeName
 {
     LivingModule,

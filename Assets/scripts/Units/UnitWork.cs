@@ -1,3 +1,6 @@
+/// <summary>
+/// Состояние юнита.
+/// </summary>
 public enum UnitWork
 {
     Idle,

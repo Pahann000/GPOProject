@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// Описывает постройку и её повидение. 
+/// </summary>
 public class Building : MonoBehaviour
 {
     [Header("Building Settings")]
@@ -16,6 +19,9 @@ public class Building : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Функция производства ресурсов.
+    /// </summary>
     private void ProduceResource()
     {
         // Логика производства ресурсов

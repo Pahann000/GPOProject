@@ -1,12 +1,13 @@
 using UnityEngine;
-using UnityEngine.Sprites;
-using UnityEngine.UIElements;
 
 /// <summary>
 /// Класс для генерации карты мира.
 /// </summary>
 public class WorldManager : MonoBehaviour
 {
+    /// <summary>
+    /// хранит единственный экземпляр данного класса.
+    /// </summary>
     public static WorldManager Instance;
     /// <summary>
     /// Хранит текстуру шума мира.
@@ -26,7 +27,9 @@ public class WorldManager : MonoBehaviour
     /// Атлас со всеми видами блоков.
     /// </summary>
     public BlockAtlas blockAtlas;
-
+    /// <summary>
+    /// Атлас со всеми видами юнитов.
+    /// </summary>
     public UnitAtlas unitAtlas;
 
     [Header("Noise settings")]
@@ -81,6 +84,7 @@ public class WorldManager : MonoBehaviour
     /// </summary>
     public float GoldSize;
 
+    ///<inheritdoc/>
     void Awake() => Instance = this;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -167,6 +171,12 @@ public class WorldManager : MonoBehaviour
         return noise;
     }
 
+    /// <summary>
+    /// Функция постановки блока.
+    /// </summary>
+    /// <param name="blockType">Тип блока.</param>
+    /// <param name="x">x мировая координата.</param>
+    /// <param name="y">y мировая координата</param>
     public void PlaceBlock(BlockType blockType, int x, int y)
     {
         GameObject newTile = new GameObject();
@@ -187,6 +197,13 @@ public class WorldManager : MonoBehaviour
         newTile.transform.position = new Vector3(x, y, 0);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="unitType">Тип юнита.</param>
+    /// <param name="x">x мировая координата.</param>
+    /// <param name="y">y мировая координата</param>
+    /// <returns>Созданный юнит.</returns>
     public Unit PlaceUnit(UnitType unitType, int x, int y)
     {
         //Vector2 position = new Vector2(x, y);
@@ -214,6 +231,10 @@ public class WorldManager : MonoBehaviour
         return newUnit.GetComponent<Unit>();
     }
 
+    /// <summary>
+    /// Функция, вызываемая при уничтожении блока.
+    /// </summary>
+    /// <param name="block"></param>
     public void DestroyBlock(Block block)
     {
         Debug.Log($"блок {block.BlockType.Name} уничтожен");

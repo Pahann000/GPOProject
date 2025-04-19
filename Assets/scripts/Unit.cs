@@ -3,14 +3,26 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     [Header("Unit Settings")]
+    /// <summary>
+    /// Тип юнита.
+    /// </summary>
     public UnitType unitType;
 
     //[Header("References")]
     //public Animator animator;
     //public GameObject selectionIndicator;
 
+    /// <summary>
+    /// Цель юнита.
+    /// </summary>
     private GameObject _target;
+    /// <summary>
+    /// Время предыдущей атаки.
+    /// </summary>
     private float _lastAttackTime;
+    /// <summary>
+    /// текущая работа юнита.
+    /// </summary>
     private UnitWork _currentUnitWork;
 
     void FixedUpdate()
@@ -31,6 +43,9 @@ public class Unit : MonoBehaviour
     //    selectionIndicator.SetActive(false);
     //}
 
+    /// <summary>
+    /// Возвращает и задаёт цель юнита.
+    /// </summary>
     public GameObject Target
     {
         get
@@ -47,11 +62,19 @@ public class Unit : MonoBehaviour
     }
 
     //TODO: поиск пути - navmesh, Муравьи Лэнгтона
+    /// <summary>
+    /// Алгоритм предвижения юнита.
+    /// </summary>
+    /// <param name="position"></param>
     private void MoveToPosition(Vector2 position)
     {
         transform.position = Vector2.right;
     }
 
+    /// <summary>
+    /// Заставляет юнита атаковать блок.
+    /// </summary>
+    /// <param name="target">Блок для атаки.</param>
     private void AttackBlock(GameObject target)
     {
 

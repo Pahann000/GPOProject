@@ -1,3 +1,6 @@
+/// <summary>
+/// Состояние постройки.
+/// </summary>
 public enum BuildingState
 {
     Planned,    // Только размечено для постройки

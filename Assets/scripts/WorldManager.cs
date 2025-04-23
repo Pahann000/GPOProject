@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Sprites;
 using UnityEngine.UIElements;
+using System.Collections;
 
 /// <summary>
 /// Класс для генерации карты мира.
@@ -86,11 +87,19 @@ public class WorldManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        StartCoroutine(InitWorld());
+
+        Unit miner = PlaceUnit(unitAtlas.Miner, 5f, 310f);
+    }
+
+    IEnumerator InitWorld()
+    {
         Seed = Random.Range(-100000, 100000);
         _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
         _goldNoise = GenerateNoiseTexture(GoldFrequency, GoldSize);
         CreateChunks();
-        GenerateTerrain();
+
+        yield return GenerateTerrainAsync(); // Постепенная генерация
     }
 
     /// <summary>
@@ -111,28 +120,18 @@ public class WorldManager : MonoBehaviour
     /// <summary>
     /// генерирует поверхность и выстраивает карту мира в игре.
     /// </summary>
-    private void GenerateTerrain()
+    IEnumerator GenerateTerrainAsync()
     {
-        
         for (int x = 0; x < _worldNoise.width; x++)
         {
             float height = Mathf.PerlinNoise((x + Seed) * TerrainFreq, Seed * TerrainFreq) * HighMultiplier + HighAddition;
             for (int y = 0; y < height; y++)
             {
-                BlockType blockType = blockAtlas.Rock;
-                if (_goldNoise.GetPixel(x,y).r > 0.5f)
+                if (_worldNoise.GetPixel(x, y).r > 0.5f)
                 {
-                    blockType = blockAtlas.Gold;
+                    PlaceBlock(blockAtlas.Rock, x, y);
                 }
-                else if (_worldNoise.GetPixel(x, y).r > 0.5f)
-                {
-                    blockType = blockAtlas.Rock;
-                }
-
-                if (_worldNoise.GetPixel(x,y).r>0.5f)
-                {
-                    PlaceBlock(blockType, x, y);
-                }
+                if (x % 10 == 0) yield return null; // Пауза каждые 10 блоков
             }
         }
     }
@@ -187,31 +186,72 @@ public class WorldManager : MonoBehaviour
         newTile.transform.position = new Vector3(x, y, 0);
     }
 
-    public Unit PlaceUnit(UnitType unitType, int x, int y)
+    public Unit PlaceUnit(UnitType unitType, float x, float y)
     {
-        //Vector2 position = new Vector2(x, y);
-        //if (Physics2D.OverlapPoint(position))
-        //{
-        //    return null;
-        //}
+        if (unitType == null)
+        {
+            Debug.LogError("UnitType не задан!");
+            return null;
+        }
 
-        GameObject newUnit = new GameObject();
+        if (unitType.Sprite == null)
+        {
+            Debug.LogError($"Спрайт для {unitType.name} не назначен");
+            return null;
+        }
 
-        newUnit.AddComponent<SpriteRenderer>();
-        newUnit.GetComponent<SpriteRenderer>().sprite = unitType.Sprite;
+        GameObject unitObj = new GameObject(unitType.name)
+        {
+            tag = "Unit" // тег для удобства
+        };
 
-        newUnit.AddComponent<BoxCollider2D>();
-        newUnit.GetComponent<BoxCollider2D>().size = Vector2.one;
+        SpriteRenderer renderer = unitObj.AddComponent<SpriteRenderer>();
+        renderer.sprite = unitType.Sprite;
+        renderer.sortingLayerName = "Units";
+        renderer.sortingOrder = 1;
 
-        newUnit.AddComponent<Rigidbody2D>();
-        newUnit.GetComponent<Rigidbody2D>().freezeRotation = true;
+        BoxCollider2D collider = unitObj.AddComponent<BoxCollider2D>();
+        collider.size = new Vector2(0.8f, 1.5f);
 
-        newUnit.AddComponent<Unit>();
-        newUnit.GetComponent<Unit>().unitType = unitType;
+        Rigidbody2D rb = unitObj.AddComponent<Rigidbody2D>();
+        rb.gravityScale = 0;
+        rb.freezeRotation = true;
 
-        newUnit.transform.position = new Vector3(x, y, 0);
+        Unit unit = unitObj.AddComponent<Unit>();
+        unit.unitType = unitType;
 
-        return newUnit.GetComponent<Unit>();
+        Vector3 spawnPos = new Vector3(x, y, 0);
+        if (Physics2D.OverlapPoint(spawnPos))
+        {
+            Debug.LogWarning($"Позиция {spawnPos} занята, ищу свободное место рядом...");
+            spawnPos = FindNearestFreePosition(spawnPos);
+        }
+
+        unitObj.transform.position = spawnPos;
+        Debug.Log($"Юнит создан на позиции: {spawnPos}");
+
+        return unit;
+    }
+
+    // Вспомогательный метод для поиска свободной позиции
+    private Vector3 FindNearestFreePosition(Vector3 targetPos)
+    {
+        for (int i = 1; i < 5; i++)
+        {
+            Vector3[] directions = {
+            targetPos + Vector3.up * i,
+            targetPos + Vector3.down * i,
+            targetPos + Vector3.left * i,
+            targetPos + Vector3.right * i
+        };
+
+            foreach (Vector3 pos in directions)
+            {
+                if (!Physics2D.OverlapPoint(pos))
+                    return pos;
+            }
+        }
+        return targetPos; // Если всё занято, возвращаем исходную
     }
 
     public void DestroyBlock(Block block)

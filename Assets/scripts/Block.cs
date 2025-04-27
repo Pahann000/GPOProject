@@ -5,7 +5,16 @@ public class Block : MonoBehaviour
     public BlockType BlockType;
     public int CurrentHealth;
 
-    void Start() => CurrentHealth = BlockType.Hardness;
+    void Start()
+    {
+        // јвтоматически добавл€ем коллайдер, если его нет
+        if (GetComponent<Collider2D>() == null)
+        {
+            gameObject.AddComponent<BoxCollider2D>();
+        }
+
+        CurrentHealth = BlockType.Hardness;
+    }
 
     public void TakeDamage(int damage)
     {

@@ -1,7 +1,10 @@
+using NUnit.Framework.Constraints;
+using Pathfinding;
+using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Sprites;
 using UnityEngine.UIElements;
-using System.Collections;
 
 /// <summary>
 /// Класс для генерации карты мира.
@@ -89,7 +92,7 @@ public class WorldManager : MonoBehaviour
     {
         StartCoroutine(InitWorld());
 
-        Unit miner = PlaceUnit(unitAtlas.Miner, 5f, 310f);
+        Unit miner = PlaceUnit(unitAtlas.Miner, 5f, 320f);
     }
 
     IEnumerator InitWorld()
@@ -170,6 +173,8 @@ public class WorldManager : MonoBehaviour
     {
         GameObject newTile = new GameObject();
 
+        newTile.layer = LayerMask.NameToLayer("Terrain");
+
         int chunkCoord = Mathf.RoundToInt(x / chunkSize) * chunkSize;
         chunkCoord /= chunkSize;
         newTile.transform.parent = _chunks[chunkCoord].transform;
@@ -205,20 +210,37 @@ public class WorldManager : MonoBehaviour
             tag = "Unit" // тег для удобства
         };
 
+        GameObject unitsParent = GameObject.Find("Units");
+        if (unitsParent == null)
+        {
+            Debug.LogError("Объект 'Units' не найден в иерархии!");
+            return null;
+        }
+
+        unitObj.transform.parent = unitsParent.transform;
+
         SpriteRenderer renderer = unitObj.AddComponent<SpriteRenderer>();
         renderer.sprite = unitType.Sprite;
         renderer.sortingLayerName = "Units";
         renderer.sortingOrder = 1;
 
-        BoxCollider2D collider = unitObj.AddComponent<BoxCollider2D>();
-        collider.size = new Vector2(0.8f, 1.5f);
+        CircleCollider2D collider = unitObj.AddComponent<CircleCollider2D>();
+        collider.radius = 0.5f;
 
         Rigidbody2D rb = unitObj.AddComponent<Rigidbody2D>();
-        rb.gravityScale = 0;
+        rb.gravityScale = 2f;
         rb.freezeRotation = true;
 
         Unit unit = unitObj.AddComponent<Unit>();
         unit.unitType = unitType;
+
+        unitObj.AddComponent<Seeker>();
+        AIPath aiPath = unitObj.AddComponent<AIPath>();
+        aiPath.radius = 1f;
+        aiPath.maxSpeed = 3f;
+        aiPath.orientation = OrientationMode.YAxisForward;
+        aiPath.pickNextWaypointDist = 1.2f;
+        unitObj.AddComponent<AIDestinationSetter>();
 
         Vector3 spawnPos = new Vector3(x, y, 0);
         if (Physics2D.OverlapPoint(spawnPos))
@@ -229,6 +251,19 @@ public class WorldManager : MonoBehaviour
 
         unitObj.transform.position = spawnPos;
         Debug.Log($"Юнит создан на позиции: {spawnPos}");
+
+        // Добавляем индикатор выделения (как дочерний объект)
+        GameObject indicator = new GameObject("SelectionIndicator");
+        indicator.transform.parent = unitObj.transform;
+        indicator.transform.localPosition = Vector3.zero;
+
+        SpriteRenderer indicatorRenderer = indicator.AddComponent<SpriteRenderer>();
+        indicatorRenderer.sprite = unitType.Sprite;
+        indicatorRenderer.color = Color.green;
+        indicatorRenderer.sortingOrder = 10;
+        indicator.SetActive(false);
+
+        unit.selectionIndicator = indicator;
 
         return unit;
     }

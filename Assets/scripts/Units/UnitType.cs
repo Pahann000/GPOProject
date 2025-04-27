@@ -5,6 +5,7 @@ public class UnitType : ScriptableObject
 {
     public float MoveSpeed;
     public float AttackCooldown;
+    public float JumpForce;
     public int AttackRange;
     public int DamagePerHit;
     public UnitTypeName UnitTypeName;

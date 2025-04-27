@@ -4,96 +4,74 @@ public class Unit : MonoBehaviour
 {
     [Header("Unit Settings")]
     public UnitType unitType;
-
-    //[Header("References")]
-    //public Animator animator;
-    //public GameObject selectionIndicator;
-
     private GameObject _target;
+    private Vector2 _currentDirection;
     private float _lastAttackTime;
-    private UnitWork _currentUnitWork;
 
     void FixedUpdate()
     {
-        if (Target != null)
-        {
-            AttackBlock(Target);
-        }
+        //if (_target == null) return;
+
+        //MoveToTarget();
+        //TryAttack();
     }
 
-    //public void Select()
-    //{
-    //    selectionIndicator.SetActive(true);
-    //}
-
-    //public void Deselect()
-    //{
-    //    selectionIndicator.SetActive(false);
-    //}
-
-    public GameObject Target
+    private void MoveToTarget()
     {
-        get
-        {
-            return _target;
-        }
-        set
-        {
-            if(value != null)
-            {
-                _target = value;
-            }
-        }
+        Vector2 direction = (_target.transform.position - transform.position).normalized;
+        transform.position += (Vector3)direction * unitType.MoveSpeed * Time.fixedDeltaTime;
+
+        // РџРѕРІРѕСЂРѕС‚ СЃРїСЂР°Р№С‚Р°
+        transform.localScale = new Vector3(
+            direction.x > 0 ? 1 : -1,
+            1,
+            1
+        );
     }
 
-    //TODO: поиск пути - navmesh, Муравьи Лэнгтона
-    private void MoveToPosition(Vector2 position)
+    private void TryAttack()
     {
-        transform.position = Vector2.right;
-    }
-
-    private void AttackBlock(GameObject target)
-    {
-
-        // Проверка расстояния до блока
-        if (Vector2.Distance(transform.position, target.transform.position) > unitType.AttackRange)
-        {
-            // Если слишком далеко - подойти ближе
-            MoveToPosition(target.transform.position);
+        if (Vector2.Distance(transform.position, _target.transform.position) > unitType.AttackRange)
             return;
-        }
 
-        // Проверка кулдауна атаки
-        if (Time.time - _lastAttackTime < unitType.AttackCooldown) return;
+        if (Time.time - _lastAttackTime < unitType.AttackCooldown)
+            return;
 
-        // Поворот к цели
-        if (target.transform.position.x > transform.position.x)
-        {
-            transform.localScale = new Vector3(1, 1, 1);
-        }
-        else
-        {
-            transform.localScale = new Vector3(-1, 1, 1);
-        }
-
-        //// Анимация атаки
-        //if (animator != null)
-        //{
-        //    animator.SetTrigger("Attack");
-        //}
-
-        // Нанесение урона блоку
-        Block block = target.GetComponent<Block>();
-        if (block.CurrentHealth - 1 != 0)
+        if (_target.TryGetComponent<Block>(out var block))
         {
             block.TakeDamage(unitType.DamagePerHit);
-        }
-        else
-        {
-            block.TakeDamage(unitType.DamagePerHit);
-            Target = null;
-        }
+            _lastAttackTime = Time.time;
 
-        _lastAttackTime = Time.time;
+            if (block.CurrentHealth <= 0)
+                _target = null;
+        }
     }
+
+    public void SetTarget(GameObject target)
+    {
+        _target = target;
+    }
+
+    [Header("Selection")]
+    public GameObject selectionIndicator; // РџСЂРµС„Р°Р± РёР»Рё РґРѕС‡РµСЂРЅРёР№ РѕР±СЉРµРєС‚
+
+    public void Select()
+    {
+        // Р’РёР·СѓР°Р»СЊРЅРѕРµ РІС‹РґРµР»РµРЅРёРµ
+        if (selectionIndicator != null)
+            selectionIndicator.SetActive(true);
+
+        // РњРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РґСЂСѓРіРёРµ СЌС„С„РµРєС‚С‹ (РёР·РјРµРЅРµРЅРёРµ С†РІРµС‚Р° Рё С‚.Рґ.)
+        GetComponent<SpriteRenderer>().color = Color.yellow;
+    }
+
+    public void Deselect()
+    {
+        // РЎРЅСЏС‚РёРµ РІС‹РґРµР»РµРЅРёСЏ
+        if (selectionIndicator != null)
+            selectionIndicator.SetActive(false);
+
+        GetComponent<SpriteRenderer>().color = Color.white;
+    }
+
 }

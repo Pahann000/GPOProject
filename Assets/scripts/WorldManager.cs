@@ -187,7 +187,7 @@ public class WorldManager : MonoBehaviour
         newTile.transform.position = new Vector3(x, y, 0);
     }
 
-    public Unit PlaceUnit(UnitType unitType, int x, int y)
+    public Unit PlaceUnit(UnitType unitType, Vector2 position, Player owner)
     {
         //Vector2 position = new Vector2(x, y);
         //if (Physics2D.OverlapPoint(position))
@@ -208,8 +208,9 @@ public class WorldManager : MonoBehaviour
 
         newUnit.AddComponent<Unit>();
         newUnit.GetComponent<Unit>().unitType = unitType;
+        newUnit.GetComponent<Unit>().Owner = owner;
 
-        newUnit.transform.position = new Vector3(x, y, 0);
+        newUnit.transform.position = position;
 
         return newUnit.GetComponent<Unit>();
     }

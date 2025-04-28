@@ -11,7 +11,9 @@ public class Unit : MonoBehaviour
 
     private GameObject _target;
     private float _lastAttackTime;
-    private UnitWork _currentUnitWork;
+
+    public UnitWork CurrentUnitWork;
+    public Player Owner;
 
     void FixedUpdate()
     {
@@ -21,39 +23,16 @@ public class Unit : MonoBehaviour
         }
     }
 
-    //public void Select()
-    //{
-    //    selectionIndicator.SetActive(true);
-    //}
-
-    //public void Deselect()
-    //{
-    //    selectionIndicator.SetActive(false);
-    //}
-
-    public GameObject Target
-    {
-        get
-        {
-            return _target;
-        }
-        set
-        {
-            if(value != null)
-            {
-                _target = value;
-            }
-        }
-    }
-
     //TODO: поиск пути - navmesh, Муравьи Лэнгтона
     private void MoveToPosition(Vector2 position)
     {
-        transform.position = Vector2.right;
+        transform.position = new Vector2(transform.position.x - 10, transform.position.x - 10);
     }
 
     private void AttackBlock(GameObject target)
     {
+
+        if (!target) { return; }
 
         // Проверка расстояния до блока
         if (Vector2.Distance(transform.position, target.transform.position) > unitType.AttackRange)
@@ -95,5 +74,36 @@ public class Unit : MonoBehaviour
         }
 
         _lastAttackTime = Time.time;
+    }
+
+
+    //public void Select()
+    //{
+    //    selectionIndicator.SetActive(true);
+    //}
+
+    //public void Deselect()
+    //{
+    //    selectionIndicator.SetActive(false);
+    //}
+
+    public GameObject Target
+    {
+        get
+        {
+            return _target;
+        }
+        set
+        {
+            if (value != null)
+            {
+                _target = value;
+            }
+        }
+    }
+
+    public Unit(Player owner)
+    {
+        Owner = owner;
     }
 }

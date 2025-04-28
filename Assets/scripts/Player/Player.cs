@@ -1,18 +1,16 @@
 using UnityEngine;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 
 public class Player : MonoBehaviour
 {
     public UnitAtlas unitAtlas;
-
-    private List<Unit> _units = new List<Unit>();
+    public ObservableDictionary<string, int> resources { get; } = new ObservableDictionary<string, int>();
+    private UnitController _unitController = new();
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        Unit newUnit = WorldManager.Instance.PlaceUnit(unitAtlas.Miner, 0, 200);
-        _units.Add(newUnit);
+        resources.Add("Gold", 10);
+        _unitController.PlaceUnit(unitAtlas.Miner, this, Vector2.zero);
     }
 
     // Update is called once per frame
@@ -31,17 +29,12 @@ public class Player : MonoBehaviour
         Debug.Log($"нажатие сделано на позиции{position}");
         if (collider)
         {
-            Block selectedBlock = collider.GetComponentInParent<Block>();
-            Debug.Log($"блок найден:{selectedBlock.BlockType.Name}");
-            if (selectedBlock != null)
+            GameObject selectedBlock = collider.gameObject;
+            if (selectedBlock.GetComponent<Block>() != null)
             {
-                SetDestoroyBlock(selectedBlock);
+                Debug.Log($"блок найден:{selectedBlock.GetComponent<Block>().BlockType.Name}");
+                _unitController.CommandUnit(selectedBlock);
             }
         }
-    }
-
-    public void SetDestoroyBlock(Block blockToDestroy)
-    {
-        _units[0].Target = blockToDestroy.transform.gameObject;
     }
 }

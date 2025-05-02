@@ -27,6 +27,6 @@ public class PowerPlant : ProductionBuilding
     protected override void ProduceResource()
     {
         // Добавляем энергию в общий пул
-        //ResourceManager.Instance.AddResource(ResourceType.Energy, EnergyOutput);
+        ResourceManager.Instance.AddResource(ResourceType.Energy, EnergyOutput);
     }
 }

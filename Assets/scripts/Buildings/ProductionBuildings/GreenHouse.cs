@@ -23,9 +23,9 @@ public class Greenhouse : ProductionBuilding
     /// </summary>
     protected override void ProduceResource()
     {
-        //if (ResourceManager.Instance.TryUseResource(ResourceType.Water, WaterConsumptionPerCycle))
-        //{
-        //    ResourceManager.Instance.AddResource(ResourceType.Food, ProductionAmount);
-        //}
+        if (ResourceManager.Instance.TryUseResource(ResourceType.Water, WaterConsumptionPerCycle))
+        {
+            ResourceManager.Instance.AddResource(ResourceType.Food, ProductionAmount);
+        }
     }
 }

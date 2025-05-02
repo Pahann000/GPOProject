@@ -45,7 +45,7 @@ public class Mine : ProductionBuilding
         ResourceType extractedResource = targetDeposit.GetResourceType();
 
         targetDeposit.ExtractResource(extractedAmount);
-        //ResourceManager.Instance.AddResource(extractedResource, extractedAmount);
+        ResourceManager.Instance.AddResource(extractedResource, extractedAmount);
     }
 
     /// <summary>

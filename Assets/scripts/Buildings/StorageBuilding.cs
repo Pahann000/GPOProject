@@ -23,7 +23,7 @@ public class StorageBuilding : Building
     public override void CompleteConstruction()
     {
         base.CompleteConstruction();
-        //ResourceManager.Instance.IncreaseStorage(StoredResource, StorageIncrease);
+        ResourceManager.Instance.IncreaseStorage(StoredResource, StorageIncrease);
     }
 
     /// <summary>
@@ -32,7 +32,7 @@ public class StorageBuilding : Building
     /// </summary>
     protected override void DestroyBuilding()
     {
-        //ResourceManager.Instance.DecreaseStorage(StoredResource, StorageIncrease);
+        ResourceManager.Instance.DecreaseStorage(StoredResource, StorageIncrease);
         base.DestroyBuilding();
     }
 }

@@ -65,6 +65,10 @@ public abstract class Building : MonoBehaviour
     /// </summary>
     public BuildingState State { get; protected set; } = BuildingState.Planned;
 
+    [SerializeField] protected BuildingData _data;
+
+    public BuildingData Data => _data;
+
     /// <summary>
     /// Наносит урон зданию.
     /// </summary>

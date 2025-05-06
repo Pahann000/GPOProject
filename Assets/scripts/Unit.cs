@@ -1,59 +1,28 @@
 using UnityEngine;
+using Pathfinding;
 
 public class Unit : MonoBehaviour
 {
-    [Header("Unit Settings")]
-    public UnitType unitType;
-    private GameObject _target;
-    private Vector2 _currentDirection;
-    private float _lastAttackTime;
+    [Header("Pathfinding")]
+    public Transform target;
+    public float activateDistance = 1f;
+    public float pathUpdateSeconds = 0.5f;
 
-    void FixedUpdate()
-    {
-        //if (_target == null) return;
+    [Header("Physics")]
+    public float speed = 5f;
+    public float nextWaypointDistance = 1f;
+    public float jumpNodeHeightRequirement = 1f;
+    public float jumpModifier = 2f;
+    public float jumpCheckOffset = 0.4f;
 
-        //MoveToTarget();
-        //TryAttack();
-    }
+    [Header("Custom Behavior")]
+    public bool followEnabled = true;
+    public bool jumpEnabled = true;
+    public bool directionLookEnabled = true;
 
-    private void MoveToTarget()
-    {
-        Vector2 direction = (_target.transform.position - transform.position).normalized;
-        transform.position += (Vector3)direction * unitType.MoveSpeed * Time.fixedDeltaTime;
-
-        // Поворот спрайта
-        transform.localScale = new Vector3(
-            direction.x > 0 ? 1 : -1,
-            1,
-            1
-        );
-    }
-
-    private void TryAttack()
-    {
-        if (Vector2.Distance(transform.position, _target.transform.position) > unitType.AttackRange)
-            return;
-
-        if (Time.time - _lastAttackTime < unitType.AttackCooldown)
-            return;
-
-        if (_target.TryGetComponent<Block>(out var block))
-        {
-            block.TakeDamage(unitType.DamagePerHit);
-            _lastAttackTime = Time.time;
-
-            if (block.CurrentHealth <= 0)
-                _target = null;
-        }
-    }
-
-    public void SetTarget(GameObject target)
-    {
-        _target = target;
-    }
 
     [Header("Selection")]
-    public GameObject selectionIndicator; // Префаб или дочерний объект
+    public GameObject selectionIndicator;
 
     public void Select()
     {

@@ -11,6 +11,7 @@ using UnityEngine.UIElements;
 /// </summary>
 public class WorldManager : MonoBehaviour
 {
+    private AstarPath _astarPath;
     public static WorldManager Instance;
     /// <summary>
     /// Хранит текстуру шума мира.
@@ -91,8 +92,16 @@ public class WorldManager : MonoBehaviour
     void Start()
     {
         StartCoroutine(InitWorld());
-
+        PlaceAStarGrid(0, 0);
         Unit miner = PlaceUnit(unitAtlas.Miner, 5f, 320f);
+    }
+
+    public void UpdateAStarGrid()
+    {
+        if (_astarPath != null)
+        {
+            _astarPath.Scan();
+        }
     }
 
     IEnumerator InitWorld()
@@ -135,6 +144,11 @@ public class WorldManager : MonoBehaviour
                     PlaceBlock(blockAtlas.Rock, x, y);
                 }
                 if (x % 10 == 0) yield return null; // Пауза каждые 10 блоков
+            }
+
+            if (x % 10 == 0)
+            {
+                UpdateAStarGrid();
             }
         }
     }
@@ -213,8 +227,7 @@ public class WorldManager : MonoBehaviour
         GameObject unitsParent = GameObject.Find("Units");
         if (unitsParent == null)
         {
-            Debug.LogError("Объект 'Units' не найден в иерархии!");
-            return null;
+            unitsParent = new GameObject("Units");
         }
 
         unitObj.transform.parent = unitsParent.transform;
@@ -232,25 +245,19 @@ public class WorldManager : MonoBehaviour
         rb.freezeRotation = true;
 
         Unit unit = unitObj.AddComponent<Unit>();
-        unit.unitType = unitType;
 
         unitObj.AddComponent<Seeker>();
         AIPath aiPath = unitObj.AddComponent<AIPath>();
-        aiPath.radius = 1f;
-        aiPath.maxSpeed = 3f;
-        aiPath.orientation = OrientationMode.YAxisForward;
-        aiPath.pickNextWaypointDist = 1.2f;
-        unitObj.AddComponent<AIDestinationSetter>();
 
-        Vector3 spawnPos = new Vector3(x, y, 0);
-        if (Physics2D.OverlapPoint(spawnPos))
-        {
-            Debug.LogWarning($"Позиция {spawnPos} занята, ищу свободное место рядом...");
-            spawnPos = FindNearestFreePosition(spawnPos);
-        }
+        //Vector3 spawnPos = new Vector3(x, y, 0);
+        //if (Physics2D.OverlapPoint(spawnPos))
+        //{
+        //    Debug.LogWarning($"Позиция {spawnPos} занята, ищу свободное место рядом...");
+        //    spawnPos = FindNearestFreePosition(spawnPos);
+        //}
 
-        unitObj.transform.position = spawnPos;
-        Debug.Log($"Юнит создан на позиции: {spawnPos}");
+        //unitObj.transform.position = spawnPos;
+        //Debug.Log($"Юнит создан на позиции: {spawnPos}");
 
         // Добавляем индикатор выделения (как дочерний объект)
         GameObject indicator = new GameObject("SelectionIndicator");
@@ -266,6 +273,52 @@ public class WorldManager : MonoBehaviour
         unit.selectionIndicator = indicator;
 
         return unit;
+    }
+
+    private void PlaceAStarGrid(float x, float y)
+    {
+        // Создаем основной объект A*
+        GameObject aStar = new GameObject("A*");
+        aStar.transform.position = new Vector3(x, y, 0);
+
+        // Добавляем основные компоненты
+        AstarPath pathfinder = aStar.AddComponent<AstarPath>();
+
+        // Настройка графа сетки
+        GridGraph gridGraph = pathfinder.data.AddGraph(typeof(GridGraph)) as GridGraph;
+
+        gridGraph.is2D = true;
+
+        // Конфигурация графа
+        gridGraph.SetDimensions(
+            Mathf.CeilToInt(WorldWidth * chunkSize),  // Ширина в узлах
+            Mathf.CeilToInt(WorldHigh * 2/3),         // Высота в узлах
+            1.0f                                      // Размер узла
+        );
+
+        gridGraph.center = new Vector3(
+            (WorldWidth * chunkSize) / 2f,
+            WorldHigh * 2/3 / 2f,
+            0
+        );
+
+        // Настройки сканирования коллайдеров
+        gridGraph.collision.use2D = true;
+        gridGraph.collision.type = ColliderType.Ray;
+        gridGraph.collision.mask = LayerMask.GetMask("Terrain");
+        gridGraph.collision.thickRaycast = true;
+        gridGraph.collision.diameter = 0.8f; // Соответствует размеру юнита
+
+        // Оптимизация
+        gridGraph.maxClimb = 1;
+        gridGraph.maxSlope = 90;
+        gridGraph.erodeIterations = 2;
+
+        // Сканируем граф
+        pathfinder.Scan();
+
+        // Сохраняем ссылку
+        _astarPath = pathfinder;
     }
 
     // Вспомогательный метод для поиска свободной позиции

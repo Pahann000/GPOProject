@@ -73,5 +73,4 @@ public class Unit : MonoBehaviour
 
         GetComponent<SpriteRenderer>().color = Color.white;
     }
-
 }

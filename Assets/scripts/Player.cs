@@ -31,16 +31,8 @@ public class Player : MonoBehaviour
         // Если кликнули по блоку и есть выбранный юнит - отправляем разрушать
         if (hit.TryGetComponent<Block>(out var block) && _selectedUnit != null)
         {
-            var destinationSetter = _selectedUnit.GetComponent<AIDestinationSetter>();
-            if (destinationSetter != null)
-            {
-                destinationSetter.target = block.transform;
-                Debug.Log($"Юнит получил задание разрушить {block.BlockType.Name}");
-            }
-            else
-            {
-                Debug.LogError("AIDestinationSetter не найден у выбранного юнита.");
-            }
+            _selectedUnit.target = block.transform;
+            Debug.Log($"Юнит получил задание разрушить {block.BlockType.Name}");
         }
     }
 

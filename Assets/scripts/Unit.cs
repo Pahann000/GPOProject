@@ -5,15 +5,17 @@ public class Unit : MonoBehaviour
 {
     [Header("Pathfinding")]
     public Transform target;
-    public float activateDistance = 1f;
+    public float activateDistance = 500f;
     public float pathUpdateSeconds = 0.5f;
 
     [Header("Physics")]
-    public float speed = 5f;
-    public float nextWaypointDistance = 1f;
-    public float jumpNodeHeightRequirement = 1f;
-    public float jumpModifier = 2f;
-    public float jumpCheckOffset = 0.4f;
+    public float speed = 1500f;
+    public float nextWaypointDistance = 3f;
+    //public float jumpNodeHeightRequirement = 0.8f;
+    public float jumpForce = 100f;
+    public float jumpCheckOffset = 0.6f;
+    public float maxSpeed = 5f;
+    public float linearDrag = 1.5f;
 
     [Header("Custom Behavior")]
     public bool followEnabled = true;
@@ -28,12 +30,15 @@ public class Unit : MonoBehaviour
     private int _currentWaypoint = 0;
     private bool _isGrounded = false;
     private Seeker _seeker;
-    private Rigidbody2D _rb;
+    private Rigidbody2D _rb; 
+    private float _coyoteTime = 1f;
+    private float _lastGroundedTime;
 
     public void Start()
     {
         _seeker = GetComponent<Seeker>();
         _rb = GetComponent<Rigidbody2D>();
+        _rb.linearDamping = linearDrag;
 
         InvokeRepeating("UpdatePath", 0f, pathUpdateSeconds);
     }
@@ -44,6 +49,11 @@ public class Unit : MonoBehaviour
         {
             PathFollow();
         }
+
+        if (_isGrounded) 
+        { 
+            _lastGroundedTime = Time.time; 
+        }
     }
 
     private void Update()
@@ -52,6 +62,25 @@ public class Unit : MonoBehaviour
         {
             _seeker.StartPath(_rb.position, target.position, OnPathComplete);
         }
+    }
+
+    private bool IsGrounded()
+    {
+        Collider2D col = GetComponent<Collider2D>();
+        float radius = col.bounds.extents.x * 0.9f; // 90% от ширины коллайдера
+        RaycastHit2D hit = Physics2D.CircleCast(
+            col.bounds.center,
+            radius,
+            Vector2.down,
+            jumpCheckOffset,
+            LayerMask.GetMask("Terrain")
+        );
+        return hit.collider != null;
+    }
+
+    bool CanJump()
+    {
+        return _isGrounded || Time.time - _lastGroundedTime <= _coyoteTime;
     }
 
     /// <summary>
@@ -71,17 +100,17 @@ public class Unit : MonoBehaviour
             return;
         }
 
-        // проверка касаемся ли чего-то, то есть стоим ли
-        _isGrounded = Physics2D.Raycast(transform.position, -Vector3.up, GetComponent<Collider2D>().bounds.extents.y + jumpCheckOffset);
+        // Проверка, стоит ли юнит на земле
+        _isGrounded = IsGrounded();
 
         // высчитываем перемещение
         Vector2 direction = ((Vector2)path.vectorPath[_currentWaypoint] - _rb.position).normalized;
         Vector2 force = direction * speed * Time.deltaTime;
 
         // прыжок
-        if (jumpEnabled && _isGrounded)
+        if (jumpEnabled && CanJump())
         {
-            _rb.AddForce(Vector2.up * speed * jumpModifier);
+            _rb.AddForce(Vector2.up * jumpForce);
         }
 
         // передвижение
@@ -97,14 +126,34 @@ public class Unit : MonoBehaviour
         // направление
         if (directionLookEnabled)
         {
-            if (_rb.velocity.x > 0.05f)
+            if (_rb.linearVelocity.x > 0.05f)
             {
                 transform.localScale = new Vector3(-1f * Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
             }
-            else if (_rb.velocity.x < -0.05f)
+            else if (_rb.linearVelocity.x < -0.05f)
             {
                 transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
             }
+        }
+
+        float maxSpeed = 5f; // Максимальная скорость
+        if (_rb.linearVelocity.magnitude > maxSpeed)
+        {
+            _rb.linearVelocity = _rb.linearVelocity.normalized * maxSpeed;
+        }
+    }
+
+    private bool TargetInDistance()
+    {
+        return Vector2.Distance(transform.position, target.transform.position) < activateDistance;
+    }
+
+    private void OnPathComplete(Path p)
+    {
+        if (!p.error)
+        {
+            path = p;
+            _currentWaypoint = 0;
         }
     }
 

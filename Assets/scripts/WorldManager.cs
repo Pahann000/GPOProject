@@ -230,6 +230,8 @@ public class WorldManager : MonoBehaviour
             unitsParent = new GameObject("Units");
         }
 
+        unitsParent.transform.position = new Vector3(5f, 320f, 0);
+
         unitObj.transform.parent = unitsParent.transform;
 
         SpriteRenderer renderer = unitObj.AddComponent<SpriteRenderer>();
@@ -241,13 +243,14 @@ public class WorldManager : MonoBehaviour
         collider.radius = 0.5f;
 
         Rigidbody2D rb = unitObj.AddComponent<Rigidbody2D>();
-        rb.gravityScale = 2f;
+        rb.gravityScale = 3f;
+        rb.linearDamping = 1.5f;
         rb.freezeRotation = true;
 
         Unit unit = unitObj.AddComponent<Unit>();
 
         unitObj.AddComponent<Seeker>();
-        AIPath aiPath = unitObj.AddComponent<AIPath>();
+        //AIPath aiPath = unitObj.AddComponent<AIPath>();
 
         //Vector3 spawnPos = new Vector3(x, y, 0);
         //if (Physics2D.OverlapPoint(spawnPos))
@@ -292,8 +295,8 @@ public class WorldManager : MonoBehaviour
         // Конфигурация графа
         gridGraph.SetDimensions(
             Mathf.CeilToInt(WorldWidth * chunkSize),  // Ширина в узлах
-            Mathf.CeilToInt(WorldHigh * 2/3),         // Высота в узлах
-            1.0f                                      // Размер узла
+            Mathf.CeilToInt(WorldHigh * 2 / 3),         // Высота в узлах
+            1f                                      // Размер узла
         );
 
         gridGraph.center = new Vector3(
@@ -312,7 +315,6 @@ public class WorldManager : MonoBehaviour
         // Оптимизация
         gridGraph.maxClimb = 1;
         gridGraph.maxSlope = 90;
-        gridGraph.erodeIterations = 2;
 
         // Сканируем граф
         pathfinder.Scan();
@@ -321,26 +323,26 @@ public class WorldManager : MonoBehaviour
         _astarPath = pathfinder;
     }
 
-    // Вспомогательный метод для поиска свободной позиции
-    private Vector3 FindNearestFreePosition(Vector3 targetPos)
-    {
-        for (int i = 1; i < 5; i++)
-        {
-            Vector3[] directions = {
-            targetPos + Vector3.up * i,
-            targetPos + Vector3.down * i,
-            targetPos + Vector3.left * i,
-            targetPos + Vector3.right * i
-        };
+    //// Вспомогательный метод для поиска свободной позиции
+    //private Vector3 FindNearestFreePosition(Vector3 targetPos)
+    //{
+    //    for (int i = 1; i < 5; i++)
+    //    {
+    //        Vector3[] directions = {
+    //        targetPos + Vector3.up * i,
+    //        targetPos + Vector3.down * i,
+    //        targetPos + Vector3.left * i,
+    //        targetPos + Vector3.right * i
+    //    };
 
-            foreach (Vector3 pos in directions)
-            {
-                if (!Physics2D.OverlapPoint(pos))
-                    return pos;
-            }
-        }
-        return targetPos; // Если всё занято, возвращаем исходную
-    }
+    //        foreach (Vector3 pos in directions)
+    //        {
+    //            if (!Physics2D.OverlapPoint(pos))
+    //                return pos;
+    //        }
+    //    }
+    //    return targetPos; // Если всё занято, возвращаем исходную
+    //}
 
     public void DestroyBlock(Block block)
     {

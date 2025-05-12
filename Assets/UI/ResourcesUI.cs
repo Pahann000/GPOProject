@@ -1,107 +1,62 @@
-using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine;
 using System.Collections.Generic;
 
-public class ResourcesUI : MonoBehaviour
+public class UIController : MonoBehaviour
 {
-    public VisualTreeAsset _resourceItemTemplate;
+    [SerializeField] private VisualTreeAsset _resourceTemplate;
+    [SerializeField] private Player _player;
 
-    private UIDocument _uiDocument;
+    private Dictionary<string, ResourceItem> _resources = new();
+    private UIDocument _mainUI;
     private VisualElement _resourcesContainer;
-    private Dictionary<string, VisualElement> _resourceElements = new();
-    private Player _player;
 
-    private void Awake()
+    private void Start()
     {
+        // Получаем ссылку на контейнер
+        _mainUI = this.gameObject.GetComponent<UIDocument>();
+        _resourcesContainer = _mainUI.rootVisualElement.Q<VisualElement>("resources-container");
+
         Initialize();
-        var root = _uiDocument.rootVisualElement;
-        _resourcesContainer = root.Q<VisualElement>("resources-container");
     }
 
     public void Initialize()
     {
-        _uiDocument = this.gameObject.GetComponent<UIDocument>();
-        _player = this.gameObject.GetComponent<Player>();
-
         // Инициализация существующих ресурсов
-        foreach (var pair in _player.resources)
+        foreach (var pair in _player.Resources)
         {
-            CreateOrUpdateResourceElement(pair.Key);
+            CreateResourceItem(pair.Key);
         }
 
         // Подписка на изменения словаря
-        _player.resources.ItemCahnged += HandleResourceChanged;
+        _player.Resources.ItemCahnged += ChangeResourceItem;
     }
 
-    private void HandleResourceChanged(string resourceType)
+    //Метод для создания новых элементов
+    public void CreateResourceItem(string key)
     {
-        if (_player.resources.TryGetValue(resourceType, out int value))
-        {
-            CreateOrUpdateResourceElement(resourceType);
-        }
-        else
-        {
-            RemoveResourceElement(resourceType);
-        }
+        // Создаем новый элемент
+        var newItem = new ResourceItem(_resourceTemplate, key);
+
+        // Добавляем в контейнер
+        _resourcesContainer.Add(newItem.Root);
+        _resources.Add(key, newItem);
+
+        newItem.SetText($"{key}: {_player.Resources[key]}");
     }
 
-    private void CreateOrUpdateResourceElement(string resourceType)
+    public void UpdateData()
     {
-        var value = _player.resources[resourceType];
-
-        if (_resourceElements.TryGetValue(resourceType, out var element))
+        foreach (var item in _resources)
         {
-            UpdateExistingElement(element, resourceType, value);
-        }
-        else
-        {
-            CreateNewElement(resourceType, value);
+            ChangeResourceItem(item.Key);
         }
     }
 
-    private void CreateNewElement(string resourceType, int value)
+    public void ChangeResourceItem(string key)
     {
-        var newElement = _resourceItemTemplate.CloneTree();
-        newElement.AddToClassList("resource-item");
+        var resource = _resources[key];
 
-        Debug.Log(_resourceItemTemplate.CloneTree().Q<Label>());
-
-        var icon = newElement.Q<VisualElement>("resource-icon");
-        var label = newElement.Q<Label>("resource-text");
-
-        //icon.style.backgroundImage = Resources.Load<Texture2D>($"Icons/{resourceType}");
-        label.text = $"{value}";
-        label.name = $"{resourceType}-label";
-
-        _resourcesContainer.Add(newElement);
-        _resourceElements.Add(resourceType, newElement);
-    }
-
-    private void UpdateExistingElement(VisualElement element, string resourceType, int newValue)
-    {
-        var label = element.Q<Label>($"{resourceType}-label");
-        label.text = $"{newValue}";
-
-        element.schedule.Execute(() => {
-            element.AddToClassList("changed");
-            element.schedule.Execute(() => element.RemoveFromClassList("changed")).ExecuteLater(300);
-        }).ExecuteLater(50);
-    }
-
-    private void RemoveResourceElement(string resourceType)
-    {
-        if (_resourceElements.TryGetValue(resourceType, out var element))
-        {
-            _resourcesContainer.Remove(element);
-            _resourceElements.Remove(resourceType);
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (_player != null)
-        {
-            _player.resources.ItemCahnged -= HandleResourceChanged;
-        }
+        resource.SetText($"{key}: {_player.Resources[key]}");
     }
 }

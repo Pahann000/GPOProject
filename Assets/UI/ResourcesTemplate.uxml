@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<engine:UXML
-    <engine:VisualElement class="resource-item">
-        <engine:VisualElement name="resource-icon" class="resource-icon"/>
-        <engine:Label name="resource-text" class="resource-text"/>
-    </engine:VisualElement>
-</engine:UXML>

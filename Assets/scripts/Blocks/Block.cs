@@ -19,7 +19,6 @@ public class Block : MonoBehaviour
 
     public void DestroyBlock()
     {
-        WorldManager.Instance.DestroyBlock(this);
         Destroy(gameObject);
     }
 }

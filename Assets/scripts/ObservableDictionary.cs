@@ -7,7 +7,14 @@ public class ObservableDictionary<TKey, TValue> : Dictionary<TKey, TValue>
 
     public new void Add(TKey key, TValue value)
     {
-        base.Add(key, value);
+        try
+        {
+            base.Add(key, value);
+        }
+        catch
+        {
+            return;
+        }
         ItemCahnged?.Invoke(key);
     }
 

@@ -3,18 +3,18 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     public UnitAtlas unitAtlas;
-    public ObservableDictionary<string, int> resources { get; } = new ObservableDictionary<string, int>();
+    public ObservableDictionary<string, int> Resources { get; } = new ObservableDictionary<string, int>();
     private UnitController _unitController = new();
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void Awake()
     {
-        resources.Add("Gold", 10);
+        Resources.Add("Gold", 10);
         _unitController.PlaceUnit(unitAtlas.Miner, this, Vector2.zero);
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {

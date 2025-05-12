@@ -33,7 +33,29 @@ public class UnitController
 
     public void PlaceUnit(UnitType unitType, Player owner, Vector2 position)
     {
-        Unit newUnit = WorldManager.Instance.PlaceUnit(unitType, position, owner);
-        _units.Add(newUnit);
+        //Vector2 position = new Vector2(x, y);
+        //if (Physics2D.OverlapPoint(position))
+        //{
+        //    return null;
+        //}
+
+        GameObject newUnit = new GameObject();
+
+        newUnit.AddComponent<SpriteRenderer>();
+        newUnit.GetComponent<SpriteRenderer>().sprite = unitType.Sprite;
+
+        newUnit.AddComponent<BoxCollider2D>();
+        newUnit.GetComponent<BoxCollider2D>().size = Vector2.one;
+
+        newUnit.AddComponent<Rigidbody2D>();
+        newUnit.GetComponent<Rigidbody2D>().freezeRotation = true;
+
+        newUnit.AddComponent<Unit>();
+        newUnit.GetComponent<Unit>().unitType = unitType;
+        newUnit.GetComponent<Unit>().Owner = owner;
+
+        newUnit.transform.position = position;
+
+        _units.Add(newUnit.GetComponent<Unit>());
     }
 }

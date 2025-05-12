@@ -1,6 +1,4 @@
 using UnityEngine;
-using UnityEngine.Sprites;
-using UnityEngine.UIElements;
 
 /// <summary>
 /// Класс для генерации карты мира.
@@ -185,38 +183,5 @@ public class WorldManager : MonoBehaviour
         newTile.GetComponent<BoxCollider2D>().size = Vector2.one;
 
         newTile.transform.position = new Vector3(x, y, 0);
-    }
-
-    public Unit PlaceUnit(UnitType unitType, Vector2 position, Player owner)
-    {
-        //Vector2 position = new Vector2(x, y);
-        //if (Physics2D.OverlapPoint(position))
-        //{
-        //    return null;
-        //}
-
-        GameObject newUnit = new GameObject();
-
-        newUnit.AddComponent<SpriteRenderer>();
-        newUnit.GetComponent<SpriteRenderer>().sprite = unitType.Sprite;
-
-        newUnit.AddComponent<BoxCollider2D>();
-        newUnit.GetComponent<BoxCollider2D>().size = Vector2.one;
-
-        newUnit.AddComponent<Rigidbody2D>();
-        newUnit.GetComponent<Rigidbody2D>().freezeRotation = true;
-
-        newUnit.AddComponent<Unit>();
-        newUnit.GetComponent<Unit>().unitType = unitType;
-        newUnit.GetComponent<Unit>().Owner = owner;
-
-        newUnit.transform.position = position;
-
-        return newUnit.GetComponent<Unit>();
-    }
-
-    public void DestroyBlock(Block block)
-    {
-        Debug.Log($"блок {block.BlockType.Name} уничтожен");
     }
 }

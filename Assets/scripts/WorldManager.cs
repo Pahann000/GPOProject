@@ -93,7 +93,7 @@ public class WorldManager : MonoBehaviour
     {
         StartCoroutine(InitWorld());
         PlaceAStarGrid(0, 0);
-        Unit miner = PlaceUnit(unitAtlas.Miner, 5f, 320f);
+        Unit miner = PlaceUnit(unitAtlas.Miner, 0, 0);
     }
 
     public void UpdateAStarGrid()
@@ -230,7 +230,7 @@ public class WorldManager : MonoBehaviour
             unitsParent = new GameObject("Units");
         }
 
-        unitsParent.transform.position = new Vector3(5f, 320f, 0);
+        unitsParent.transform.position = new Vector3(5f, 350f, 0);
 
         unitObj.transform.parent = unitsParent.transform;
 

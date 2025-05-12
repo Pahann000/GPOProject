@@ -12,7 +12,7 @@ public class Unit : MonoBehaviour
     public float speed = 1500f;
     public float nextWaypointDistance = 3f;
     //public float jumpNodeHeightRequirement = 0.8f;
-    public float jumpForce = 100f;
+    public float jumpForce = 200f;
     public float jumpCheckOffset = 0.6f;
     public float maxSpeed = 5f;
     public float linearDrag = 1.5f;
@@ -80,7 +80,7 @@ public class Unit : MonoBehaviour
 
     bool CanJump()
     {
-        return _isGrounded || Time.time - _lastGroundedTime <= _coyoteTime;
+        return _isGrounded && Time.time - _lastGroundedTime <= _coyoteTime;
     }
 
     /// <summary>

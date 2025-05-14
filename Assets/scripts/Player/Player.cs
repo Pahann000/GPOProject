@@ -1,7 +1,13 @@
 using UnityEngine;
 
+/// <summary>
+/// Класс игрока.
+/// </summary>
 public class Player : MonoBehaviour
 {
+    /// <summary>
+    /// Атлас со всеми видами юнитов.
+    /// </summary>
     [SerializeField]private UnitAtlas unitAtlas;
     //[SerializeField] private BuildingAtlas buildingAtlas;
     public ObservableDictionary<string, int> Resources { get; } = new ObservableDictionary<string, int>();
@@ -24,6 +30,11 @@ public class Player : MonoBehaviour
         }
     }
 
+    //TODO: сделать нормальное выделение, и вообще работу игрока с блоками
+    /// <summary>
+    /// выделяет блок(заглушка заставляющая первого юнита уничтожить блок).
+    /// </summary>
+    /// <param name="position">Позиция выделяемого блока.</param>
     private void SelectBlock(Vector2 position)
     {
         Collider2D collider = Physics2D.OverlapPoint(position);

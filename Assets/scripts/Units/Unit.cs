@@ -23,7 +23,7 @@ public class Unit : MonoBehaviour
     /// <summary>
     /// ������� ������ �����.
     /// </summary>
-    private UnitWork _currentUnitWork;
+    public UnitWork CurrentUnitWork { get; private set; }
     public Player Owner;
 
     void FixedUpdate()

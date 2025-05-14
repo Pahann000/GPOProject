@@ -1,28 +1,38 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
+/// <summary>
+/// Класс блока.
+/// </summary>
 public class Block : MonoBehaviour
 {
+    /// <summary>
+    /// Тип блока.
+    /// </summary>
     public BlockType BlockType;
-    public int CurrentHealth;
+    /// <summary>
+    /// Текущее здоровье блока. 
+    /// </summary>
+    public int CurrentHealth { get; private set; }
 
+    ///<inheritdoc/>
     void Start() => CurrentHealth = BlockType.Hardness;
 
-    public void TakeDamage(int damage, Player Damager)
+    /// <summary>
+    /// Функция получения урона блоком.
+    /// </summary>
+    /// <param name="damage">Количество урона</param>
+    public void TakeDamage(int damage, Player damager)
     {
         CurrentHealth -= damage;
         if (CurrentHealth <= 0)
         {
-            DropResources(Damager);
+            DropRecources(damager);
             DestroyBlock();
         }
     }
 
-    private void DestroyBlock()
-    {
-        Destroy(gameObject);
-    }
-
-    private void DropResources(Player player)
+    private void DropRecources(Player player)
     {
         if (!player.Resources.ContainsKey(BlockType.Name))
         {
@@ -32,5 +42,13 @@ public class Block : MonoBehaviour
         {
             player.Resources[BlockType.Name] += 1;
         }
+    }
+
+    /// <summary>
+    /// Метод, вызываемый при уничтожении блока.
+    /// </summary>
+    private void DestroyBlock()
+    {
+        Destroy(gameObject);
     }
 }

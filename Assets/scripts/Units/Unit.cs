@@ -3,16 +3,27 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     [Header("Unit Settings")]
+    /// <summary>
+    /// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
+    /// </summary>
     public UnitType unitType;
 
     //[Header("References")]
     //public Animator animator;
     //public GameObject selectionIndicator;
 
+    /// <summary>
+    /// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
+    /// </summary>
     private GameObject _target;
+    /// <summary>
+    /// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
+    /// </summary>
     private float _lastAttackTime;
-
-    public UnitWork CurrentUnitWork;
+    /// <summary>
+    /// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
+    /// </summary>
+    private UnitWork _currentUnitWork;
     public Player Owner;
 
     void FixedUpdate()
@@ -23,29 +34,37 @@ public class Unit : MonoBehaviour
         }
     }
 
-    //TODO: поиск пути - navmesh, Муравьи Лэнгтона
+    //TODO: пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ - navmesh, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    /// <summary>
+    /// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
+    /// </summary>
+    /// <param name="position"></param>
     private void MoveToPosition(Vector2 position)
     {
         transform.position = new Vector2(transform.position.x - 10, transform.position.x - 10);
     }
 
+    /// <summary>
+    /// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.
+    /// </summary>
+    /// <param name="target">пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.</param>
     private void AttackBlock(GameObject target)
     {
 
         if (!target) { return; }
 
-        // Проверка расстояния до блока
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         if (Vector2.Distance(transform.position, target.transform.position) > unitType.AttackRange)
         {
-            // Если слишком далеко - подойти ближе
+            // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
             MoveToPosition(target.transform.position);
             return;
         }
 
-        // Проверка кулдауна атаки
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         if (Time.time - _lastAttackTime < unitType.AttackCooldown) return;
 
-        // Поворот к цели
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
         if (target.transform.position.x > transform.position.x)
         {
             transform.localScale = new Vector3(1, 1, 1);
@@ -55,13 +74,13 @@ public class Unit : MonoBehaviour
             transform.localScale = new Vector3(-1, 1, 1);
         }
 
-        //// Анимация атаки
+        //// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         //if (animator != null)
         //{
         //    animator.SetTrigger("Attack");
         //}
 
-        // Нанесение урона блоку
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         Block block = target.GetComponent<Block>();
         if (block.CurrentHealth - 1 != 0)
         {

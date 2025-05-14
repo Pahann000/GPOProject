@@ -20,7 +20,7 @@ public class UIController : MonoBehaviour
         Initialize();
     }
 
-    public void Initialize()
+    private void Initialize()
     {
         // Инициализация существующих ресурсов
         foreach (var pair in _player.Resources)
@@ -33,7 +33,7 @@ public class UIController : MonoBehaviour
     }
 
     //Метод для создания новых элементов
-    public void CreateResourceItem(string key)
+    private void CreateResourceItem(string key)
     {
         // Создаем новый элемент
         var newItem = new ResourceItem(_resourceTemplate, key);
@@ -45,18 +45,16 @@ public class UIController : MonoBehaviour
         newItem.SetText($"{key}: {_player.Resources[key]}");
     }
 
-    public void UpdateData()
+    private void ChangeResourceItem(string key)
     {
-        foreach (var item in _resources)
+        if (_resources.ContainsKey(key))
         {
-            ChangeResourceItem(item.Key);
+            var resource = _resources[key];
+            resource.SetText($"{key}: {_player.Resources[key]}");
         }
-    }
-
-    public void ChangeResourceItem(string key)
-    {
-        var resource = _resources[key];
-
-        resource.SetText($"{key}: {_player.Resources[key]}");
+        else
+        {
+            CreateResourceItem(key);
+        }
     }
 }

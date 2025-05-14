@@ -65,11 +65,11 @@ public class Unit : MonoBehaviour
         Block block = target.GetComponent<Block>();
         if (block.CurrentHealth - 1 != 0)
         {
-            block.TakeDamage(unitType.DamagePerHit);
+            block.TakeDamage(unitType.DamagePerHit, Owner);
         }
         else
         {
-            block.TakeDamage(unitType.DamagePerHit);
+            block.TakeDamage(unitType.DamagePerHit, Owner);
             Target = null;
         }
 

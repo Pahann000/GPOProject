@@ -5,7 +5,6 @@ using UnityEngine;
 /// </summary>
 public class WorldManager : MonoBehaviour
 {
-    public static WorldManager Instance;
     /// <summary>
     /// Хранит текстуру шума мира.
     /// </summary>
@@ -17,15 +16,13 @@ public class WorldManager : MonoBehaviour
     /// <summary>
     /// Список всех чанков.
     /// </summary>
-    private GameObject[] _chunks;
+    private static GameObject[] _chunks;
 
     [Header("Atlases")]
     /// <summary>
     /// Атлас со всеми видами блоков.
     /// </summary>
     public BlockAtlas blockAtlas;
-
-    public UnitAtlas unitAtlas;
 
     [Header("Noise settings")]
     /// <summary>
@@ -78,8 +75,6 @@ public class WorldManager : MonoBehaviour
     /// Размер кластеров золота (больше значение меньше руды).
     /// </summary>
     public float GoldSize;
-
-    void Awake() => Instance = this;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()

@@ -4,21 +4,17 @@ using UnityEngine;
 public class UnitController
 {
     private List<Unit> _units = new();
-    private int _currentUnitIndex;
 
-    /// <summary>
-    /// TODO: сюда выбор юнита надо адекватный
-    /// </summary>
-    public void SelectUnit()
+    public Unit SelectUnit()
     {
         for(int i = 0; i < _units.Count; i++)
         {
-            if (_units[_currentUnitIndex].CurrentUnitWork == UnitWork.Idle)
+            if (_units[i].CurrentUnitWork == UnitWork.Idle)
             {
-                _currentUnitIndex = i;
-                break;
+                return _units[i];
             }
         }
+        return null;
     }
 
     /// <summary>
@@ -27,8 +23,13 @@ public class UnitController
     /// <param name="target"></param>
     public void CommandUnit(GameObject target)
     {
-        SelectUnit();
-        _units[_currentUnitIndex].Target = target;
+        Unit selectedUnit = SelectUnit();
+        if (!selectedUnit)
+        {
+            return;
+        }
+
+        selectedUnit.Target = target;
     }
 
     public void PlaceUnit(UnitType unitType, Player owner, Vector2 position)

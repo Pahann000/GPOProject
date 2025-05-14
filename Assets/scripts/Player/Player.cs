@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public UnitAtlas unitAtlas;
+    [SerializeField]private UnitAtlas unitAtlas;
+    //[SerializeField] private BuildingAtlas buildingAtlas;
     public ObservableDictionary<string, int> Resources { get; } = new ObservableDictionary<string, int>();
     private UnitController _unitController = new();
 
@@ -26,13 +27,11 @@ public class Player : MonoBehaviour
     private void SelectBlock(Vector2 position)
     {
         Collider2D collider = Physics2D.OverlapPoint(position);
-        Debug.Log($"нажатие сделано на позиции{position}");
         if (collider)
         {
             GameObject selectedBlock = collider.gameObject;
             if (selectedBlock.GetComponent<Block>() != null)
             {
-                Debug.Log($"блок найден:{selectedBlock.GetComponent<Block>().BlockType.Name}");
                 _unitController.CommandUnit(selectedBlock);
             }
         }

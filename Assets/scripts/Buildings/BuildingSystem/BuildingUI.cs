@@ -1,3 +1,4 @@
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,24 +23,33 @@ public class BuildingUI : MonoBehaviour
         CreateBuildingButtons();
     }
 
-    /// <summary>
-    /// Создает кнопки для каждого доступного здания
-    /// </summary>
     private void CreateBuildingButtons()
     {
-        foreach (var building in _availableBuildings)
+        foreach (var data in _availableBuildings)
         {
-            // Создаем новую кнопку
-            var button = Instantiate(_buildingButtonPrefab, _buttonsContainer);
+            var btn = Instantiate(_buildingButtonPrefab, _buttonsContainer);
+            btn.image.sprite = data.Icon;
 
-            // Устанавливаем иконку здания
-            button.GetComponent<Image>().sprite = building.Icon;
+            // Получаем компонент Tooltip
+            var tooltip = btn.GetComponent<Tooltip>();
+            if (tooltip == null)
+            {
+                Debug.LogError("Tooltip component missing on button prefab!");
+                continue;
+            }
 
-            // Добавляем обработчик клика
-            button.onClick.AddListener(() => _buildingSystem.StartBuildingPlacement(building));
+            // Формируем текст
+            var sb = new StringBuilder();
+            sb.AppendLine(data.DisplayName);
+            sb.AppendLine("Cost:");
+            foreach (var res in data.ConstructionCost.Resources)
+            {
+                sb.AppendLine($"{res.Key}: {res.Value}");
+            }
 
-            // Можно добавить Tooltip с информацией о здании
-            // button.GetComponent<TooltipTrigger>().SetTooltip(building.DisplayName, building.Description);
+            tooltip.SetText(sb.ToString());
+
+            btn.onClick.AddListener(() => _buildingSystem.StartBuildingPlacement(data));
         }
     }
 }

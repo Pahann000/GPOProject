@@ -1,32 +1,23 @@
 using UnityEngine;
+using System.Collections;
 
-/// <summary>
-/// Электростанция - производственное здание, генерирующее энергию.
-/// Наследует базовую логику производства от <see cref="ProductionBuilding"/>.
-/// </summary>
-/// <remarks>
-/// Производит фиксированное количество энергии через заданные интервалы времени.
-/// </remarks>
+[CreateAssetMenu(fileName = "PowerPlantData", menuName = "Buildings/PowerPlant Data")]
 public class PowerPlant : ProductionBuilding
 {
-    /// <summary>
-    /// Количество энергии, производимой за один цикл.
-    /// </summary>
-    /// <value>
-    /// Положительное целое число, определяющее выход энергии.
-    /// </value>
-    public int EnergyOutput;
+    [Header("Power Plant Settings")]
+    [SerializeField] private int energyProduction = 10;
 
-    /// <summary>
-    /// Реализация производственного цикла для генерации энергии.
-    /// </summary>
-    /// <remarks>
-    /// Вызывается автоматически через заданные интервалы <see cref="ProductionBuilding.ProductionInterval"/>.
-    /// Добавляет указанное количество <see cref="EnergyOutput"/> в общий пул ресурсов.
-    /// </remarks>
-    protected override void ProduceResource()
+    protected override void Start()
     {
-        // Добавляем энергию в общий пул
-        ResourceManager.Instance.AddResource(ResourceType.Energy, EnergyOutput);
+        base.Start();
+        outputResources = new ResourceBundle(
+            (ResourceType.Energy, energyProduction)
+        );
+    }
+
+    protected override IEnumerator ProductionAnimation()
+    {
+        productionAnimator.SetTrigger("EnergySurge");
+        yield return new WaitForSeconds(0.5f);
     }
 }

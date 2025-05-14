@@ -1,9 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Данные здания, создаваемые как ScriptableObject
-/// </summary>
 [CreateAssetMenu(fileName = "NewBuilding", menuName = "Buildings/Building Data")]
 public class BuildingData : ScriptableObject
 {
@@ -17,25 +14,21 @@ public class BuildingData : ScriptableObject
     public GameObject Prefab;
 
     [Tooltip("Ресурсы, необходимые для постройки")]
-    public ResourceCost ConstructionCost;
+    public ResourceBundle ConstructionCost;
 
     [Tooltip("Правила размещения здания на карте")]
     public List<PlacementRule> PlacementRules;
+
+    [Tooltip("Максимальное здоровье зданий")]
+    public int MaxHealth;
+
+    [Tooltip("Ширина здания в клетках")]
+    public int Width = 1;
+
+    [Tooltip("Высота здания в клетках")]
+    public int Height = 1;
+
+    [Header("Production Settings")]
+    public ResourceBundle InputResources;
+    public ResourceBundle OutputResources;
 }
-
-/// <summary>
-/// Структура, описывающая стоимость постройки в ресурсах
-/// </summary>
-[System.Serializable]
-public struct ResourceCost
-{
-    [Tooltip("Количество металла")]
-    public int Metal;
-
-    [Tooltip("Количество минералов")]
-    public int Minerals;
-
-    [Tooltip("Количество воды")]
-    public int Water;
-}
-

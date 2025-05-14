@@ -1,24 +1,16 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Централизованная система управления ресурсами колонии
-/// (Реализация через синглтон)
-/// </summary>
 public class ResourceManager : MonoBehaviour
 {
-    // Текущие запасы ресурсов
-    private Dictionary<ResourceType, int> _resources = new Dictionary<ResourceType, int>();
 
-    // Максимальные вместимости
-    private Dictionary<ResourceType, int> _storageLimits = new Dictionary<ResourceType, int>();
+    private Dictionary<ResourceType, int> resources = new Dictionary<ResourceType, int>();
+    private Dictionary<ResourceType, int> storageLimits = new Dictionary<ResourceType, int>();
 
-    // Ссылка на экземпляр (синглтон)
     public static ResourceManager Instance { get; private set; }
 
     private void Awake()
     {
-        // Инициализация синглтона
         if (Instance == null)
         {
             Instance = this;
@@ -31,65 +23,55 @@ public class ResourceManager : MonoBehaviour
         }
     }
 
-    /// <summary> Инициализация стартовых значений </summary>
     private void InitializeResources()
     {
         foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
         {
-            _resources[type] = 0;
-            _storageLimits[type] = 1000; // Дефолтное значение
+            resources[type] = 0;
+            storageLimits[type] = 1000;
         }
 
-        // Стартовые ресурсы
-        _resources[ResourceType.Metal] = 500;
-        _resources[ResourceType.Water] = 200;
+        AddResources(new ResourceBundle(
+            (ResourceType.Metal, 500),
+            (ResourceType.Water, 200)
+        ));
     }
 
-    /// <summary> Добавить ресурсы </summary>
-    public void AddResource(ResourceType type, int amount)
+    public bool HasResources(ResourceBundle cost)
     {
-        _resources[type] = Mathf.Min(_resources[type] + amount, _storageLimits[type]);
-    }
-
-    /// <summary> Попытаться использовать ресурсы </summary>
-    /// <returns> True если ресурсов достаточно и они были списаны </returns>
-    public bool TryUseResource(ResourceType type, int amount)
-    {
-        if (_resources[type] >= amount)
+        foreach (var kvp in cost.Resources)
         {
-            _resources[type] -= amount;
-            return true;
+            if (resources[kvp.Key] < kvp.Value)
+                return false;
         }
-        return false;
+        return true;
     }
 
-    /// <summary> Увеличить вместимость хранилища </summary>
-    public void IncreaseStorage(ResourceType type, int amount)
+    public bool TrySpendResources(ResourceBundle cost)
     {
-        _storageLimits[type] += amount;
+        if (!HasResources(cost)) return false;
+
+        foreach (var kvp in cost.Resources)
+        {
+            resources[kvp.Key] -= kvp.Value;
+        }
+        return true;
     }
 
-    /// <summary> Уменьшить вместимость хранилища </summary>
-    public void DecreaseStorage(ResourceType type, int amount)
+    public void AddResources(ResourceBundle income)
     {
-        _storageLimits[type] -= amount;
+        foreach (var kvp in income.Resources)
+        {
+            resources[kvp.Key] = Mathf.Min(
+                resources[kvp.Key] + kvp.Value,
+                storageLimits[kvp.Key]
+            );
+        }
     }
 
-    /// <summary> Проверить наличие ресурсов по структуре затрат </summary>
-    /// <returns> True если всех ресурсов достаточно </returns>
-    public bool HasResources(ResourceCost cost)
-    {
-        return _resources[ResourceType.Metal] >= cost.Metal &&
-               _resources[ResourceType.Minerals] >= cost.Minerals &&
-               _resources[ResourceType.Water] >= cost.Water;
-    }
+    public int GetResource(ResourceType type) => resources[type];
+    public int GetStorageLimit(ResourceType type) => storageLimits[type];
 
-    /// <summary> Потратить ресурсы по структуре затрат </summary>
-    public void SpendResources(ResourceCost cost)
-    {
-        _resources[ResourceType.Metal] -= cost.Metal;
-        _resources[ResourceType.Minerals] -= cost.Minerals;
-        _resources[ResourceType.Water] -= cost.Water;
-    }
+    public void IncreaseStorage(ResourceType type, int amount) => storageLimits[type] += amount;
+    public void DecreaseStorage(ResourceType type, int amount) => storageLimits[type] -= amount;
 }
-

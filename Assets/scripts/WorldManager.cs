@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -21,6 +22,8 @@ public class WorldManager : MonoBehaviour
     /// Список всех чанков.
     /// </summary>
     private GameObject[] _chunks;
+
+    private List<Building> _activeBuildings = new List<Building>();
 
     [Header("Atlases")]
     /// <summary>
@@ -83,6 +86,9 @@ public class WorldManager : MonoBehaviour
     /// Размер кластеров золота (больше значение меньше руды).
     /// </summary>
     public float GoldSize;
+
+    [Header("Building Settings")]
+    [SerializeField] private LayerMask _buildingObstacleMask;
 
     ///<inheritdoc/>
     void Awake() => Instance = this;
@@ -238,5 +244,65 @@ public class WorldManager : MonoBehaviour
     public void DestroyBlock(Block block)
     {
         Debug.Log($"блок {block.BlockType.Name} уничтожен");
+    }
+
+    /// <summary> Размещает здание с проверкой условий </summary>
+    public Building PlaceBuilding(BuildingData data, Vector2 position)
+    {
+        if (!CanPlaceBuilding(data, position)) return null;
+        if (!ResourceManager.Instance.TrySpendResources(data.ConstructionCost)) return null;
+
+        GameObject buildingObj = CreateBuildingObject(data, position);
+        Building building = InitializeBuildingComponent(buildingObj, data);
+
+        if (building != null)
+        {
+            _activeBuildings.Add(building); // Добавляем здание в список
+        }
+
+        return building;
+    }
+
+    private GameObject CreateBuildingObject(BuildingData data, Vector2 position)
+    {
+        int chunkIndex = Mathf.FloorToInt(position.x / chunkSize);
+        chunkIndex = Mathf.Clamp(chunkIndex, 0, _chunks.Length - 1);
+
+        GameObject obj = Instantiate(data.Prefab, position, Quaternion.identity);
+        obj.transform.parent = _chunks[chunkIndex].transform;
+        return obj;
+    }
+
+    private Building InitializeBuildingComponent(GameObject obj, BuildingData data)
+    {
+        Building building = obj.AddComponent<Building>();
+        building.Initialize(data);
+
+        // Настройка коллайдера по размеру здания
+        BoxCollider2D collider = obj.AddComponent<BoxCollider2D>();
+        collider.size = new Vector2(data.Width, data.Height);
+        collider.offset = new Vector2(data.Width / 2f, data.Height / 2f);
+
+        return building;
+    }
+
+    private bool CanPlaceBuilding(BuildingData data, Vector2 position)
+    {
+        // Проверка коллизий
+        Collider2D[] collisions = Physics2D.OverlapBoxAll(
+            position,
+            new Vector2(data.Width, data.Height),
+            0,
+            _buildingObstacleMask);
+
+        if (collisions.Length > 0) return false;
+
+        // Проверка специальных правил
+        foreach (PlacementRule rule in data.PlacementRules)
+        {
+            if (!rule.IsSatisfied(position)) return false;
+        }
+
+        return true;
     }
 }

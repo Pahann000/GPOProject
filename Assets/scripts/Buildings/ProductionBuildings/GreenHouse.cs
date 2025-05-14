@@ -1,31 +1,30 @@
 using UnityEngine;
+using System.Collections;
 
-/// <summary>
-/// Теплица - производственное здание для выращивания еды с потреблением воды.
-/// Наследует базовую логику производства от <see cref="ProductionBuilding"/>.
-/// </summary>
-/// <remarks>
-/// Для успешного производства требует наличия воды в указанном количестве.
-/// При недостатке воды производственный цикл пропускается.
-/// </remarks>
+[CreateAssetMenu(fileName = "GreenhouseData", menuName = "Buildings/Greenhouse Data")]
 public class Greenhouse : ProductionBuilding
 {
-    /// <summary>
-    /// Количество воды, потребляемое за один производственный цикл.
-    /// </summary>
-    /// <value>
-    /// Положительное целое число, определяющее расход воды.
-    /// </value>
-    public int WaterConsumptionPerCycle;
+    [Header("Greenhouse Settings")]
+    [SerializeField] private int waterConsumption = 3;
+    [SerializeField] private int foodProduction = 5;
 
-    /// <summary>
-    /// Производит пищевые ресурсы, потребляя воду.
-    /// </summary>
-    protected override void ProduceResource()
+    protected override void Start()
     {
-        if (ResourceManager.Instance.TryUseResource(ResourceType.Water, WaterConsumptionPerCycle))
-        {
-            ResourceManager.Instance.AddResource(ResourceType.Food, ProductionAmount);
-        }
+        base.Start();
+
+        // Инициализация ресурсов
+        inputResources = new ResourceBundle(
+            (ResourceType.Water, waterConsumption)
+        );
+
+        outputResources = new ResourceBundle(
+            (ResourceType.Food, foodProduction)
+        );
+    }
+
+    protected override IEnumerator ProductionAnimation()
+    {
+        productionAnimator.SetTrigger("Harvest");
+        yield return new WaitForSeconds(0.8f);
     }
 }

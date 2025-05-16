@@ -9,9 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31a140bd797f9fc479625fbacdbde244, type: 3}
-  m_Name: Gold
+  m_Script: {fileID: 11500000, guid: 909193bfff2eb5b4db26d83d86083d36, type: 3}
+  m_Name: BlockTileAtlas
   m_EditorClassIdentifier: 
-  Sprite: {fileID: -3988769855312385993, guid: aea87080337dc3645a4d2d2e171bb6d2, type: 3}
-  Name: Gold
-  Hardness: 5
+  tiles:
+  - type: 3
+    uvPosition: {x: 0, y: 0}
+    uvSize: {x: 0.25, y: 0.25}
+  - type: 2
+    uvPosition: {x: 1, y: 0}
+    uvSize: {x: 0.25, y: 0.25}

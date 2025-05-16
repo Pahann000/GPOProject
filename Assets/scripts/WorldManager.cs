@@ -13,16 +13,8 @@ public class WorldManager : MonoBehaviour
     /// ������ �������� ���� ������.
     /// </summary>
     private Texture2D _goldNoise;
-    /// <summary>
-    /// ������ ���� ������.
-    /// </summary>
-    private static GameObject[] _chunks;
 
-    [Header("Atlases")]
-    /// <summary>
-    /// ����� �� ����� ������ ������.
-    /// </summary>
-    public BlockAtlas blockAtlas;
+    public Map map;
 
     [Header("Noise settings")]
     /// <summary>
@@ -82,23 +74,7 @@ public class WorldManager : MonoBehaviour
         Seed = Random.Range(-100000, 100000);
         _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
         _goldNoise = GenerateNoiseTexture(GoldFrequency, GoldSize);
-        CreateChunks();
         GenerateTerrain();
-    }
-
-    /// <summary>
-    /// ������ ������ ������.
-    /// </summary>
-    public void CreateChunks()
-    {
-        _chunks = new GameObject[WorldWidth];
-        for (int i = 0; i < WorldWidth; i++)
-        {
-            GameObject newChunk = new GameObject();
-            newChunk.name = i.ToString();
-            newChunk.transform.parent = this.transform;
-            _chunks[i] = newChunk;
-        }
     }
 
     /// <summary>
@@ -112,20 +88,17 @@ public class WorldManager : MonoBehaviour
             float height = Mathf.PerlinNoise((x + Seed) * TerrainFreq, Seed * TerrainFreq) * HighMultiplier + HighAddition;
             for (int y = 0; y < height; y++)
             {
-                BlockType blockType = blockAtlas.Rock;
-                if (_goldNoise.GetPixel(x,y).r > 0.5f)
+                TileType type = TileType.Air;
+                if (_goldNoise.GetPixel(x, y).r > 0.5f)
                 {
-                    blockType = blockAtlas.Gold;
+                    type = TileType.Gold;
                 }
                 else if (_worldNoise.GetPixel(x, y).r > 0.5f)
                 {
-                    blockType = blockAtlas.Rock;
+                    type = TileType.Stone;
                 }
 
-                if (_worldNoise.GetPixel(x,y).r>0.5f)
-                {
-                    PlaceBlock(blockType, x, y);
-                }
+                map.SetTile(x, y, type);
             }
         }
     }
@@ -158,31 +131,5 @@ public class WorldManager : MonoBehaviour
         noise.Apply();
 
         return noise;
-    }
-
-    /// <summary>
-    /// ������� ���������� �����.
-    /// </summary>
-    /// <param name="blockType">��� �����.</param>
-    /// <param name="x">x ������� ����������.</param>
-    /// <param name="y">y ������� ����������</param>
-    public void PlaceBlock(BlockType blockType, int x, int y)
-    {
-        GameObject newTile = new GameObject();
-
-        int chunkCoord = Mathf.RoundToInt(x / chunkSize) * chunkSize;
-        chunkCoord /= chunkSize;
-        newTile.transform.parent = _chunks[chunkCoord].transform;
-
-        newTile.AddComponent<Block>();
-        newTile.GetComponent<Block>().BlockType = blockType;
-
-        newTile.AddComponent<SpriteRenderer>();
-        newTile.GetComponent<SpriteRenderer>().sprite = blockType.Sprite;
-
-        newTile.AddComponent<BoxCollider2D>();
-        newTile.GetComponent<BoxCollider2D>().size = Vector2.one;
-
-        newTile.transform.position = new Vector3(x, y, 0);
     }
 }

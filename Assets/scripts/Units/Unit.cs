@@ -28,10 +28,7 @@ public class Unit : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (Target != null)
-        {
-            AttackBlock(Target);
-        }
+
     }
 
     //TODO: ����� ���� - navmesh, ������� ��������
@@ -44,6 +41,7 @@ public class Unit : MonoBehaviour
         transform.position = new Vector2(transform.position.x - 10, transform.position.x - 10);
     }
 
+    /*
     /// <summary>
     /// ���������� ����� ��������� ����.
     /// </summary>
@@ -94,7 +92,7 @@ public class Unit : MonoBehaviour
 
         _lastAttackTime = Time.time;
     }
-
+    */
 
     //public void Select()
     //{
@@ -120,6 +118,7 @@ public class Unit : MonoBehaviour
             }
         }
     }
+ 
 
     public Unit(Player owner)
     {

@@ -26,7 +26,7 @@ public class Player : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             var mousePos = Camera.main.ScreenPointToRay(Input.mousePosition);
-            SelectBlock(new Vector2(mousePos.origin.x, mousePos.origin.y));
+            //SelectBlock(new Vector2(mousePos.origin.x, mousePos.origin.y));
         }
     }
 
@@ -35,16 +35,16 @@ public class Player : MonoBehaviour
     /// выделяет блок(заглушка заставляющая первого юнита уничтожить блок).
     /// </summary>
     /// <param name="position">Позиция выделяемого блока.</param>
-    private void SelectBlock(Vector2 position)
-    {
-        Collider2D collider = Physics2D.OverlapPoint(position);
-        if (collider)
-        {
-            GameObject selectedBlock = collider.gameObject;
-            if (selectedBlock.GetComponent<Block>() != null)
-            {
-                _unitController.CommandUnit(selectedBlock);
-            }
-        }
-    }
+    //private void SelectBlock(Vector2 position)
+    //{
+    //    Collider2D collider = Physics2D.OverlapPoint(position);
+    //    if (collider)
+    //    {
+    //        GameObject selectedBlock = collider.gameObject;
+    //        if (selectedBlock.GetComponent<Block>() != null)
+    //        {
+    //            _unitController.CommandUnit(selectedBlock);
+    //        }
+    //    }
+    //}
 }

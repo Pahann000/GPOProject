@@ -31,22 +31,14 @@ public class Player : MonoBehaviour
         // Если кликнули по блоку и есть выбранный юнит - отправляем разрушать
         if (hit.TryGetComponent<Block>(out var block) && _selectedUnit != null)
         {
-            _selectedUnit.target = block.transform;
+            _selectedUnit.SetTarget(block.transform);
             Debug.Log($"Юнит получил задание разрушить {block.BlockType.Name}");
         }
     }
 
     private void SelectUnit(Unit unit)
     {
-        // Снимаем выделение с предыдущего юнита
-        if (_selectedUnit != null)
-        {
-            unit.Deselect();
-        }
-
         _selectedUnit = unit;
         Debug.Log($"Выбран юнит: {unit.name}");
-
-        unit.Select();
     }
 }

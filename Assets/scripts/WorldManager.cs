@@ -250,30 +250,6 @@ public class WorldManager : MonoBehaviour
         Unit unit = unitObj.AddComponent<Unit>();
 
         unitObj.AddComponent<Seeker>();
-        //AIPath aiPath = unitObj.AddComponent<AIPath>();
-
-        //Vector3 spawnPos = new Vector3(x, y, 0);
-        //if (Physics2D.OverlapPoint(spawnPos))
-        //{
-        //    Debug.LogWarning($"Позиция {spawnPos} занята, ищу свободное место рядом...");
-        //    spawnPos = FindNearestFreePosition(spawnPos);
-        //}
-
-        //unitObj.transform.position = spawnPos;
-        //Debug.Log($"Юнит создан на позиции: {spawnPos}");
-
-        // Добавляем индикатор выделения (как дочерний объект)
-        GameObject indicator = new GameObject("SelectionIndicator");
-        indicator.transform.parent = unitObj.transform;
-        indicator.transform.localPosition = Vector3.zero;
-
-        SpriteRenderer indicatorRenderer = indicator.AddComponent<SpriteRenderer>();
-        indicatorRenderer.sprite = unitType.Sprite;
-        indicatorRenderer.color = Color.green;
-        indicatorRenderer.sortingOrder = 10;
-        indicator.SetActive(false);
-
-        unit.selectionIndicator = indicator;
 
         return unit;
     }

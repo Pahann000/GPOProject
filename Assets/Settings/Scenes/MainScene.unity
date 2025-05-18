@@ -417,9 +417,9 @@ MonoBehaviour:
   HighMultiplier: 10
   Seed: 345.71
   chunkSize: 16
-  WorldWidth: 10
-  WorldHigh: 100
-  HighAddition: 50
+  WorldWidth: 100
+  WorldHigh: 300
+  HighAddition: 295
   GoldFrequency: 0.08
   GoldSize: 0.8
 --- !u!4 &1252822904

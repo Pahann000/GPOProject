@@ -21,7 +21,7 @@ public class UnitController
     /// заглушка, заставляет юнита бить блок
     /// </summary>
     /// <param name="target"></param>
-    public void CommandUnit(GameObject target)
+    public void CommandUnit(Tile target)
     {
         Unit selectedUnit = SelectUnit();
         if (!selectedUnit)

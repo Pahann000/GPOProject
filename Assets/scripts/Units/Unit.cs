@@ -15,7 +15,7 @@ public class Unit : MonoBehaviour
     /// <summary>
     /// ���� �����.
     /// </summary>
-    private GameObject _target;
+    private Tile _target;
     /// <summary>
     /// ����� ���������� �����.
     /// </summary>
@@ -28,7 +28,10 @@ public class Unit : MonoBehaviour
 
     void FixedUpdate()
     {
-
+        if (Target != null)
+        {
+            AttackBlock(Target);
+        }
     }
 
     //TODO: ����� ���� - navmesh, ������� ��������
@@ -41,21 +44,21 @@ public class Unit : MonoBehaviour
         transform.position = new Vector2(transform.position.x - 10, transform.position.x - 10);
     }
 
-    /*
+    
     /// <summary>
     /// ���������� ����� ��������� ����.
     /// </summary>
     /// <param name="target">���� ��� �����.</param>
-    private void AttackBlock(GameObject target)
+    private void AttackBlock(Tile target)
     {
-
-        if (!target) { return; }
+        if (target == null) { return; }
+        Vector2 position = new Vector2(target.x, target.y);
 
         // �������� ���������� �� �����
-        if (Vector2.Distance(transform.position, target.transform.position) > unitType.AttackRange)
+        if (Vector2.Distance(transform.position, position) > unitType.AttackRange)
         {
             // ���� ������� ������ - ������� �����
-            MoveToPosition(target.transform.position);
+            //MoveToPosition(position);
             return;
         }
 
@@ -63,7 +66,7 @@ public class Unit : MonoBehaviour
         if (Time.time - _lastAttackTime < unitType.AttackCooldown) return;
 
         // ������� � ����
-        if (target.transform.position.x > transform.position.x)
+        if (target.x > transform.position.x)
         {
             transform.localScale = new Vector3(1, 1, 1);
         }
@@ -77,23 +80,19 @@ public class Unit : MonoBehaviour
         //{
         //    animator.SetTrigger("Attack");
         //}
-
-        // ��������� ����� �����
-        Block block = target.GetComponent<Block>();
-        if (block.CurrentHealth - 1 != 0)
+        if (target.CurrentHealth - unitType.DamagePerHit > 0)
         {
-            block.TakeDamage(unitType.DamagePerHit, Owner);
+            target.TakeDamage(unitType.DamagePerHit, Owner);
         }
         else
         {
-            block.TakeDamage(unitType.DamagePerHit, Owner);
+            target.TakeDamage(unitType.DamagePerHit, Owner);
             Target = null;
         }
 
         _lastAttackTime = Time.time;
     }
-    */
-
+   
     //public void Select()
     //{
     //    selectionIndicator.SetActive(true);
@@ -104,7 +103,7 @@ public class Unit : MonoBehaviour
     //    selectionIndicator.SetActive(false);
     //}
 
-    public GameObject Target
+    public Tile Target
     {
         get
         {
@@ -112,10 +111,7 @@ public class Unit : MonoBehaviour
         }
         set
         {
-            if (value != null)
-            {
-                _target = value;
-            }
+            _target = value;
         }
     }
  

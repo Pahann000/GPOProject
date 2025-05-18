@@ -15,9 +15,8 @@ public class Map : MonoBehaviour
 
     void Awake()
     {
-        Debug.Log("Map Awake");
-        Debug.Log(atlas);
         Instance = this;
+        Instance.transform.position = Vector3.zero;
     }
 
     public void SetTile(int x, int y, TileType type)
@@ -52,7 +51,6 @@ public class Map : MonoBehaviour
         );
 
         MapChunk chunk = chunkObj.AddComponent<MapChunk>();
-        Debug.Log(chunk);
         chunk.Init(chunkSize, atlas, atlasMaterial);
         return chunk;
     }

@@ -82,7 +82,6 @@ public class WorldManager : MonoBehaviour
     /// </summary>
     private void GenerateTerrain()
     {
-        
         for (int x = 0; x < _worldNoise.width; x++)
         {
             float height = Mathf.PerlinNoise((x + Seed) * TerrainFreq, Seed * TerrainFreq) * HighMultiplier + HighAddition;

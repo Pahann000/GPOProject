@@ -17,7 +17,7 @@ public class Player : MonoBehaviour
     void Awake()
     {
         Resources.Add("Gold", 10);
-        _unitController.PlaceUnit(unitAtlas.Miner, this, Vector2.zero);
+        _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(10, 110));
     }
 
     // Update is called once per frame
@@ -26,7 +26,7 @@ public class Player : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             var mousePos = Camera.main.ScreenPointToRay(Input.mousePosition);
-            //SelectBlock(new Vector2(mousePos.origin.x, mousePos.origin.y));
+            SelectBlock(new Vector2(mousePos.origin.x, mousePos.origin.y));
         }
     }
 
@@ -35,16 +35,14 @@ public class Player : MonoBehaviour
     /// выделяет блок(заглушка заставляющая первого юнита уничтожить блок).
     /// </summary>
     /// <param name="position">Позиция выделяемого блока.</param>
-    //private void SelectBlock(Vector2 position)
-    //{
-    //    Collider2D collider = Physics2D.OverlapPoint(position);
-    //    if (collider)
-    //    {
-    //        GameObject selectedBlock = collider.gameObject;
-    //        if (selectedBlock.GetComponent<Block>() != null)
-    //        {
-    //            _unitController.CommandUnit(selectedBlock);
-    //        }
-    //    }
-    //}
+    private void SelectBlock(Vector2 position)
+    {
+        Debug.Log($"clicked at {position.ToString()}");
+        Tile selectedTile = Map.Instance.GetTile(((int)position.x), ((int)position.y));
+        Debug.Log(selectedTile.tileData.type.ToString());
+        if (selectedTile.tileData.type != TileType.Air)
+        {
+            _unitController.CommandUnit(selectedTile);
+        }
+    }
 }

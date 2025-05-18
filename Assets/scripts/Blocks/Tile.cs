@@ -2,7 +2,7 @@
 public class Tile
 {
     private readonly Map _map;
-    public int CurrentHealh { get; private set; }
+    public int CurrentHealth { get; private set; }
     public TileData tileData;
     public readonly int x;
     public readonly int y;
@@ -13,7 +13,7 @@ public class Tile
         this.x = x;
         this.y = y;
         this.tileData = tileData;
-        CurrentHealh = 10;
+        CurrentHealth = 10;
     }
 
     private void Destroy()
@@ -21,11 +21,24 @@ public class Tile
         _map.SetTile(x, y, TileType.Air);
     }
 
-    public void TakeDamage(int amount)
+    private void DropResources(Player player)
     {
-        CurrentHealh -= amount;
-        if (CurrentHealh <= 0)
+        if (!player.Resources.ContainsKey(tileData.type.ToString()))
         {
+            player.Resources.Add(tileData.type.ToString(), 1);
+        }
+        else
+        {
+            player.Resources[tileData.type.ToString()] += 1;
+        }
+    }
+
+    public void TakeDamage(int amount, Player Damager)
+    {
+        CurrentHealth -= amount;
+        if (CurrentHealth <= 0)
+        {
+            DropResources(Damager);
             Destroy();
         }
     }

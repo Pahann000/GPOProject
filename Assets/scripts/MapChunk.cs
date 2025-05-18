@@ -6,9 +6,10 @@ public class MapChunk : MonoBehaviour
     public bool needsUpdate = false;
 
     private MeshFilter _meshFilter;
-    private MeshCollider _meshCollider;
     private int _chunkSize;
     private TileAtlas _atlas = Map.Instance.atlas;
+    private CompositeCollider2D _collider;
+    private Dictionary<Vector2Int, Collider2D> _colliders = new();
 
     public void Init(int chunkSize, TileAtlas atlas, Material material)
     {
@@ -20,8 +21,10 @@ public class MapChunk : MonoBehaviour
         _meshFilter = gameObject.AddComponent<MeshFilter>();
         MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
         renderer.material = material;
+        _collider = gameObject.AddComponent<CompositeCollider2D>();
+        _collider.generationType = CompositeCollider2D.GenerationType.Synchronous;
 
-        _meshCollider = gameObject.AddComponent<MeshCollider>();
+        gameObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
     }
 
     void LateUpdate()
@@ -51,6 +54,7 @@ public class MapChunk : MonoBehaviour
 
                 if (tile.tileData.type == TileType.Air) continue;
                 AddTileMesh(x, y, tile.tileData.type, ref vertices, ref triangles, ref uv, ref triangleIndex);
+                GenerateCollider(worldPos);
             }
         }
 
@@ -60,7 +64,30 @@ public class MapChunk : MonoBehaviour
         mesh.RecalculateNormals();
 
         _meshFilter.mesh = mesh;
-        _meshCollider.sharedMesh = mesh;
+    }
+
+
+    public void GenerateCollider(Vector2Int cell)
+    {
+        GameObject colliderObj = new GameObject("ChunkCollider");
+        colliderObj.transform.parent = transform;
+        colliderObj.transform.position = (Vector2)cell + new Vector2(0.5f, 0.5f);
+
+        var collider = colliderObj.AddComponent<BoxCollider2D>();
+        collider.size = Vector2.one;
+        collider.compositeOperation = Collider2D.CompositeOperation.Merge;
+
+        _colliders.Add(cell, collider);
+    }
+
+    public void DeleteCollider(Vector2Int cell)
+    {
+        if (_colliders.ContainsKey(cell))
+        {
+            GameObject cellObject = _colliders[cell].gameObject;
+            _colliders.Remove(cell);
+            Destroy(cellObject);
+        }
     }
 
     private void AddTileMesh(int x, int y, TileType type, ref List<Vector3> vertices, ref List<int> triangles, ref List<Vector2> uv, ref int triangleIndex)
@@ -95,7 +122,13 @@ public class MapChunk : MonoBehaviour
 
     private Vector2Int GetWorldPosition(int localX, int localY)
     {
+
         Vector2 chunkPos = transform.position;
+        if (localX < 0 || localY < 0)
+        {
+            Debug.Log($"{chunkPos}, {localX}, {localY}");
+        }
+
         return new Vector2Int(
             Mathf.FloorToInt(chunkPos.x) + localX,
             Mathf.FloorToInt(chunkPos.y) + localY

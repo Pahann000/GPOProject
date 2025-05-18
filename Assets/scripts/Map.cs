@@ -3,7 +3,19 @@ using System.Collections.Generic;
 
 public class Map : MonoBehaviour
 {
-    public static Map Instance;
+    private static Map _instance;
+    public static Map Instance
+    {
+        get 
+        {
+            if (_instance == null)
+            {
+                _instance  = new Map();
+            }
+            return _instance;
+        }
+        private set {  _instance = value; }
+    }
 
     [Header("Settings")]
     public int chunkSize = 16;
@@ -16,7 +28,7 @@ public class Map : MonoBehaviour
     void Awake()
     {
         Instance = this;
-        Instance.transform.position = Vector3.zero;
+        transform.position = Vector3.zero;
     }
 
     public void SetTile(int x, int y, TileType type)

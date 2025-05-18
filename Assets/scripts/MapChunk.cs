@@ -7,7 +7,7 @@ public class MapChunk : MonoBehaviour
 
     private MeshFilter _meshFilter;
     private int _chunkSize;
-    private TileAtlas _atlas = Map.Instance.atlas;
+    private TileAtlas _atlas;
     private CompositeCollider2D _collider;
     private Dictionary<Vector2Int, Collider2D> _colliders = new();
 
@@ -52,7 +52,12 @@ public class MapChunk : MonoBehaviour
                 Vector2Int worldPos = GetWorldPosition(x, y);
                 Tile tile = Map.Instance.GetTile(worldPos.x, worldPos.y);
 
-                if (tile.tileData.type == TileType.Air) continue;
+                if (tile.tileData.type == TileType.Air) 
+                {
+                    DestroyCollider(worldPos);
+                    continue;
+                }
+                
                 AddTileMesh(x, y, tile.tileData.type, ref vertices, ref triangles, ref uv, ref triangleIndex);
                 GenerateCollider(worldPos);
             }
@@ -66,18 +71,29 @@ public class MapChunk : MonoBehaviour
         _meshFilter.mesh = mesh;
     }
 
-
-    public void GenerateCollider(Vector2Int cell)
+    private void DestroyCollider(Vector2Int worldPos)
     {
+        if (_colliders.ContainsKey(worldPos))
+        {
+            GameObject ColliderGameObject = _colliders[worldPos].gameObject;
+            _colliders.Remove(worldPos);
+            Destroy(ColliderGameObject);
+        }
+    }
+
+    private void GenerateCollider(Vector2Int worldPos)
+    {
+        if (_colliders.ContainsKey(worldPos)) { return; }
+
         GameObject colliderObj = new GameObject("ChunkCollider");
         colliderObj.transform.parent = transform;
-        colliderObj.transform.position = (Vector2)cell + new Vector2(0.5f, 0.5f);
+        colliderObj.transform.position = (Vector2)worldPos + new Vector2(0.5f, 0.5f);
 
         var collider = colliderObj.AddComponent<BoxCollider2D>();
         collider.size = Vector2.one;
         collider.compositeOperation = Collider2D.CompositeOperation.Merge;
 
-        _colliders.Add(cell, collider);
+        _colliders.Add(worldPos, collider);
     }
 
     public void DeleteCollider(Vector2Int cell)

@@ -255,53 +255,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _resourceTemplate: {fileID: 9197481963319205126, guid: 9b48e4c5ede64d04f86cd2ce2627b458, type: 3}
   _player: {fileID: 1354929586}
---- !u!1 &385209259
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 385209261}
-  - component: {fileID: 385209260}
-  m_Layer: 0
-  m_Name: Map
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &385209260
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 385209259}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d4664dbdcbe1bd4d82192a7216229b9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  chunkSize: 16
-  atlas: {fileID: 11400000, guid: 9fc08f2512f05414a9e56efa8ae542f5, type: 2}
-  atlasMaterial: {fileID: 2100000, guid: e2722fc755d33e64cb7173d0ac419d2c, type: 2}
---- !u!4 &385209261
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 385209259}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.88088334, y: -0.31643844, z: -0.012004962}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &860615437
 GameObject:
   m_ObjectHideFlags: 0
@@ -410,15 +363,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdf907ff006c8444aa97ef96a84a2891, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  map: {fileID: 385209260}
+  atlas: {fileID: 11400000, guid: 9fc08f2512f05414a9e56efa8ae542f5, type: 2}
+  atlasMaterial: {fileID: 2100000, guid: e2722fc755d33e64cb7173d0ac419d2c, type: 2}
   CaveSize: 0.3
   CaveFreq: 0.02
   TerrainFreq: 0.03
   HighMultiplier: 10
   Seed: 345.71
   chunkSize: 16
-  WorldWidth: 100
-  WorldHigh: 300
+  WorldWidth: 10
+  WorldHigh: 10
   HighAddition: 295
   GoldFrequency: 0.08
   GoldSize: 0.8
@@ -611,4 +565,3 @@ SceneRoots:
   - {fileID: 1252822904}
   - {fileID: 134638790}
   - {fileID: 860615440}
-  - {fileID: 385209261}

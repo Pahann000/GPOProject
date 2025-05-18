@@ -148,8 +148,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdf907ff006c8444aa97ef96a84a2891, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockAtlas: {fileID: 11400000, guid: 8d4747b03b5984840bce5c57464ccf51, type: 2}
-  unitAtlas: {fileID: 11400000, guid: 1c182a2b8e932794a8c51263e7fa24e0, type: 2}
+  atlas: {fileID: 11400000, guid: 9fc08f2512f05414a9e56efa8ae542f5, type: 2}
+  atlasMaterial: {fileID: 2100000, guid: e2722fc755d33e64cb7173d0ac419d2c, type: 2}
   CaveSize: 0.2
   CaveFreq: 0.019
   TerrainFreq: 0.07

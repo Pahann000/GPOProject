@@ -91,9 +91,12 @@ public class WorldManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        StartCoroutine(InitWorld());
+        Seed = Random.Range(-100000, 100000);
+        _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
+        _goldNoise = GenerateNoiseTexture(GoldFrequency, GoldSize);
+        CreateChunks();
+        GenerateTerrain();
         PlaceAStarGrid(0, 0);
-        Unit miner = PlaceUnit(unitAtlas.Miner, 0, 0);
     }
 
     public void UpdateAStarGrid()
@@ -102,16 +105,6 @@ public class WorldManager : MonoBehaviour
         {
             _astarPath.Scan();
         }
-    }
-
-    IEnumerator InitWorld()
-    {
-        Seed = Random.Range(-100000, 100000);
-        _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
-        _goldNoise = GenerateNoiseTexture(GoldFrequency, GoldSize);
-        CreateChunks();
-
-        yield return GenerateTerrainAsync(); // Постепенная генерация
     }
 
     /// <summary>
@@ -132,21 +125,30 @@ public class WorldManager : MonoBehaviour
     /// <summary>
     /// генерирует поверхность и выстраивает карту мира в игре.
     /// </summary>
-    IEnumerator GenerateTerrainAsync()
+    private void GenerateTerrain()
     {
         for (int x = 0; x < _worldNoise.width; x++)
         {
             float height = Mathf.PerlinNoise((x + Seed) * TerrainFreq, Seed * TerrainFreq) * HighMultiplier + HighAddition;
             for (int y = 0; y < height; y++)
             {
+                BlockType blockType = blockAtlas.Rock;
+                if (_goldNoise.GetPixel(x, y).r > 0.5f)
+                {
+                    blockType = blockAtlas.Gold;
+                }
+                else if (_worldNoise.GetPixel(x, y).r > 0.5f)
+                {
+                    blockType = blockAtlas.Rock;
+                }
+
                 if (_worldNoise.GetPixel(x, y).r > 0.5f)
                 {
-                    PlaceBlock(blockAtlas.Rock, x, y);
+                    PlaceBlock(blockType, x, y);
                 }
-                if (x % 10 == 0) yield return null; // Пауза каждые 10 блоков
             }
 
-            if (x % 10 == 0)
+            if (x % chunkSize == 0)
             {
                 UpdateAStarGrid();
             }
@@ -205,74 +207,22 @@ public class WorldManager : MonoBehaviour
         newTile.transform.position = new Vector3(x, y, 0);
     }
 
-    public Unit PlaceUnit(UnitType unitType, float x, float y)
-    {
-        if (unitType == null)
-        {
-            Debug.LogError("UnitType не задан!");
-            return null;
-        }
-
-        if (unitType.Sprite == null)
-        {
-            Debug.LogError($"Спрайт для {unitType.name} не назначен");
-            return null;
-        }
-
-        GameObject unitObj = new GameObject(unitType.name)
-        {
-            tag = "Unit" // тег для удобства
-        };
-
-        GameObject unitsParent = GameObject.Find("Units");
-        if (unitsParent == null)
-        {
-            unitsParent = new GameObject("Units");
-        }
-
-        unitsParent.transform.position = new Vector3(5f, 350f, 0);
-
-        unitObj.transform.parent = unitsParent.transform;
-
-        SpriteRenderer renderer = unitObj.AddComponent<SpriteRenderer>();
-        renderer.sprite = unitType.Sprite;
-        renderer.sortingLayerName = "Units";
-        renderer.sortingOrder = 1;
-
-        CircleCollider2D collider = unitObj.AddComponent<CircleCollider2D>();
-        collider.radius = 0.5f;
-
-        Rigidbody2D rb = unitObj.AddComponent<Rigidbody2D>();
-        rb.gravityScale = 3f;
-        rb.linearDamping = 1.5f;
-        rb.freezeRotation = true;
-
-        Unit unit = unitObj.AddComponent<Unit>();
-
-        unitObj.AddComponent<Seeker>();
-
-        return unit;
-    }
-
     private void PlaceAStarGrid(float x, float y)
     {
-        // Создаем основной объект A*
         GameObject aStar = new GameObject("A*");
         aStar.transform.position = new Vector3(x, y, 0);
 
-        // Добавляем основные компоненты
         AstarPath pathfinder = aStar.AddComponent<AstarPath>();
 
-        // Настройка графа сетки
         GridGraph gridGraph = pathfinder.data.AddGraph(typeof(GridGraph)) as GridGraph;
 
         gridGraph.is2D = true;
 
         // Конфигурация графа
         gridGraph.SetDimensions(
-            Mathf.CeilToInt(WorldWidth * chunkSize),  // Ширина в узлах
-            Mathf.CeilToInt(WorldHigh * 2 / 3),         // Высота в узлах
-            1f                                      // Размер узла
+            Mathf.CeilToInt(WorldWidth * chunkSize),
+            Mathf.CeilToInt(WorldHigh * 2 / 3),
+            1f
         );
 
         gridGraph.center = new Vector3(
@@ -281,44 +231,20 @@ public class WorldManager : MonoBehaviour
             0
         );
 
-        // Настройки сканирования коллайдеров
         gridGraph.collision.use2D = true;
         gridGraph.collision.type = ColliderType.Ray;
         gridGraph.collision.mask = LayerMask.GetMask("Terrain");
         gridGraph.collision.thickRaycast = true;
-        gridGraph.collision.diameter = 0.8f; // Соответствует размеру юнита
+        gridGraph.collision.diameter = 0.8f;
 
-        // Оптимизация
         gridGraph.maxClimb = 1;
         gridGraph.maxSlope = 90;
 
-        // Сканируем граф
+        // Сканируем
         pathfinder.Scan();
 
-        // Сохраняем ссылку
         _astarPath = pathfinder;
     }
-
-    //// Вспомогательный метод для поиска свободной позиции
-    //private Vector3 FindNearestFreePosition(Vector3 targetPos)
-    //{
-    //    for (int i = 1; i < 5; i++)
-    //    {
-    //        Vector3[] directions = {
-    //        targetPos + Vector3.up * i,
-    //        targetPos + Vector3.down * i,
-    //        targetPos + Vector3.left * i,
-    //        targetPos + Vector3.right * i
-    //    };
-
-    //        foreach (Vector3 pos in directions)
-    //        {
-    //            if (!Physics2D.OverlapPoint(pos))
-    //                return pos;
-    //        }
-    //    }
-    //    return targetPos; // Если всё занято, возвращаем исходную
-    //}
 
     public void DestroyBlock(Block block)
     {

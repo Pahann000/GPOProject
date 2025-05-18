@@ -14,11 +14,42 @@ public class Unit : MonoBehaviour
     public LayerMask obstacleLayer; // Слой препятствий
     private Rigidbody2D rb; // Физика юнита
     public float nextWaypointDistance = 0.5f; // Минимальное расстояние для перехода к следующей точке
-    public LayerMask groundLayer = LayerMask.GetMask("Terrain"); // Слой земли
+    public LayerMask groundLayers; // Слой земли
 
     void Start()
     {
-        seeker = GetComponent<Seeker>();
+        InitializeComponents();
+    }
+
+    void InitializeComponents()
+    {
+
+        GameObject unitsParent = GameObject.Find("Units");
+        if (unitsParent == null)
+        {
+            unitsParent = new GameObject("Units");
+        }
+
+        unitsParent.transform.position = new Vector3(5f, 350f, 0);
+
+        gameObject.transform.parent = unitsParent.transform;
+
+        groundLayer = LayerMask.GetMask("Terrain");
+
+        SpriteRenderer renderer = unitObj.AddComponent<SpriteRenderer>();
+        renderer.sprite = unitType.Sprite;
+        renderer.sortingLayerName = "Units";
+        renderer.sortingOrder = 1;
+
+        CircleCollider2D collider = unitObj.AddComponent<CircleCollider2D>();
+        collider.radius = 0.5f;
+
+        rb = gameObject.AddComponent<RigidBody2D>();
+        rb.gravityScale = 3f;
+        rb.linearDamping = 1.5f;
+        rb.freezeRotation = true;
+
+        seeker = gameObject.AddComponent<Seeker>();
     }
 
     private bool IsGrounded(Vector2 point)

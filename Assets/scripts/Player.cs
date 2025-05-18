@@ -1,44 +1,46 @@
-using Pathfinding;
+п»їusing Pathfinding;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
     public UnitAtlas unitAtlas;
-    private Unit _selectedUnit;
 
-    void Update()
+    private List<Unit> _units = new List<Unit>();
+
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
+        Unit newUnit = WorldManager.Instance.PlaceUnit(unitAtlas.Miner, 0, 200);
+        _units.Add(newUnit);
+    }
+
+    // Update is called once per frame
+    void FixedUpdate()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            HandleSelection();
+            var mousePos = Camera.main.ScreenPointToRay(Input.mousePosition);
+            SelectBlock(new Vector2(mousePos.origin.x, mousePos.origin.y));
         }
     }
 
-    private void HandleSelection()
+    private void SelectBlock(Vector2 position)
     {
-        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Collider2D hit = Physics2D.OverlapPoint(mousePos);
-
-        if (hit == null) return;
-
-        // Если кликнули по юниту - выбираем его
-        if (hit.TryGetComponent<Unit>(out var unit))
+        Collider2D collider = Physics2D.OverlapPoint(position);
+        Debug.Log($"Г­Г Г¦Г ГІГЁГҐ Г±Г¤ГҐГ«Г Г­Г® Г­Г  ГЇГ®Г§ГЁГ¶ГЁГЁ{position}");
+        if (collider)
         {
-            SelectUnit(unit);
-            return;
-        }
-
-        // Если кликнули по блоку и есть выбранный юнит - отправляем разрушать
-        if (hit.TryGetComponent<Block>(out var block) && _selectedUnit != null)
-        {
-            _selectedUnit.SetTarget(block.transform);
-            Debug.Log($"Юнит получил задание разрушить {block.BlockType.Name}");
+            Block selectedBlock = collider.GetComponentInParent<Block>();
+            Debug.Log($"ГЎГ«Г®ГЄ Г­Г Г©Г¤ГҐГ­:{selectedBlock.BlockType.Name}");
+            if (selectedBlock != null)
+            {
+                SetDestoroyBlock(selectedBlock);
+            }
         }
     }
 
-    private void SelectUnit(Unit unit)
+    public void SetDestoroyBlock(Block blockToDestroy)
     {
-        _selectedUnit = unit;
-        Debug.Log($"Выбран юнит: {unit.name}");
+        _units[0].SetTarget(blockToDestroy.transform);
     }
 }

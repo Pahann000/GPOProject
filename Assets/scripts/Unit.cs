@@ -4,26 +4,25 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     public Transform target;
+    public UnitType unitType;
     private Seeker seeker;
     private Path path;
     private int currentWaypoint = 0;
-    private bool pathCalculated = false;
     public float jumpForce = 5f; // Сила прыжка
     public float speed = 2f; // Скорость передвижения
     public float obstacleCheckDistance = 1f; // Дистанция проверки препятствий
     public LayerMask obstacleLayer; // Слой препятствий
     private Rigidbody2D rb; // Физика юнита
     public float nextWaypointDistance = 0.5f; // Минимальное расстояние для перехода к следующей точке
-    public LayerMask groundLayers; // Слой земли
 
     void Start()
     {
+        obstacleLayer = LayerMask.GetMask("Terrain");
         InitializeComponents();
     }
 
     void InitializeComponents()
     {
-
         GameObject unitsParent = GameObject.Find("Units");
         if (unitsParent == null)
         {
@@ -34,17 +33,15 @@ public class Unit : MonoBehaviour
 
         gameObject.transform.parent = unitsParent.transform;
 
-        groundLayer = LayerMask.GetMask("Terrain");
-
-        SpriteRenderer renderer = unitObj.AddComponent<SpriteRenderer>();
+        SpriteRenderer renderer = gameObject.AddComponent<SpriteRenderer>();
         renderer.sprite = unitType.Sprite;
         renderer.sortingLayerName = "Units";
         renderer.sortingOrder = 1;
 
-        CircleCollider2D collider = unitObj.AddComponent<CircleCollider2D>();
+        CircleCollider2D collider = gameObject.AddComponent<CircleCollider2D>();
         collider.radius = 0.5f;
 
-        rb = gameObject.AddComponent<RigidBody2D>();
+        rb = gameObject.AddComponent<Rigidbody2D>();
         rb.gravityScale = 3f;
         rb.linearDamping = 1.5f;
         rb.freezeRotation = true;
@@ -54,7 +51,7 @@ public class Unit : MonoBehaviour
 
     private bool IsGrounded(Vector2 point)
     {
-        RaycastHit2D hit = Physics2D.Raycast(point, Vector2.down, 1f, groundLayer);
+        RaycastHit2D hit = Physics2D.Raycast(point, Vector2.down, 1f, obstacleLayer);
         return hit.collider != null;
     }
 
@@ -80,7 +77,7 @@ public class Unit : MonoBehaviour
             return;
         }
 
-        Vector2 direction = (targetPos - (Vector2)transform.position).normalized;
+        Vector2 direction = (targetPos - (Vector2)transform.position);
 
         if (Physics2D.Raycast(transform.position, direction, obstacleCheckDistance, obstacleLayer))
         {

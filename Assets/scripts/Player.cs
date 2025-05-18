@@ -1,5 +1,6 @@
-﻿using Pathfinding;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections.Generic;
+using Unity.VisualScripting;
 
 public class Player : MonoBehaviour
 {
@@ -10,7 +11,7 @@ public class Player : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        Unit newUnit = WorldManager.Instance.PlaceUnit(unitAtlas.Miner, 0, 200);
+        Unit newUnit = WorldManager.Instance.PlaceUnit(unitAtlas.Miner, 0, 0);
         _units.Add(newUnit);
     }
 

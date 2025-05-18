@@ -207,6 +207,18 @@ public class WorldManager : MonoBehaviour
         newTile.transform.position = new Vector3(x, y, 0);
     }
 
+    public Unit PlaceUnit(UnitType unitType, float x, float y)
+    {
+        GameObject newUnit = new GameObject();
+
+        newUnit.AddComponent<Unit>();
+        newUnit.GetComponent<Unit>().unitType = unitType;
+
+        newUnit.transform.position = new Vector3(x, y, 0);
+
+        return newUnit.GetComponent<Unit>();
+    }
+
     private void PlaceAStarGrid(float x, float y)
     {
         GameObject aStar = new GameObject("A*");

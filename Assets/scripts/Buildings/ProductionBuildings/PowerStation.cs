@@ -10,8 +10,15 @@ public class PowerPlant : ProductionBuilding
     protected override void Start()
     {
         base.Start();
-        outputResources = new ResourceBundle(
-            (ResourceType.Energy, energyProduction)
+
+        // Используем новый метод Create
+        inputResources = ResourceBundle.Create(
+            (ResourceType.Minerals, 2),
+            (ResourceType.Water, 1)
+        );
+
+        outputResources = ResourceBundle.Create(
+            (ResourceType.Energy, 5)
         );
     }
 

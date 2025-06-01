@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 public class ResourceManager : MonoBehaviour
 {
-
     private Dictionary<ResourceType, int> resources = new Dictionary<ResourceType, int>();
     private Dictionary<ResourceType, int> storageLimits = new Dictionary<ResourceType, int>();
 
@@ -31,18 +30,19 @@ public class ResourceManager : MonoBehaviour
             storageLimits[type] = 1000;
         }
 
+        // Пример стартовых ресурсов
         AddResources(new ResourceBundle(
-            (ResourceType.Metal, 500),
-            (ResourceType.Water, 200)
+            new ResourceBundle.ResourcePair { Type = ResourceType.Metal, Amount = 500 },
+            new ResourceBundle.ResourcePair { Type = ResourceType.Water, Amount = 200 }
         ));
     }
 
     public bool HasResources(ResourceBundle cost)
     {
-        foreach (var kvp in cost.Resources)
+        foreach (var resPair in cost.Resources)
         {
-            if (resources[kvp.Key] < kvp.Value)
-                return false;
+            if (!resources.ContainsKey(resPair.Type)) return false;
+            if (resources[resPair.Type] < resPair.Amount) return false;
         }
         return true;
     }
@@ -51,27 +51,37 @@ public class ResourceManager : MonoBehaviour
     {
         if (!HasResources(cost)) return false;
 
-        foreach (var kvp in cost.Resources)
+        foreach (var resPair in cost.Resources)
         {
-            resources[kvp.Key] -= kvp.Value;
+            resources[resPair.Type] -= resPair.Amount;
         }
         return true;
     }
 
     public void AddResources(ResourceBundle income)
     {
-        foreach (var kvp in income.Resources)
+        foreach (var resPair in income.Resources)
         {
-            resources[kvp.Key] = Mathf.Min(
-                resources[kvp.Key] + kvp.Value,
-                storageLimits[kvp.Key]
-            );
+            if (resources.ContainsKey(resPair.Type))
+            {
+                resources[resPair.Type] = Mathf.Min(
+                    resources[resPair.Type] + resPair.Amount,
+                    storageLimits[resPair.Type]
+                );
+            }
         }
     }
 
-    public int GetResource(ResourceType type) => resources[type];
-    public int GetStorageLimit(ResourceType type) => storageLimits[type];
+    public int GetResource(ResourceType type) => resources.ContainsKey(type) ? resources[type] : 0;
+    public int GetStorageLimit(ResourceType type) => storageLimits.ContainsKey(type) ? storageLimits[type] : 0;
 
-    public void IncreaseStorage(ResourceType type, int amount) => storageLimits[type] += amount;
-    public void DecreaseStorage(ResourceType type, int amount) => storageLimits[type] -= amount;
+    public void IncreaseStorage(ResourceType type, int amount)
+    {
+        if (storageLimits.ContainsKey(type)) storageLimits[type] += amount;
+    }
+
+    public void DecreaseStorage(ResourceType type, int amount)
+    {
+        if (storageLimits.ContainsKey(type)) storageLimits[type] = Mathf.Max(0, storageLimits[type] - amount);
+    }
 }

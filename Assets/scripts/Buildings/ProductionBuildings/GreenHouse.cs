@@ -12,13 +12,13 @@ public class Greenhouse : ProductionBuilding
     {
         base.Start();
 
-        // Инициализация ресурсов
-        inputResources = new ResourceBundle(
-            (ResourceType.Water, waterConsumption)
+        // Используем новый метод Create
+        inputResources = ResourceBundle.Create(
+            (ResourceType.Water, 1)
         );
 
-        outputResources = new ResourceBundle(
-            (ResourceType.Food, foodProduction)
+        outputResources = ResourceBundle.Create(
+            (ResourceType.Food, 3)
         );
     }
 

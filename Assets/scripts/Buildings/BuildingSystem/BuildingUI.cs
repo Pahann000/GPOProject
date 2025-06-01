@@ -2,35 +2,52 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Пользовательский интерфейс для выбора и строительства зданий
-/// </summary>
 public class BuildingUI : MonoBehaviour
 {
     [Header("Building Settings")]
-    [SerializeField] private BuildingData[] _availableBuildings; // Доступные для строительства здания
-    [SerializeField] private Button _buildingButtonPrefab;      // Префаб кнопки здания
-    [SerializeField] private Transform _buttonsContainer;       // Контейнер для кнопок
+    [SerializeField] private BuildingData[] _availableBuildings;
+    [SerializeField] private Button _buildingButtonPrefab;
+    [SerializeField] private Transform _buttonsContainer;
 
-    private BuildingSystem _buildingSystem; // Ссылка на систему строительства
+    private BuildingSystem _buildingSystem;
 
     private void Start()
     {
-        // Получаем ссылку на систему строительства
         _buildingSystem = FindObjectOfType<BuildingSystem>();
-
-        // Создаем кнопки для всех доступных зданий
         CreateBuildingButtons();
     }
 
     private void CreateBuildingButtons()
     {
+        if (_availableBuildings == null || _availableBuildings.Length == 0)
+        {
+            Debug.LogError("Available Buildings array is empty!");
+            return;
+        }
+
+        if (_buildingButtonPrefab == null)
+        {
+            Debug.LogError("Building Button Prefab is not assigned!");
+            return;
+        }
+
         foreach (var data in _availableBuildings)
         {
+            if (data == null)
+            {
+                Debug.LogError("Found null in _availableBuildings array!");
+                continue;
+            }
+
+            if (data.ConstructionCost.Resources == null || data.ConstructionCost.Resources.Count == 0)
+            {
+                Debug.LogError($"Building {data.DisplayName} has no construction cost!");
+                continue;
+            }
+
             var btn = Instantiate(_buildingButtonPrefab, _buttonsContainer);
             btn.image.sprite = data.Icon;
 
-            // Получаем компонент Tooltip
             var tooltip = btn.GetComponent<Tooltip>();
             if (tooltip == null)
             {
@@ -38,19 +55,17 @@ public class BuildingUI : MonoBehaviour
                 continue;
             }
 
-            // Формируем текст
             var sb = new StringBuilder();
             sb.AppendLine(data.DisplayName);
             sb.AppendLine("Cost:");
+
             foreach (var res in data.ConstructionCost.Resources)
             {
-                sb.AppendLine($"{res.Key}: {res.Value}");
+                sb.AppendLine($"{res.Type}: {res.Amount}");
             }
 
             tooltip.SetText(sb.ToString());
-
             btn.onClick.AddListener(() => _buildingSystem.StartBuildingPlacement(data));
         }
     }
 }
-

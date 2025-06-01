@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class ProductionBuilding : Building
 {
@@ -60,18 +61,23 @@ public class ProductionBuilding : Building
 
     protected virtual ResourceBundle MultiplyResourceBundle(ResourceBundle bundle, float multiplier)
     {
-        var newResources = new ResourceBundle();
-        foreach (var kvp in bundle.Resources)
+        var newBundle = new ResourceBundle();
+        newBundle.Resources = new List<ResourceBundle.ResourcePair>();
+
+        foreach (var res in bundle.Resources)
         {
-            newResources.Resources[kvp.Key] = Mathf.RoundToInt(kvp.Value * multiplier);
+            newBundle.Resources.Add(new ResourceBundle.ResourcePair
+            {
+                Type = res.Type,
+                Amount = Mathf.RoundToInt(res.Amount * multiplier)
+            });
         }
-        return newResources;
+        return newBundle;
     }
 
     public override void Initialize(BuildingData data)
     {
-        base.Initialize(data); // Вызываем базовую реализацию
-        // Дополнительная инициализация
+        base.Initialize(data);
         inputResources = data.InputResources;
         outputResources = data.OutputResources;
     }

@@ -1,68 +1,42 @@
 using UnityEngine;
-using System.Collections;
-public class Mine : ProductionBuilding
+
+public class GreenHouse : ProductionBuilding
 {
-    [Header("Mining Settings")]
-    public float miningEfficiency = 1f;
-    private ResourceDeposit targetDeposit;
-
-    public int ProductionAmount { get; private set; }
-
     protected override void Start()
     {
         base.Start();
-        FindNearestDeposit();
-        UpdateOutputResources();
-    }
 
-    private void FindNearestDeposit()
-    {
-        ResourceDeposit[] deposits = FindObjectsOfType<ResourceDeposit>();
-        float minDistance = float.MaxValue;
-
-        foreach (var deposit in deposits)
-        {
-            if (deposit.IsDepleted) continue;
-
-            float distance = Vector3.Distance(transform.position, deposit.transform.position);
-            if (distance < minDistance)
+        // »нициализаци€ ресурсов (если нужно переопределить значени€)
+        inputResources = new ResourceBundle(
+            new ResourceBundle.ResourcePair
             {
-                minDistance = distance;
-                targetDeposit = deposit;
+                Type = ResourceType.Water,
+                Amount = 1
             }
-        }
+        );
+
+        outputResources = new ResourceBundle(
+            new ResourceBundle.ResourcePair
+            {
+                Type = ResourceType.Food,
+                Amount = 3
+            }
+        );
     }
 
-    private void UpdateOutputResources()
-    {
-        if (targetDeposit != null)
-        {
-            outputResources = MultiplyResourceBundle(
-                new ResourceBundle((targetDeposit.ResourceType, ProductionAmount)),
-                miningEfficiency
-            );
-        }
-    }
-
+    // ƒополнительна€ специфична€ логика дл€ теплицы
     protected override void TryProduceResources()
     {
-        if (targetDeposit == null || targetDeposit.IsDepleted)
-        {
-            FindNearestDeposit();
-            UpdateOutputResources();
-        }
-
-        if (targetDeposit != null && !targetDeposit.IsDepleted)
+        // ѕроверка дн€/ночи или других условий
+        if (IsDayTime())
         {
             base.TryProduceResources();
-            targetDeposit.ExtractResource(outputResources.Resources[targetDeposit.ResourceType]);
         }
     }
 
-    protected override void UpgradeProduction(float efficiencyMultiplier)
+    private bool IsDayTime()
     {
-        base.UpgradeProduction(efficiencyMultiplier);
-        miningEfficiency *= efficiencyMultiplier;
-        UpdateOutputResources();
+        // ¬аша логика определени€ времени суток
+        return true;
     }
 }

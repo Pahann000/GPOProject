@@ -1,3 +1,4 @@
+using Pathfinding;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,7 +41,7 @@ public class UnitController
         //    return null;
         //}
 
-        GameObject newUnit = new GameObject();
+        GameObject newUnit = new GameObject("Unit");
 
         newUnit.AddComponent<SpriteRenderer>();
         newUnit.GetComponent<SpriteRenderer>().sprite = unitType.Sprite;
@@ -48,12 +49,17 @@ public class UnitController
         newUnit.AddComponent<BoxCollider2D>();
         newUnit.GetComponent<BoxCollider2D>().size = Vector2.one;
 
-        newUnit.AddComponent<Rigidbody2D>();
-        newUnit.GetComponent<Rigidbody2D>().freezeRotation = true;
+        Rigidbody2D rb = newUnit.AddComponent<Rigidbody2D>();
+        rb.freezeRotation = true;
 
-        newUnit.AddComponent<Unit>();
-        newUnit.GetComponent<Unit>().unitType = unitType;
-        newUnit.GetComponent<Unit>().Owner = owner;
+        Seeker seeker = newUnit.gameObject.AddComponent<Seeker>();
+
+        Unit unitObject = newUnit.AddComponent<Unit>();
+        unitObject.unitType = unitType;
+        unitObject.Owner = owner;
+        unitObject.Seeker = seeker;
+        unitObject.rb = rb;
+        unitObject.obstacleLayer = LayerMask.NameToLayer("Terrain");
 
         newUnit.transform.position = position;
 

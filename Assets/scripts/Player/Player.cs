@@ -17,7 +17,7 @@ public class Player : MonoBehaviour
     void Awake()
     {
         Resources.Add("Gold", 10);
-        _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(10, 110));
+        _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(10, 300));
     }
 
     // Update is called once per frame

@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tiles:
   - type: 3
-    uvPosition: {x: 0, y: 0}
-    uvSize: {x: 0.25, y: 0.25}
+    uvPosition: {x: 0, y: 0.5}
+    uvSize: {x: 0.5, y: 0.5}
   - type: 2
-    uvPosition: {x: 1, y: 0}
+    uvPosition: {x: 0.75, y: 0.75}
     uvSize: {x: 0.25, y: 0.25}

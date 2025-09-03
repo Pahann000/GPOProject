@@ -13,8 +13,6 @@ public class MapChunk : MonoBehaviour
 
     public void Init(int chunkSize, TileAtlas atlas, Material material)
     {
-        Debug.Log(atlas);
-
         _chunkSize = chunkSize;
         _atlas = atlas;
 
@@ -25,6 +23,7 @@ public class MapChunk : MonoBehaviour
         _collider.generationType = CompositeCollider2D.GenerationType.Synchronous;
 
         gameObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
+        gameObject.layer = LayerMask.NameToLayer("Terrain");
     }
 
     void LateUpdate()
@@ -94,16 +93,6 @@ public class MapChunk : MonoBehaviour
         collider.compositeOperation = Collider2D.CompositeOperation.Merge;
 
         _colliders.Add(worldPos, collider);
-    }
-
-    public void DeleteCollider(Vector2Int cell)
-    {
-        if (_colliders.ContainsKey(cell))
-        {
-            GameObject cellObject = _colliders[cell].gameObject;
-            _colliders.Remove(cell);
-            Destroy(cellObject);
-        }
     }
 
     private void AddTileMesh(int x, int y, TileType type, ref List<Vector3> vertices, ref List<int> triangles, ref List<Vector2> uv, ref int triangleIndex)

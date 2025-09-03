@@ -1,10 +1,13 @@
 using UnityEngine;
+using Pathfinding;
 
 /// <summary>
 /// ����� ��� ��������� ����� ����.
 /// </summary>
 public class WorldManager : MonoBehaviour
 {
+    private AstarPath _astarPath;
+
     [SerializeField]private TileAtlas atlas;
     [SerializeField]private Material atlasMaterial;
     /// <summary>
@@ -77,6 +80,7 @@ public class WorldManager : MonoBehaviour
         _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
         _goldNoise = GenerateNoiseTexture(GoldFrequency, GoldSize);
         GenerateTerrain();
+        PlaceAStarGrid(0, 0);
     }
 
     private Map GenerateMapObject()
@@ -141,5 +145,43 @@ public class WorldManager : MonoBehaviour
         noise.Apply();
 
         return noise;
+    }
+
+    private void PlaceAStarGrid(float x, float y)
+    {
+        GameObject aStar = new GameObject("A*");
+        aStar.transform.position = new Vector3(x, y, 0);
+
+        AstarPath pathfinder = aStar.AddComponent<AstarPath>();
+
+        GridGraph gridGraph = pathfinder.data.AddGraph(typeof(GridGraph)) as GridGraph;
+
+        gridGraph.is2D = true;
+
+        // Êîíôèãóðàöèÿ ãðàôà
+        gridGraph.SetDimensions(
+            Mathf.CeilToInt(WorldWidth * chunkSize),
+            Mathf.CeilToInt(WorldHigh * chunkSize),
+            1f
+        );
+
+        gridGraph.center = new Vector3(
+            (WorldWidth * chunkSize) / 2f,
+            (WorldHigh * chunkSize) / 2f,
+            0
+        );
+
+        gridGraph.collision.use2D = true;
+        gridGraph.collision.type = ColliderType.Ray;
+        gridGraph.collision.thickRaycast = true;
+        gridGraph.collision.diameter = 1f;
+
+        gridGraph.maxClimb = 1;
+        gridGraph.maxSlope = 90;
+
+        // Ñêàíèðóåì
+        pathfinder.Scan();
+
+        _astarPath = pathfinder;
     }
 }

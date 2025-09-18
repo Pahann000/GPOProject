@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 334aaa10a263aa749964dcbb25c08dc3, type: 3}
   m_Name: Worker
   m_EditorClassIdentifier: 
+  Health: 10
   MoveSpeed: 4
   AttackCooldown: 30
   AttackRange: 7

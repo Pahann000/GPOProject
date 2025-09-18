@@ -17,7 +17,8 @@ public class Player : MonoBehaviour
     void Awake()
     {
         Resources.Add("Gold", 10);
-        _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(10, 300));
+        _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(10, 250));
+        _unitController.PlaceUnit(unitAtlas.Miner, new Player(), new Vector2(10, 250));
     }
 
     // Update is called once per frame
@@ -26,7 +27,7 @@ public class Player : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             var mousePos = Camera.main.ScreenPointToRay(Input.mousePosition);
-            SelectBlock(new Vector2(mousePos.origin.x, mousePos.origin.y));
+            SelectTarget(new Vector2(mousePos.origin.x, mousePos.origin.y));
         }
     }
 
@@ -35,14 +36,33 @@ public class Player : MonoBehaviour
     /// выделяет блок(заглушка заставляющая первого юнита уничтожить блок).
     /// </summary>
     /// <param name="position">Позиция выделяемого блока.</param>
-    private void SelectBlock(Vector2 position)
+    private void SelectTarget(Vector2 position)
     {
-        Debug.Log($"clicked at {position.ToString()}");
-        Tile selectedTile = Map.Instance.GetTile(((int)position.x), ((int)position.y));
-        Debug.Log(selectedTile.tileData.type.ToString());
-        if (selectedTile.tileData.type != TileType.Air)
+        IDamagable target = null;
+        Block selectedBlock = Map.Instance.GetBlock(((int)position.x), ((int)position.y));
+
+        if (selectedBlock.tileData.type != BlockType.Air)
         {
-            _unitController.CommandUnit(selectedTile);
+            target = selectedBlock;
         }
+        else
+        {
+            Vector3 vector3 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            var targetCollider = Physics2D.OverlapPoint(new Vector2(vector3.x, vector3.y));
+            if (targetCollider) 
+            {
+                Unit unit = targetCollider.gameObject.GetComponent<Unit>();
+                if (unit != null && !(unit.Owner == this))
+                {
+                    target = unit;
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+
+        _unitController.CommandUnit(target);
     }
 }

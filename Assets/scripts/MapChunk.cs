@@ -7,11 +7,11 @@ public class MapChunk : MonoBehaviour
 
     private MeshFilter _meshFilter;
     private int _chunkSize;
-    private TileAtlas _atlas;
+    private BlockAtlas _atlas;
     private CompositeCollider2D _collider;
     private Dictionary<Vector2Int, Collider2D> _colliders = new();
 
-    public void Init(int chunkSize, TileAtlas atlas, Material material)
+    public void Init(int chunkSize, BlockAtlas atlas, Material material)
     {
         _chunkSize = chunkSize;
         _atlas = atlas;
@@ -23,7 +23,6 @@ public class MapChunk : MonoBehaviour
         _collider.generationType = CompositeCollider2D.GenerationType.Synchronous;
 
         gameObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
-        gameObject.layer = LayerMask.NameToLayer("Terrain");
     }
 
     void LateUpdate()
@@ -49,9 +48,9 @@ public class MapChunk : MonoBehaviour
             for (int y = 0; y < _chunkSize; y++)
             {
                 Vector2Int worldPos = GetWorldPosition(x, y);
-                Tile tile = Map.Instance.GetTile(worldPos.x, worldPos.y);
+                Block tile = Map.Instance.GetBlock(worldPos.x, worldPos.y);
 
-                if (tile.tileData.type == TileType.Air) 
+                if (tile.tileData.type == BlockType.Air) 
                 {
                     DestroyCollider(worldPos);
                     continue;
@@ -92,10 +91,12 @@ public class MapChunk : MonoBehaviour
         collider.size = Vector2.one;
         collider.compositeOperation = Collider2D.CompositeOperation.Merge;
 
+        colliderObj.layer = LayerMask.NameToLayer("Terrain");
+
         _colliders.Add(worldPos, collider);
     }
 
-    private void AddTileMesh(int x, int y, TileType type, ref List<Vector3> vertices, ref List<int> triangles, ref List<Vector2> uv, ref int triangleIndex)
+    private void AddTileMesh(int x, int y, BlockType type, ref List<Vector3> vertices, ref List<int> triangles, ref List<Vector2> uv, ref int triangleIndex)
     {
         // Меш генерация для одного тайла
         Vector3[] tileVertices = {

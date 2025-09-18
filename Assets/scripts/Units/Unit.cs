@@ -1,19 +1,15 @@
-using Pathfinding;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
-public class Unit : MonoBehaviour
+public class Unit : MonoBehaviour, IDamagable
 {
-    private Path _path;
-    private int _currentWaypoint = 0;
-    private float obstacleCheckDistance = 1f; // Дистанция проверки препятствий
+    private List<Vector2Int> currentPath;
+    private int pathIndex;
+    private float _jumpForce = 20f; // Сила прыжка
+    private float _speed = 2f; // Скорость передвижения
 
     public Rigidbody2D rb; // Физика юнита
-    public Seeker Seeker;
-    public float jumpForce = 5f; // Сила прыжка
-    public float speed = 2f; // Скорость передвижения
-    public LayerMask obstacleLayer; // Слой препятствий
-    public float nextWaypointDistance = 0.5f; // Минимальное расстояние для перехода к следующей точке
 
     [Header("Unit Settings")]
     /// <summary>
@@ -27,7 +23,7 @@ public class Unit : MonoBehaviour
     /// <summary>
     /// ���� �����.
     /// </summary>
-    private Tile _target;
+    private IDamagable _target;
     /// <summary>
     /// ����� ���������� �����.
     /// </summary>
@@ -35,83 +31,89 @@ public class Unit : MonoBehaviour
     /// <summary>
     /// ������� ������ �����.
     /// </summary>
-    public UnitWork CurrentUnitWork { get; private set; }
     public Player Owner;
 
+    public UnitWork CurrentUnitWork { get; private set; }
 
-    void FixedUpdate()
+    public Vector2Int CurrentGridPosition
     {
-        if (Target != null)
+        get
         {
-            AttackBlock(Target);
+            return new Vector2Int(
+                Mathf.RoundToInt(transform.position.x),
+                Mathf.RoundToInt(transform.position.y)
+            );
         }
     }
 
-    private bool IsGrounded(Vector2 point)
+    public bool CanReachPosition(Vector2Int targetGridPosition)
     {
-        RaycastHit2D hit = Physics2D.Raycast(point, Vector2.down, 1f, obstacleLayer);
-        return hit.collider != null;
+        return Pathfinding.FindPath(CurrentGridPosition, targetGridPosition) != null;
     }
 
-    //TODO: ����� ���� - navmesh, ������� ��������
-    /// <summary>
-    /// �������� ����������� �����.
-    /// </summary>
-    /// <param name="position"></param>
-    private void MoveToPosition(Vector2 position)
+    public void MoveTo(Vector2Int targetPosition)
     {
-        if (_path == null || _currentWaypoint >= _path.vectorPath.Count) return;
+        Vector2Int startPosition = new Vector2Int(
+            Mathf.RoundToInt(transform.position.x),
+            Mathf.RoundToInt(transform.position.y)
+        );
 
-        Vector2 targetPos = (Vector2)_path.vectorPath[_currentWaypoint];
+        currentPath = Pathfinding.FindPath(startPosition, targetPosition);
+        pathIndex = 0;
 
-        // Проверяем, находится ли точка пути на земле
-        if (!IsGrounded(targetPos))
+        if (currentPath != null)
+            FollowPath();
+    }
+
+    private IEnumerator FollowPath()
+    {
+        while (pathIndex < currentPath.Count)
         {
-            Debug.Log("Точка пути недоступна, пропускаем её!");
-            _currentWaypoint++;
-            return;
-        }
+            Vector3 targetWorldPos = new Vector3(
+                currentPath[pathIndex].x,
+                currentPath[pathIndex].y,
+                0
+            );
 
-        Vector2 direction = (targetPos - (Vector2)transform.position);
+            while (transform.position != targetWorldPos)
+            {
+                transform.position = Vector3.MoveTowards(
+                    transform.position,
+                    targetWorldPos,
+                    _speed * Time.deltaTime
+                );
+                yield return null;
+            }
 
-        if (Physics2D.Raycast(transform.position, direction, obstacleCheckDistance, obstacleLayer))
-        {
-            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-        }
-        else
-        {
-            transform.position += (Vector3)direction * Time.deltaTime * speed;
-        }
-
-        if (Vector2.Distance(transform.position, targetPos) < nextWaypointDistance)
-        {
-            _currentWaypoint++;
+            pathIndex++;
         }
     }
 
-    
     /// <summary>
     /// ���������� ����� ��������� ����.
     /// </summary>
     /// <param name="target">���� ��� �����.</param>
-    private void AttackBlock(Tile target)
+    private void AtackTarget(IDamagable target)
     {
-        if (target == null) { return; }
-        Vector2 position = new Vector2(target.x, target.y);
+        Vector2Int targetPos = new Vector2Int(
+        Mathf.RoundToInt(target.X),
+        Mathf.RoundToInt(target.Y)
+        );
+
+        if (target == null || CanReachPosition(targetPos)) { return; }
 
         // �������� ���������� �� �����
-        if (Vector2.Distance(transform.position, position) > unitType.AttackRange)
+        if (Vector2.Distance(transform.position, targetPos) > unitType.AttackRange)
         {
             // ���� ������� ������ - ������� �����
-            MoveToPosition(position);
-            return;
+            MoveTo(targetPos);
         }
 
         // �������� �������� �����
         if (Time.time - _lastAttackTime < unitType.AttackCooldown) return;
 
         // ������� � ����
-        if (target.x > transform.position.x)
+        if (target.X > transform.position.x)
         {
             transform.localScale = new Vector3(1, 1, 1);
         }
@@ -127,13 +129,15 @@ public class Unit : MonoBehaviour
         //}
         if (target.CurrentHealth - unitType.DamagePerHit > 0)
         {
-            target.TakeDamage(unitType.DamagePerHit, Owner);
+            target.TakeDamage(unitType.DamagePerHit, Owner, unitType.UnitTypeName);
         }
         else
         {
-            target.TakeDamage(unitType.DamagePerHit, Owner);
+            target.TakeDamage(unitType.DamagePerHit, Owner, unitType.UnitTypeName);
             Target = null;
         }
+
+        Debug.Log(target.CurrentHealth);
 
         _lastAttackTime = Time.time;
     }
@@ -148,16 +152,24 @@ public class Unit : MonoBehaviour
     //    selectionIndicator.SetActive(false);
     //}
 
-    private void OnPathComplete(Path p)
+    public void TakeDamage(int amount, Player Damager, UnitTypeName unitType)
     {
-        if (!p.error)
+        if (unitType == UnitTypeName.Soldier)
         {
-            _path = p;
-            _currentWaypoint = 0;
+            CurrentHealth -= amount * 2;
+        }
+        else
+        {
+            CurrentHealth -= amount / 2;
+        }
+
+        if (CurrentHealth <= 0)
+        {
+            CurrentUnitWork = UnitWork.Dead;
         }
     }
 
-    public Tile Target
+    public IDamagable Target
     {
         get
         {
@@ -168,9 +180,14 @@ public class Unit : MonoBehaviour
             _target = value;
             if (_target != null)
             {
-                Vector3 targetPos = new Vector3(_target.x, _target.y, 0);
-                Seeker.StartPath(transform.position, targetPos, OnPathComplete);
+                AtackTarget(_target);
             }
         }
     }
+
+    public int X => (int)transform.position.x;
+    public int Y => (int)transform.position.y;
+
+    public int CurrentHealth { get; set; }
+
 }

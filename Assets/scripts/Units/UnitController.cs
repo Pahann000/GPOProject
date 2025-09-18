@@ -1,4 +1,3 @@
-using Pathfinding;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,7 +21,7 @@ public class UnitController
     /// заглушка, заставляет юнита бить блок
     /// </summary>
     /// <param name="target"></param>
-    public void CommandUnit(Tile target)
+    public void CommandUnit(IDamagable target)
     {
         Unit selectedUnit = SelectUnit();
         if (!selectedUnit)
@@ -52,17 +51,13 @@ public class UnitController
         Rigidbody2D rb = newUnit.AddComponent<Rigidbody2D>();
         rb.freezeRotation = true;
 
-        Seeker seeker = newUnit.gameObject.AddComponent<Seeker>();
-
         Unit unitObject = newUnit.AddComponent<Unit>();
         unitObject.unitType = unitType;
         unitObject.Owner = owner;
-        unitObject.Seeker = seeker;
         unitObject.rb = rb;
-        unitObject.obstacleLayer = LayerMask.NameToLayer("Terrain");
 
         newUnit.transform.position = position;
 
-        _units.Add(newUnit.GetComponent<Unit>());
+        _units.Add(unitObject);
     }
 }

@@ -6,6 +6,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "UnitType", menuName = "Unit type")]
 public class UnitType : ScriptableObject
 {
+    public int Health;
     /// <summary>
     /// Скорость передвижения.
     /// </summary>

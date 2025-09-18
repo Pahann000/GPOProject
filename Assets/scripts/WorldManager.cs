@@ -1,14 +1,11 @@
 using UnityEngine;
-using Pathfinding;
 
 /// <summary>
 /// ����� ��� ��������� ����� ����.
 /// </summary>
 public class WorldManager : MonoBehaviour
 {
-    private AstarPath _astarPath;
-
-    [SerializeField]private TileAtlas atlas;
+    [SerializeField]private BlockAtlas atlas;
     [SerializeField]private Material atlasMaterial;
     /// <summary>
     /// ������ �������� ���� ����.
@@ -80,7 +77,6 @@ public class WorldManager : MonoBehaviour
         _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
         _goldNoise = GenerateNoiseTexture(GoldFrequency, GoldSize);
         GenerateTerrain();
-        PlaceAStarGrid(0, 0);
     }
 
     private Map GenerateMapObject()
@@ -97,22 +93,22 @@ public class WorldManager : MonoBehaviour
     /// </summary>
     private void GenerateTerrain()
     {
-        for (int x = 0; x < _worldNoise.width; x++)
+        for (int x = 0; x < WorldWidth * chunkSize; x++)
         {
             float height = Mathf.PerlinNoise((x + Seed) * TerrainFreq, Seed * TerrainFreq) * HighMultiplier + HighAddition;
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < height*chunkSize; y++)
             {
-                TileType type = TileType.Air;
+                BlockType type = BlockType.Air;
                 if (_goldNoise.GetPixel(x, y).r > 0.5f)
                 {
-                    type = TileType.Gold;
+                    type = BlockType.Gold;
                 }
                 else if (_worldNoise.GetPixel(x, y).r > 0.5f)
                 {
-                    type = TileType.Stone;
+                    type = BlockType.Stone;
                 }
 
-                Map.Instance.SetTile(x, y, type);
+                Map.Instance.PlaceBlock(x, y, type);
             }
         }
     }
@@ -145,43 +141,5 @@ public class WorldManager : MonoBehaviour
         noise.Apply();
 
         return noise;
-    }
-
-    private void PlaceAStarGrid(float x, float y)
-    {
-        GameObject aStar = new GameObject("A*");
-        aStar.transform.position = new Vector3(x, y, 0);
-
-        AstarPath pathfinder = aStar.AddComponent<AstarPath>();
-
-        GridGraph gridGraph = pathfinder.data.AddGraph(typeof(GridGraph)) as GridGraph;
-
-        gridGraph.is2D = true;
-
-        // Êîíôèãóðàöèÿ ãðàôà
-        gridGraph.SetDimensions(
-            Mathf.CeilToInt(WorldWidth * chunkSize),
-            Mathf.CeilToInt(WorldHigh * chunkSize),
-            1f
-        );
-
-        gridGraph.center = new Vector3(
-            (WorldWidth * chunkSize) / 2f,
-            (WorldHigh * chunkSize) / 2f,
-            0
-        );
-
-        gridGraph.collision.use2D = true;
-        gridGraph.collision.type = ColliderType.Ray;
-        gridGraph.collision.thickRaycast = true;
-        gridGraph.collision.diameter = 1f;
-
-        gridGraph.maxClimb = 1;
-        gridGraph.maxSlope = 90;
-
-        // Ñêàíèðóåì
-        pathfinder.Scan();
-
-        _astarPath = pathfinder;
     }
 }

@@ -19,11 +19,11 @@ public class Map : MonoBehaviour
 
     [Header("Settings")]
     public int chunkSize = 16;
-    public TileAtlas atlas;
+    public BlockAtlas atlas;
     public Material atlasMaterial;
 
     private Dictionary<Vector2Int, MapChunk> _chunks = new Dictionary<Vector2Int, MapChunk>();
-    private Dictionary<Vector2Int, Tile> _tileData = new Dictionary<Vector2Int, Tile>();
+    private Dictionary<Vector2Int, Block> _tileData = new Dictionary<Vector2Int, Block>();
 
     void Awake()
     {
@@ -31,7 +31,7 @@ public class Map : MonoBehaviour
         transform.position = Vector3.zero;
     }
 
-    public void SetTile(int x, int y, TileType type)
+    public void PlaceBlock(int x, int y, BlockType type)
     {
         Vector2Int pos = new Vector2Int(x, y);
         Vector2Int chunkPos = GetChunkPosition(x, y);
@@ -42,14 +42,14 @@ public class Map : MonoBehaviour
             _chunks.Add(chunkPos, chunk);
         }
 
-        _tileData[pos] = new Tile(new TileData(type), this, x, y);
+        _tileData[pos] = new Block(new BlockData(type), this, x, y);
         chunk.needsUpdate = true;
     }
 
-    public Tile GetTile(int x, int y)
+    public Block GetBlock(int x, int y)
     {
         Vector2Int pos = new Vector2Int(x, y);
-        return _tileData.TryGetValue(pos, out Tile data) ? data : new Tile(new TileData(TileType.Air), this, x, y);
+        return _tileData.TryGetValue(pos, out Block data) ? data : new Block(new BlockData(BlockType.Air), this, x, y);
     }
 
     private MapChunk CreateChunk(Vector2Int chunkPos)

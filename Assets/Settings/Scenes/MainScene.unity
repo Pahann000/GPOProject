@@ -363,17 +363,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdf907ff006c8444aa97ef96a84a2891, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  atlas: {fileID: 11400000, guid: 9fc08f2512f05414a9e56efa8ae542f5, type: 2}
+  atlas: {fileID: 11400000, guid: 9035713f356193c4a91f63e279b97d6d, type: 2}
   atlasMaterial: {fileID: 2100000, guid: e2722fc755d33e64cb7173d0ac419d2c, type: 2}
   CaveSize: 0.3
   CaveFreq: 0.04
-  TerrainFreq: 0.03
-  HighMultiplier: 10
+  TerrainFreq: 0.04
+  HighMultiplier: 1
   Seed: 345.71
   chunkSize: 16
-  WorldWidth: 30
-  WorldHigh: 20
-  HighAddition: 200
+  WorldWidth: 10
+  WorldHigh: 10
+  HighAddition: 5
   GoldFrequency: 0.08
   GoldSize: 0.8
 --- !u!4 &1252822904
@@ -455,7 +455,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 100
+  orthographic size: 10
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2

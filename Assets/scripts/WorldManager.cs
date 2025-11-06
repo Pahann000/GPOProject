@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -15,6 +16,8 @@ public class WorldManager : MonoBehaviour
     /// ������ �������� ���� ������.
     /// </summary>
     private Texture2D _goldNoise;
+
+    private Dictionary<Texture2D, BlockType> Noises = new();
 
     [Header("Noise settings")]
     /// <summary>
@@ -48,7 +51,7 @@ public class WorldManager : MonoBehaviour
     /// <summary>
     /// ������ ���� � ������.
     /// </summary>
-    public int WorldWidth = 10;
+    public int WorldWidth = 100;
     /// <summary>
     /// ������ ���� � ������.
     /// </summary>
@@ -76,7 +79,11 @@ public class WorldManager : MonoBehaviour
         Seed = Random.Range(-100000, 100000);
         _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
         _goldNoise = GenerateNoiseTexture(GoldFrequency, GoldSize);
-        GenerateTerrain();
+
+        Noises.Add(_goldNoise, BlockType.Gold);
+        Noises.Add(_worldNoise, BlockType.Stone);
+
+        UpdateAllChunks();
     }
 
     private Map GenerateMapObject()
@@ -85,30 +92,21 @@ public class WorldManager : MonoBehaviour
         Map map = MapGameObject.AddComponent<Map>();
         map.atlas = atlas;
         map.atlasMaterial = atlasMaterial;
+        map.Noises = Noises;
         return map;
     }
 
     /// <summary>
     /// ���������� ����������� � ����������� ����� ���� � ����.
     /// </summary>
-    private void GenerateTerrain()
+    private void UpdateAllChunks()
     {
         for (int x = 0; x < WorldWidth * chunkSize; x++)
         {
             float height = Mathf.PerlinNoise((x + Seed) * TerrainFreq, Seed * TerrainFreq) * HighMultiplier + HighAddition;
             for (int y = 0; y < height*chunkSize; y++)
             {
-                BlockType type = BlockType.Air;
-                if (_goldNoise.GetPixel(x, y).r > 0.5f)
-                {
-                    type = BlockType.Gold;
-                }
-                else if (_worldNoise.GetPixel(x, y).r > 0.5f)
-                {
-                    type = BlockType.Stone;
-                }
-
-                Map.Instance.PlaceBlock(x, y, type);
+                Map.Instance.GenerateChunk(x, y);
             }
         }
     }

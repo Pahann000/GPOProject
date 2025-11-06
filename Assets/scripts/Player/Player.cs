@@ -17,8 +17,7 @@ public class Player : MonoBehaviour
     void Awake()
     {
         Resources.Add("Gold", 10);
-        _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(10, 250));
-        _unitController.PlaceUnit(unitAtlas.Miner, new Player(), new Vector2(10, 250));
+        _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(10, 150));
     }
 
     // Update is called once per frame
@@ -39,7 +38,7 @@ public class Player : MonoBehaviour
     private void SelectTarget(Vector2 position)
     {
         IDamagable target = null;
-        Block selectedBlock = Map.Instance.GetBlock(((int)position.x), ((int)position.y));
+        Block selectedBlock = Map.Instance.GetBlockObj(((int)position.x), ((int)position.y));
 
         if (selectedBlock.tileData.type != BlockType.Air)
         {

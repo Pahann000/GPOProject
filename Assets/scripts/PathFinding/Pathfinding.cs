@@ -11,23 +11,18 @@ public static class Pathfinding
         public int HCost { get; set; } // Эвристическое расстояние до цели
         public int FCost => GCost + HCost;
         public Node Parent { get; set; }
-        public bool IsWalkable { get; }
 
-        public Node(int x, int y, bool isWalkable)
+        public Node(int x, int y)
         {
             X = x;
             Y = y;
-            IsWalkable = isWalkable;
         }
     }
 
     public static List<Vector2Int> FindPath(Vector2Int start, Vector2Int target)
     {
-        Node startNode = new Node(start.x, start.y, IsWalkable(start.x, start.y));
-        Node targetNode = new Node(target.x, target.y, IsWalkable(target.x, target.y));
-
-        if (!startNode.IsWalkable || !targetNode.IsWalkable)
-            return null;
+        Node startNode = new Node(start.x, start.y);
+        Node targetNode = new Node(target.x, target.y+1);
 
         List<Node> openSet = new List<Node>();
         HashSet<Vector2Int> closedSet = new HashSet<Vector2Int>();
@@ -53,7 +48,7 @@ public static class Pathfinding
 
             foreach (Node neighbour in GetNeighbours(currentNode))
             {
-                if (!neighbour.IsWalkable || closedSet.Contains(new Vector2Int(neighbour.X, neighbour.Y)))
+                if (closedSet.Contains(new Vector2Int(neighbour.X, neighbour.Y)))
                     continue;
 
                 int newMovementCostToNeighbour = currentNode.GCost + GetDistance(currentNode, neighbour);
@@ -64,7 +59,9 @@ public static class Pathfinding
                     neighbour.Parent = currentNode;
 
                     if (!openSet.Contains(neighbour))
+                    {
                         openSet.Add(neighbour);
+                    }
                 }
             }
         }
@@ -85,13 +82,10 @@ public static class Pathfinding
             int checkX = node.X + dx[i];
             int checkY = node.Y + dy[i];
 
-            if (checkX >= 0 && checkY >= 0)
+            if (checkX >= 0 && checkY >= 0 && IsWalkable(checkX, checkY))
             {
-                neighbours.Add(new Node(
-                    checkX,
-                    checkY,
-                    IsWalkable(checkX, checkY)
-                ));
+                Node neighbour = new Node(checkX, checkY);
+                neighbours.Add(neighbour);
             }
         }
 
@@ -121,7 +115,11 @@ public static class Pathfinding
 
     private static bool IsWalkable(int x, int y)
     {
-        Block block = Map.Instance.GetBlock(x, y);
-        return block != null && block.tileData.type == BlockType.Air;
+        Block block = Map.Instance.GetBlockInfo(x, y);
+        Block blockUnder = Map.Instance.GetBlockInfo(x, y - 1);
+        Block blockUnderUnder = Map.Instance.GetBlockInfo(x, y - 2);
+
+        return block != null && block.tileData.type == BlockType.Air && 
+            (blockUnder.tileData.type != BlockType.Air || blockUnderUnder.tileData.type != BlockType.Air);
     }
 }

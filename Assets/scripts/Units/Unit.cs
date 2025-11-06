@@ -1,156 +1,105 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Unit : MonoBehaviour, IDamagable
 {
-    private List<Vector2Int> currentPath;
-    private int pathIndex;
-    private float _jumpForce = 20f; // Сила прыжка
-    private float _speed = 2f; // Скорость передвижения
-
-    public Rigidbody2D rb; // Физика юнита
-
-    [Header("Unit Settings")]
-    /// <summary>
-    /// ��� �����.
-    /// </summary>
-    public UnitType unitType;
-
-    //public Animator animator;
-    //public GameObject selectionIndicator;
-
-    /// <summary>
-    /// ���� �����.
-    /// </summary>
+    private float _speed = 2f;
+    private float _jumpForce = 8f;
     private IDamagable _target;
-    /// <summary>
-    /// ����� ���������� �����.
-    /// </summary>
-    private float _lastAttackTime;
-    /// <summary>
-    /// ������� ������ �����.
-    /// </summary>
+    private Coroutine _currentAction;
+
+    public Rigidbody2D rb;
+    public UnitType unitType;
     public Player Owner;
 
+    public int X => (int)transform.position.x;
+    public int Y => (int)transform.position.y;
+    public int CurrentHealth { get; set; }
     public UnitWork CurrentUnitWork { get; private set; }
 
-    public Vector2Int CurrentGridPosition
+    /// <summary>
+    /// Начать последовательность: движение -> атака
+    /// </summary>
+    private void SetTarget(IDamagable target)
     {
-        get
+        if (_currentAction != null)
         {
-            return new Vector2Int(
-                Mathf.RoundToInt(transform.position.x),
-                Mathf.RoundToInt(transform.position.y)
-            );
+            StopCoroutine(_currentAction);
+        }
+
+        _target = target;
+        _currentAction = StartCoroutine(Attack());
+    }
+
+    private IEnumerator Attack()
+    {
+        while (_target != null && _target.CurrentHealth > 0)
+        {
+            yield return StartCoroutine(PerformAttack());
+            yield return new WaitForSeconds(unitType.AttackCooldown);
         }
     }
 
-    public bool CanReachPosition(Vector2Int targetGridPosition)
+    private IEnumerator MoveToTarget()
     {
-        return Pathfinding.FindPath(CurrentGridPosition, targetGridPosition) != null;
-    }
+        CurrentUnitWork = UnitWork.Moving;
 
-    public void MoveTo(Vector2Int targetPosition)
-    {
-        Vector2Int startPosition = new Vector2Int(
-            Mathf.RoundToInt(transform.position.x),
-            Mathf.RoundToInt(transform.position.y)
+        Vector2Int targetPos = new Vector2Int(_target.X, _target.Y);
+        List<Vector2Int> path = Pathfinding.FindPath(
+            new Vector2Int(X, Y),
+            targetPos
         );
 
-        currentPath = Pathfinding.FindPath(startPosition, targetPosition);
-        pathIndex = 0;
-
-        if (currentPath != null)
-            FollowPath();
-    }
-
-    private IEnumerator FollowPath()
-    {
-        while (pathIndex < currentPath.Count)
+        if (path == null)
         {
-            Vector3 targetWorldPos = new Vector3(
-                currentPath[pathIndex].x,
-                currentPath[pathIndex].y,
-                0
-            );
-
-            while (transform.position != targetWorldPos)
+            CurrentUnitWork = UnitWork.Idle;
+            _target = null;
+            yield break;
+        }
+        foreach (Vector2 point in path)
+        {
+            Vector3 direction = Vector2.right;
+            if (point.x <= X)
             {
-                transform.position = Vector3.MoveTowards(
-                    transform.position,
-                    targetWorldPos,
-                    _speed * Time.deltaTime
-                );
-                yield return null;
+                direction = Vector2.left;
             }
 
-            pathIndex++;
+            if(point.y > Y)
+            {
+                transform.Translate(_speed * Time.deltaTime * direction);
+            }
+
+            while (Vector3.Distance(transform.position, point) > 1.5f)
+            {
+                transform.Translate(_speed * Time.deltaTime * direction);
+
+                yield return null;
+            }
         }
     }
 
-    /// <summary>
-    /// ���������� ����� ��������� ����.
-    /// </summary>
-    /// <param name="target">���� ��� �����.</param>
-    private void AtackTarget(IDamagable target)
+    private IEnumerator PerformAttack()
     {
-        Vector2Int targetPos = new Vector2Int(
-        Mathf.RoundToInt(target.X),
-        Mathf.RoundToInt(target.Y)
-        );
+        CurrentUnitWork = UnitWork.Attacking;
 
-        if (target == null || CanReachPosition(targetPos)) { return; }
-
-        // �������� ���������� �� �����
-        if (Vector2.Distance(transform.position, targetPos) > unitType.AttackRange)
+        if (Vector2.Distance(transform.position, new Vector2(_target.X, _target.Y)) > unitType.AttackRange)
         {
-            // ���� ������� ������ - ������� �����
-            MoveTo(targetPos);
-        }
-
-        // �������� �������� �����
-        if (Time.time - _lastAttackTime < unitType.AttackCooldown) return;
-
-        // ������� � ����
-        if (target.X > transform.position.x)
-        {
-            transform.localScale = new Vector3(1, 1, 1);
+            yield return StartCoroutine(MoveToTarget());
         }
         else
         {
-            transform.localScale = new Vector3(-1, 1, 1);
+            _target.TakeDamage(unitType.DamagePerHit, Owner, unitType.UnitTypeName);
+            Debug.Log(_target.CurrentHealth);
+            if (_target.CurrentHealth <= 0)
+            {
+                _target = null;
+                CurrentUnitWork = UnitWork.Idle;
+            }
         }
 
-        //// �������� �����
-        //if (animator != null)
-        //{
-        //    animator.SetTrigger("Attack");
-        //}
-        if (target.CurrentHealth - unitType.DamagePerHit > 0)
-        {
-            target.TakeDamage(unitType.DamagePerHit, Owner, unitType.UnitTypeName);
-        }
-        else
-        {
-            target.TakeDamage(unitType.DamagePerHit, Owner, unitType.UnitTypeName);
-            Target = null;
-        }
-
-        Debug.Log(target.CurrentHealth);
-
-        _lastAttackTime = Time.time;
     }
-
-    //public void Select()
-    //{
-    //    selectionIndicator.SetActive(true);
-    //}
-
-    //public void Deselect()
-    //{
-    //    selectionIndicator.SetActive(false);
-    //}
 
     public void TakeDamage(int amount, Player Damager, UnitTypeName unitType)
     {
@@ -171,23 +120,7 @@ public class Unit : MonoBehaviour, IDamagable
 
     public IDamagable Target
     {
-        get
-        {
-            return _target;
-        }
-        set
-        {
-            _target = value;
-            if (_target != null)
-            {
-                AtackTarget(_target);
-            }
-        }
+        get => _target;
+        set => SetTarget(value);
     }
-
-    public int X => (int)transform.position.x;
-    public int Y => (int)transform.position.y;
-
-    public int CurrentHealth { get; set; }
-
 }

@@ -48,7 +48,7 @@ public class MapChunk : MonoBehaviour
             for (int y = 0; y < _chunkSize; y++)
             {
                 Vector2Int worldPos = GetWorldPosition(x, y);
-                Block tile = Map.Instance.GetBlock(worldPos.x, worldPos.y);
+                Block tile = Map.Instance.GetBlockInfo(worldPos.x, worldPos.y);
 
                 if (tile.tileData.type == BlockType.Air) 
                 {

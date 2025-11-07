@@ -87,7 +87,7 @@ public class Map : MonoBehaviour
         return chunk;
     }
 
-    private Vector2Int GetChunkPosition(int x, int y)
+    public Vector2Int GetChunkPosition(int x, int y)
     {
         return new Vector2Int(
             Mathf.FloorToInt(x / (float)chunkSize),
@@ -97,7 +97,7 @@ public class Map : MonoBehaviour
 
     public void GenerateChunk(int x, int y)
     {
-        Vector2Int chunkPos = GetChunkPosition(x, y);
+        Vector2Int chunkPos = new Vector2Int(x, y);
         if (!_chunks.TryGetValue(chunkPos, out MapChunk chunk))
         {
             chunk = CreateChunk(chunkPos);
@@ -109,9 +109,10 @@ public class Map : MonoBehaviour
 
     public void DestroyChunk(int x, int y)
     {
-        Vector2Int chunkPos = GetChunkPosition(x, y);
+        Vector2Int chunkPos = new Vector2Int(x, y);
         if (_chunks.TryGetValue(chunkPos, out MapChunk chunk))
         {
+            _chunks.Remove(chunkPos);
             Destroy(chunk.gameObject);
         }
     }

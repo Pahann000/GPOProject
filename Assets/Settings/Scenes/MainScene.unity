@@ -372,7 +372,7 @@ MonoBehaviour:
   Seed: 345.71
   chunkSize: 16
   WorldWidth: 100
-  WorldHigh: 100
+  WorldHeight: 100
   HighAddition: 70
   GoldFrequency: 0.08
   GoldSize: 0.8
@@ -455,7 +455,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 10
+  orthographic size: 50
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2

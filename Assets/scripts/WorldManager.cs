@@ -1,3 +1,4 @@
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -55,7 +56,7 @@ public class WorldManager : MonoBehaviour
     /// <summary>
     /// ������ ���� � ������.
     /// </summary>
-    public int WorldHigh = 100;
+    public int WorldHeight = 100;
     /// <summary>
     /// ������ ����������� � �������. 
     /// </summary>
@@ -83,7 +84,7 @@ public class WorldManager : MonoBehaviour
         Noises.Add(_goldNoise, BlockType.Gold);
         Noises.Add(_worldNoise, BlockType.Stone);
 
-        UpdateAllChunks();
+        GenerateChunkManager();
     }
 
     private Map GenerateMapObject()
@@ -96,17 +97,23 @@ public class WorldManager : MonoBehaviour
         return map;
     }
 
+    private ChunkManager GenerateChunkManager()
+    {
+        GameObject chunkManagerGameObject = new GameObject("ChunkManager");
+        ChunkManager chunkManager = chunkManagerGameObject.AddComponent<ChunkManager>();
+        return chunkManager;
+    }
+
     /// <summary>
     /// ���������� ����������� � ����������� ����� ���� � ����.
     /// </summary>
-    private void UpdateAllChunks()
+    private void GenerateAllChunks()
     {
-        for (int x = 0; x < WorldWidth * chunkSize; x++)
+        for (int x = 0; x < WorldWidth * 2; x++)
         {
-            float height = Mathf.PerlinNoise((x + Seed) * TerrainFreq, Seed * TerrainFreq) * HighMultiplier + HighAddition;
-            for (int y = 0; y < height*chunkSize; y++)
+            for (int y = 0; y < WorldHeight * 2; y++)
             {
-                Map.Instance.GenerateChunk(x, y);
+                Map.Instance.GenerateChunk(x * chunkSize, y * chunkSize);
             }
         }
     }
@@ -118,7 +125,7 @@ public class WorldManager : MonoBehaviour
     /// <returns>Texture2D</returns>
     private Texture2D GenerateNoiseTexture(float frequency, float limit)
     {
-        Texture2D noise = new Texture2D(WorldWidth * chunkSize, WorldHigh * chunkSize);
+        Texture2D noise = new Texture2D(WorldWidth * chunkSize, WorldHeight * chunkSize);
         for (int x = 0; x < noise.width; x++)
         {
             for (int y = 0; y < noise.height; y++)

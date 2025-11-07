@@ -1,12 +1,11 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Unit : MonoBehaviour, IDamagable
+public class Unit : MonoBehaviour, IDamagable, IChunkObserver
 {
     private float _speed = 2f;
-    private float _jumpForce = 8f;
+    //private float _jumpForce = 8f;
     private IDamagable _target;
     private Coroutine _currentAction;
 
@@ -15,9 +14,21 @@ public class Unit : MonoBehaviour, IDamagable
     public Player Owner;
 
     public int X => (int)transform.position.x;
+
     public int Y => (int)transform.position.y;
+
     public int CurrentHealth { get; set; }
+
     public UnitWork CurrentUnitWork { get; private set; }
+
+    public IDamagable Target
+    {
+        get => _target;
+        set => SetTarget(value);
+    }
+
+    private void Start() => ChunkManager.Instance.RegisterObserver(this);
+    private void OnDestroy() => ChunkManager.Instance.UnregisterObserver(this);
 
     /// <summary>
     /// Начать последовательность: движение -> атака
@@ -98,7 +109,6 @@ public class Unit : MonoBehaviour, IDamagable
                 CurrentUnitWork = UnitWork.Idle;
             }
         }
-
     }
 
     public void TakeDamage(int amount, Player Damager, UnitTypeName unitType)
@@ -116,11 +126,5 @@ public class Unit : MonoBehaviour, IDamagable
         {
             CurrentUnitWork = UnitWork.Dead;
         }
-    }
-
-    public IDamagable Target
-    {
-        get => _target;
-        set => SetTarget(value);
     }
 }

@@ -1,5 +1,6 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 public class MapChunk : MonoBehaviour
 {
@@ -29,12 +30,12 @@ public class MapChunk : MonoBehaviour
     {
         if (needsUpdate)
         {
-            RebuildMesh();
+            StartCoroutine(RebuildMesh());
             needsUpdate = false;
         }
     }
 
-    public void RebuildMesh()
+    private IEnumerator RebuildMesh()
     {
         Mesh mesh = new Mesh();
         List<Vector3> vertices = new List<Vector3>();
@@ -57,8 +58,9 @@ public class MapChunk : MonoBehaviour
                 }
                 
                 AddTileMesh(x, y, tile.tileData.type, ref vertices, ref triangles, ref uv, ref triangleIndex);
-                GenerateCollider(worldPos);
+                StartCoroutine(GenerateCollider(worldPos));
             }
+            yield return null;
         }
 
         mesh.vertices = vertices.ToArray();
@@ -67,9 +69,11 @@ public class MapChunk : MonoBehaviour
         mesh.RecalculateNormals();
 
         _meshFilter.mesh = mesh;
+
+        yield return null;
     }
 
-    private void DestroyCollider(Vector2Int worldPos)
+    private IEnumerator DestroyCollider(Vector2Int worldPos)
     {
         if (_colliders.ContainsKey(worldPos))
         {
@@ -77,11 +81,12 @@ public class MapChunk : MonoBehaviour
             _colliders.Remove(worldPos);
             Destroy(ColliderGameObject);
         }
+        yield return null;
     }
 
-    private void GenerateCollider(Vector2Int worldPos)
+    private IEnumerator GenerateCollider(Vector2Int worldPos)
     {
-        if (_colliders.ContainsKey(worldPos)) { return; }
+        if (_colliders.ContainsKey(worldPos)) { yield return null; }
 
         GameObject colliderObj = new GameObject("ChunkCollider");
         colliderObj.transform.parent = transform;
@@ -94,11 +99,13 @@ public class MapChunk : MonoBehaviour
         colliderObj.layer = LayerMask.NameToLayer("Terrain");
 
         _colliders.Add(worldPos, collider);
+
+        yield return null;
     }
 
     private void AddTileMesh(int x, int y, BlockType type, ref List<Vector3> vertices, ref List<int> triangles, ref List<Vector2> uv, ref int triangleIndex)
     {
-        // Меш генерация для одного тайла
+        // РњРµС€ РіРµРЅРµСЂР°С†РёСЏ РґР»СЏ РѕРґРЅРѕРіРѕ С‚Р°Р№Р»Р°
         Vector3[] tileVertices = {
             new Vector3(x, y),
             new Vector3(x + 1, y),
@@ -115,7 +122,7 @@ public class MapChunk : MonoBehaviour
         triangles.Add(triangleIndex + 2);
         triangles.Add(triangleIndex + 3);
 
-        // UV из атласа
+        // UV РёР· Р°С‚Р»Р°СЃР°
         Rect texCoords = _atlas.GetUV(type);
 
         uv.Add(new Vector2(texCoords.xMin, texCoords.yMin));

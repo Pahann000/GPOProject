@@ -9,8 +9,7 @@ public class MapChunk : MonoBehaviour
     private MeshFilter _meshFilter;
     private int _chunkSize;
     private BlockAtlas _atlas;
-    private CompositeCollider2D _collider;
-    private Dictionary<Vector2Int, Collider2D> _colliders = new();
+    private Transform _collidersParent;
 
     public void Init(int chunkSize, BlockAtlas atlas, Material material)
     {
@@ -20,10 +19,12 @@ public class MapChunk : MonoBehaviour
         _meshFilter = gameObject.AddComponent<MeshFilter>();
         MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
         renderer.material = material;
-        _collider = gameObject.AddComponent<CompositeCollider2D>();
-        _collider.generationType = CompositeCollider2D.GenerationType.Synchronous;
 
-        gameObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
+        // Создаем родительский объект для коллайдеров (как в первом примере)
+        _collidersParent = new GameObject("Colliders").transform;
+        _collidersParent.parent = transform;
+        _collidersParent.localPosition = Vector3.zero;
+
     }
 
     void LateUpdate()
@@ -53,12 +54,10 @@ public class MapChunk : MonoBehaviour
 
                 if (tile.tileData.type == BlockType.Air) 
                 {
-                    DestroyCollider(worldPos);
                     continue;
                 }
                 
                 AddTileMesh(x, y, tile.tileData.type, ref vertices, ref triangles, ref uv, ref triangleIndex);
-                StartCoroutine(GenerateCollider(worldPos));
             }
             yield return null;
         }
@@ -70,37 +69,95 @@ public class MapChunk : MonoBehaviour
 
         _meshFilter.mesh = mesh;
 
+        RebuildColliders();
+
         yield return null;
     }
 
-    private IEnumerator DestroyCollider(Vector2Int worldPos)
+    private void RebuildColliders()
     {
-        if (_colliders.ContainsKey(worldPos))
+        // Очищаем старые коллайдеры
+        foreach (Transform child in _collidersParent)
         {
-            GameObject ColliderGameObject = _colliders[worldPos].gameObject;
-            _colliders.Remove(worldPos);
-            Destroy(ColliderGameObject);
+            Destroy(child.gameObject);
         }
-        yield return null;
+
+        // Создаем карту блоков для чанка
+        bool[,] solidMap = new bool[_chunkSize, _chunkSize];
+        for (int x = 0; x < _chunkSize; x++)
+        {
+            for (int y = 0; y < _chunkSize; y++)
+            {
+                Vector2Int worldPos = GetWorldPosition(x, y);
+                Block tile = Map.Instance.GetBlockInfo(worldPos.x, worldPos.y);
+                solidMap[x, y] = (tile.tileData.type != BlockType.Air);
+            }
+        }
+
+        // Сканируем построчно и создаем объединенные коллайдеры
+        for (int y = 0; y < _chunkSize; y++)
+        {
+            GameObject rowCollider = new GameObject("RowCollider_" + y);
+            rowCollider.transform.parent = _collidersParent;
+            rowCollider.layer = LayerMask.NameToLayer("Terrain");
+            rowCollider.transform.localPosition = Vector3.zero;
+
+            int currentSegmentStart = -1;
+            int currentSegmentWidth = 0;
+
+            for (int x = 0; x < _chunkSize; x++)
+            {
+                // Если блок твердый
+                if (solidMap[x, y])
+                {
+                    // Если сегмент еще не начат, начинаем новый
+                    if (currentSegmentStart == -1)
+                    {
+                        currentSegmentStart = x;
+                        currentSegmentWidth = 1;
+                    }
+                    else
+                    {
+                        // Продолжаем существующий сегмент
+                        currentSegmentWidth++;
+                    }
+                }
+                else
+                {
+                    // Если встретили воздух и у нас есть активный сегмент
+                    if (currentSegmentStart != -1)
+                    {
+                        // Завершаем текущий сегмент
+                        CreateSegmentCollider(rowCollider, currentSegmentStart, y, currentSegmentWidth);
+                        currentSegmentStart = -1;
+                        currentSegmentWidth = 0;
+                    }
+                }
+            }
+
+            // Завершаем сегмент в конце строки, если он есть
+            if (currentSegmentStart != -1)
+            {
+                CreateSegmentCollider(rowCollider, currentSegmentStart, y, currentSegmentWidth);
+            }
+        }
     }
 
-    private IEnumerator GenerateCollider(Vector2Int worldPos)
+    private void CreateSegmentCollider(GameObject parent, int startX, int y, int width)
     {
-        if (_colliders.ContainsKey(worldPos)) { yield return null; }
+        GameObject segmentObj = new GameObject($"Segment_{startX}_{y}");
+        segmentObj.transform.parent = parent.transform;
+        segmentObj.layer = parent.layer;
 
-        GameObject colliderObj = new GameObject("ChunkCollider");
-        colliderObj.transform.parent = transform;
-        colliderObj.transform.position = (Vector2)worldPos + new Vector2(0.5f, 0.5f);
+        BoxCollider2D collider = segmentObj.AddComponent<BoxCollider2D>();
 
-        var collider = colliderObj.AddComponent<BoxCollider2D>();
-        collider.size = Vector2.one;
-        collider.compositeOperation = Collider2D.CompositeOperation.Merge;
+        // Рассчитываем позицию и размер
+        // центр сегмента: startX + width/2, y + 0.5f
+        collider.offset = new Vector2(width * 0.5f, 0.5f);
+        collider.size = new Vector2(width, 1f);
 
-        colliderObj.layer = LayerMask.NameToLayer("Terrain");
-
-        _colliders.Add(worldPos, collider);
-
-        yield return null;
+        // Позиционируем в начале сегмента
+        segmentObj.transform.localPosition = new Vector3(startX, y, 0);
     }
 
     private void AddTileMesh(int x, int y, BlockType type, ref List<Vector3> vertices, ref List<int> triangles, ref List<Vector2> uv, ref int triangleIndex)

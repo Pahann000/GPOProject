@@ -36,7 +36,9 @@ public class Map : MonoBehaviour
     {
         Vector2Int pos = new Vector2Int(x, y);
         _tileData[pos] = new Block(new BlockData(type), this, x, y);
-        GenerateChunk(x, y);
+
+        Vector2Int chunkPos = GetChunkPosition(x, y);
+        GenerateChunk(chunkPos.x, chunkPos.y);
     }
 
     public Block GetBlockObj(int x, int y)

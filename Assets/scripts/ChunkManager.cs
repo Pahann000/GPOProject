@@ -4,14 +4,14 @@ using UnityEngine;
 public class ChunkManager : MonoBehaviour
 {
     private static ChunkManager _instance;
-    [SerializeField] private int LoadingRadius = 1;
+    [SerializeField] private int LoadingRadius = 2;
     private HashSet<Vector2Int> _requiredChunks = new HashSet<Vector2Int>();
     private HashSet<Vector2Int> _loadedChunks = new HashSet<Vector2Int>();
     private List<IChunkObserver> _observers = new List<IChunkObserver>();
 
-    public static ChunkManager Instance 
+    public static ChunkManager Instance
     {
-        get{ return _instance; }
+        get { return _instance; }
         private set { _instance = value; }
 
     }
@@ -54,33 +54,37 @@ public class ChunkManager : MonoBehaviour
                 {
                     int ChunkPosX = ObserverPosition.x + x * Map.Instance.chunkSize;
                     int ChunkPosy = ObserverPosition.y + y * Map.Instance.chunkSize;
+
                     Vector2Int newChunkPosition = Map.Instance.GetChunkPosition(ChunkPosX, ChunkPosy);
                     _requiredChunks.Add(newChunkPosition);
-
-                    // Загружаем новые чанки
-                    if (!_loadedChunks.Contains(newChunkPosition))
-                    {
-                        Map.Instance.GenerateChunk(newChunkPosition.x, newChunkPosition.y);
-                        _loadedChunks.Add(newChunkPosition);
-                    }
                 }
             }
+        }
 
-            // Удаляем старые
-            var chunksToRemove = new List<Vector2Int>();
-            foreach (Vector2Int loadedChunk in _loadedChunks)
+        foreach (Vector2Int requiredChunk in _requiredChunks)
+        {
+            // Загружаем новые чанки
+            if (!_loadedChunks.Contains(requiredChunk))
             {
-                if (!_requiredChunks.Contains(loadedChunk))
-                {
-                    chunksToRemove.Add(loadedChunk);
-                }
+                Map.Instance.GenerateChunk(requiredChunk.x, requiredChunk.y);
+                _loadedChunks.Add(requiredChunk);
             }
+        }
 
-            foreach (Vector2Int chunk in chunksToRemove)
+        // Удаляем старые
+        var chunksToRemove = new List<Vector2Int>();
+        foreach (Vector2Int loadedChunk in _loadedChunks)
+        {
+            if (!_requiredChunks.Contains(loadedChunk))
             {
-                _loadedChunks.Remove(chunk);
-                Map.Instance.DestroyChunk(chunk.x, chunk.y);
+                chunksToRemove.Add(loadedChunk);
             }
+        }
+
+        foreach (Vector2Int chunk in chunksToRemove)
+        {
+            _loadedChunks.Remove(chunk);
+            Map.Instance.DestroyChunk(chunk.x, chunk.y);
         }
     }
 }

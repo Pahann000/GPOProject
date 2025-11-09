@@ -94,6 +94,8 @@ public class WorldManager : MonoBehaviour
         map.atlas = atlas;
         map.atlasMaterial = atlasMaterial;
         map.Noises = Noises;
+        map.width = WorldWidth * chunkSize;
+        map.height = WorldHeight * chunkSize;
         return map;
     }
 
@@ -102,20 +104,6 @@ public class WorldManager : MonoBehaviour
         GameObject chunkManagerGameObject = new GameObject("ChunkManager");
         ChunkManager chunkManager = chunkManagerGameObject.AddComponent<ChunkManager>();
         return chunkManager;
-    }
-
-    /// <summary>
-    /// ���������� ����������� � ����������� ����� ���� � ����.
-    /// </summary>
-    private void GenerateAllChunks()
-    {
-        for (int x = 0; x < WorldWidth * 2; x++)
-        {
-            for (int y = 0; y < WorldHeight * 2; y++)
-            {
-                Map.Instance.GenerateChunk(x * chunkSize, y * chunkSize);
-            }
-        }
     }
 
     /// <summary>

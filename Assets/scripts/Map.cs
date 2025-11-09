@@ -21,6 +21,8 @@ public class Map : MonoBehaviour
     public int chunkSize = 16;
     public BlockAtlas atlas;
     public Material atlasMaterial;
+    public int width;
+    public int height;
     public Dictionary<Texture2D, BlockType> Noises;
 
     private Dictionary<Vector2Int, MapChunk> _chunks = new Dictionary<Vector2Int, MapChunk>();
@@ -53,6 +55,11 @@ public class Map : MonoBehaviour
 
     public Block GetBlockInfo(int x, int y)
     {
+        if (x > width || x < 0 || y > height || y < 0)
+        {
+            return new Block(new BlockData(BlockType.Air), this, x, y);
+        }
+
         Vector2Int pos = new Vector2Int(x, y);
         if (_tileData.TryGetValue(pos, out Block data))
         {

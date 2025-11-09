@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// Класс игрока.
 /// </summary>
-public class Player : MonoBehaviour
+public class Player : MonoBehaviour, IChunkObserver
 {
     /// <summary>
     /// Атлас со всеми видами юнитов.
@@ -11,7 +11,15 @@ public class Player : MonoBehaviour
     [SerializeField]private UnitAtlas unitAtlas;
     //[SerializeField] private BuildingAtlas buildingAtlas;
     public ObservableDictionary<string, int> Resources { get; } = new ObservableDictionary<string, int>();
+
+    public int X => (int)this.transform.position.x;
+
+    public int Y => (int)this.transform.position.y;
+
     private UnitController _unitController = new();
+
+    private void Start() => ChunkManager.Instance.RegisterObserver(this);
+    private void OnDestroy() => ChunkManager.Instance.UnregisterObserver(this);
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()

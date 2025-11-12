@@ -1,21 +1,21 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 /// <summary>
-/// Описывает атлас, содержащий типы юнитов.
+/// РћРїРёСЃС‹РІР°РµС‚ Р°С‚Р»Р°СЃ, СЃРѕРґРµСЂР¶Р°С‰РёР№ С‚РёРїС‹ СЋРЅРёС‚РѕРІ.
 /// </summary>
 [CreateAssetMenu(fileName = "UnitAtlas", menuName = "Unit atlas")]
 public class UnitAtlas : ScriptableObject
 {
     /// <summary>
-    /// Шахтёр.
+    /// РЁР°С…С‚С‘СЂ.
     /// </summary>
     public UnitType Miner;
     /// <summary>
-    /// Рабочий.
+    /// Р Р°Р±РѕС‡РёР№.
     /// </summary>
     public UnitType Worker;
     /// <summary>
-    /// солдат.
+    /// СЃРѕР»РґР°С‚.
     /// </summary>
     public UnitType Soldier;
 }

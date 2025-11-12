@@ -1,7 +1,7 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 /// <summary>
-/// Описывает постройку и её повидение. 
+/// РћРїРёСЃС‹РІР°РµС‚ РїРѕСЃС‚СЂРѕР№РєСѓ Рё РµС‘ РїРѕРІРёРґРµРЅРёРµ. 
 /// </summary>
 public class Building : MonoBehaviour
 {
@@ -20,11 +20,11 @@ public class Building : MonoBehaviour
     }
 
     /// <summary>
-    /// Функция производства ресурсов.
+    /// Р¤СѓРЅРєС†РёСЏ РїСЂРѕРёР·РІРѕРґСЃС‚РІР° СЂРµСЃСѓСЂСЃРѕРІ.
     /// </summary>
     private void ProduceResource()
     {
-        // Логика производства ресурсов
+        // Р›РѕРіРёРєР° РїСЂРѕРёР·РІРѕРґСЃС‚РІР° СЂРµСЃСѓСЂСЃРѕРІ
         
     }
 }

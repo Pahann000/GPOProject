@@ -1,34 +1,45 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 /// <summary>
-/// Класс игрока.
+/// РљР»Р°СЃСЃ, РѕР±РµСЃРїРµС‡РёРІР°СЋС‰РёР№ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёРµ РёРіСЂРѕРєР° СЃ РёРіСЂРѕРІС‹Рј РјРёСЂРѕРј.
 /// </summary>
 public class Player : MonoBehaviour, IChunkObserver
 {
-    /// <summary>
-    /// Атлас со всеми видами юнитов.
-    /// </summary>
-    [SerializeField]private UnitAtlas unitAtlas;
-    //[SerializeField] private BuildingAtlas buildingAtlas;
-    public ObservableDictionary<string, int> Resources { get; } = new ObservableDictionary<string, int>();
-
-    public int X => (int)this.transform.position.x;
-
-    public int Y => (int)this.transform.position.y;
-
     private UnitController _unitController = new();
 
     private void Start() => ChunkManager.Instance.RegisterObserver(this);
     private void OnDestroy() => ChunkManager.Instance.UnregisterObserver(this);
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    /// <summary>
+    /// РђС‚Р»Р°СЃ СЃРѕ РІСЃРµРјРё РІРёРґР°РјРё СЋРЅРёС‚РѕРІ.
+    /// </summary>
+    [SerializeField]private UnitAtlas unitAtlas;
+
+    //[SerializeField] private BuildingAtlas buildingAtlas;
+
+    /// <summary>
+    /// РІСЂРµРјРµРЅРЅР°СЏ СЂРµР°Р»РёР·Р°С†РёСЏ РёРЅРІРµРЅС‚Р°СЂСЏ РёРіСЂРѕРєР°.
+    /// </summary>
+    public ObservableDictionary<string, int> Resources { get; } = new ObservableDictionary<string, int>();
+
+    /// <summary>
+    /// РџРѕР»РѕР¶РµРЅРёРµ РёРіСЂРѕРєР° РїРѕ X.
+    /// </summary>
+    public int X => (int)this.transform.position.x;
+
+    /// <summary>
+    /// РџРѕР»РѕР¶РµРЅРёРµ РёРіСЂРѕРєР° РїРѕ X.
+    /// </summary>
+    public int Y => (int)this.transform.position.y;
+
+    /// <inheritdoc/>
     void Awake()
     {
         Resources.Add("Gold", 10);
         _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(10, 150));
     }
 
-    // Update is called once per frame
+    /// <inheritdoc/>
     void Update()
     {
         if (Input.GetMouseButtonDown(0))
@@ -38,11 +49,11 @@ public class Player : MonoBehaviour, IChunkObserver
         }
     }
 
-    //TODO: сделать нормальное выделение, и вообще работу игрока с блоками
+    //TODO: СЃРґРµР»Р°С‚СЊ РЅРѕСЂРјР°Р»СЊРЅРѕРµ РІС‹РґРµР»РµРЅРёРµ, Рё РІРѕРѕР±С‰Рµ СЂР°Р±РѕС‚Сѓ РёРіСЂРѕРєР° СЃ Р±Р»РѕРєР°РјРё
     /// <summary>
-    /// выделяет блок(заглушка заставляющая первого юнита уничтожить блок).
+    /// РІС‹РґРµР»СЏРµС‚ Р±Р»РѕРє(Р·Р°РіР»СѓС€РєР° Р·Р°СЃС‚Р°РІР»СЏСЋС‰Р°СЏ СЋРЅРёС‚Р° СѓРЅРёС‡С‚РѕР¶РёС‚СЊ Р±Р»РѕРє).
     /// </summary>
-    /// <param name="position">Позиция выделяемого блока.</param>
+    /// <param name="position">РџРѕР·РёС†РёСЏ РІС‹РґРµР»СЏРµРјРѕРіРѕ Р±Р»РѕРєР°.</param>
     private void SelectTarget(Vector2 position)
     {
         IDamagable target = null;

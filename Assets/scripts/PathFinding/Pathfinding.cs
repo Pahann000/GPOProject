@@ -1,14 +1,17 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Класс, реализующий поиск пути по карте.
+/// </summary>
 public static class Pathfinding
 {
     private class Node
     {
         public int X { get; }
         public int Y { get; }
-        public int GCost { get; set; } // ���������� �� ������
-        public int HCost { get; set; } // ������������� ���������� �� ����
+        public int GCost { get; set; } // Расстояние от старта
+        public int HCost { get; set; } // Эвристическое расстояние до цели
         public int FCost => GCost + HCost;
         public Node Parent { get; set; }
 
@@ -19,6 +22,15 @@ public static class Pathfinding
         }
     }
 
+    /// <summary>
+    /// Находит путь от start до target.
+    /// </summary>
+    /// <param name="start"> Начальная позиция поиска пути. </param>
+    /// <param name="target"> Цель, до котрой требуется найти путь. </param>
+    /// <returns>
+    /// List<Vector2Int> - путь до цели виде набора векторов.
+    /// null - если путь не найден.
+    /// </returns>
     public static List<Vector2Int> FindPath(Vector2Int start, Vector2Int target)
     {
         Node startNode = new Node(start.x, start.y);
@@ -66,14 +78,14 @@ public static class Pathfinding
             }
         }
 
-        return null; // ���� �� ������
+        return null; // Путь не найден
     }
 
     private static List<Node> GetNeighbours(Node node)
     {
         List<Node> neighbours = new List<Node>();
 
-        // ��������� ������� �� ����������� � ���������
+        // Проверяем соседей по горизонтали и вертикали
         int[] dx = { 0, 1, 0, -1 };
         int[] dy = { 1, 0, -1, 0 };
 
@@ -96,7 +108,7 @@ public static class Pathfinding
     {
         int dstX = Mathf.Abs(nodeA.X - nodeB.X);
         int dstY = Mathf.Abs(nodeA.Y - nodeB.Y);
-        return dstX + dstY; // ������������� ����������
+        return dstX + dstY; // Манхэттенское расстояние
     }
 
     private static List<Vector2Int> RetracePath(Node startNode, Node endNode)
@@ -113,6 +125,7 @@ public static class Pathfinding
         return path;
     }
 
+    //TODO: создать алгоритм нахождения блоков, до которых юнит может добраться.
     private static bool IsWalkable(int x, int y)
     {
         Block block = Map.Instance.GetBlockInfo(x, y);

@@ -1,34 +1,34 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 /// <summary>
-/// Описывает тип юнита и его характеристики.
+/// РћРїРёСЃС‹РІР°РµС‚ С‚РёРї СЋРЅРёС‚Р° Рё РµРіРѕ С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєРё.
 /// </summary>
 [CreateAssetMenu(fileName = "UnitType", menuName = "Unit type")]
 public class UnitType : ScriptableObject
 {
     public int Health;
     /// <summary>
-    /// Скорость передвижения.
+    /// РЎРєРѕСЂРѕСЃС‚СЊ РїРµСЂРµРґРІРёР¶РµРЅРёСЏ.
     /// </summary>
     public float MoveSpeed;
     /// <summary>
-    /// Задержка перед следующей атакой.
+    /// Р—Р°РґРµСЂР¶РєР° РїРµСЂРµРґ СЃР»РµРґСѓСЋС‰РµР№ Р°С‚Р°РєРѕР№.
     /// </summary>
     public float AttackCooldown;
     /// <summary>
-    /// Дистанция атаки.
+    /// Р”РёСЃС‚Р°РЅС†РёСЏ Р°С‚Р°РєРё.
     /// </summary>
     public int AttackRange;
     /// <summary>
-    /// Урон от атак.
+    /// РЈСЂРѕРЅ РѕС‚ Р°С‚Р°Рє.
     /// </summary>
     public int DamagePerHit;
     /// <summary>
-    /// Наименование типа юнита.
+    /// РќР°РёРјРµРЅРѕРІР°РЅРёРµ С‚РёРїР° СЋРЅРёС‚Р°.
     /// </summary>
     public UnitTypeName UnitTypeName;
     /// <summary>
-    /// Спрайт юнита.
+    /// РЎРїСЂР°Р№С‚ СЋРЅРёС‚Р°.
     /// </summary>
     public Sprite Sprite;
 }

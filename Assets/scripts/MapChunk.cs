@@ -2,15 +2,36 @@
 using System.Collections.Generic;
 using System.Collections;
 
+/// <summary>
+/// Класс, описывающий отдельный чанк на карте(<see cref="Map"/>)
+/// </summary>
 public class MapChunk : MonoBehaviour
 {
-    public bool needsUpdate = false;
-
     private MeshFilter _meshFilter;
     private int _chunkSize;
     private BlockAtlas _atlas;
     private Transform _collidersParent;
 
+    /// <summary>
+    /// указывает, нужно ли обновить чанк.
+    /// </summary>
+    public bool needsUpdate { get; set; } = false;
+
+    void LateUpdate()
+    {
+        if (needsUpdate)
+        {
+            StartCoroutine(RebuildMesh());
+            needsUpdate = false;
+        }
+    }
+
+    /// <summary>
+    /// Инициализирует объект чанка.
+    /// </summary>
+    /// <param name="chunkSize"> Размер чанка. </param>
+    /// <param name="atlas"> атлас со всеми видами блоков. </param>
+    /// <param name="material"> материал (текстура). </param>
     public void Init(int chunkSize, BlockAtlas atlas, Material material)
     {
         _chunkSize = chunkSize;
@@ -27,14 +48,7 @@ public class MapChunk : MonoBehaviour
 
     }
 
-    void LateUpdate()
-    {
-        if (needsUpdate)
-        {
-            StartCoroutine(RebuildMesh());
-            needsUpdate = false;
-        }
-    }
+    // Дальше только сущий кошмар...
 
     private IEnumerator RebuildMesh()
     {

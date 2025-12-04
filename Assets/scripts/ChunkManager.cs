@@ -1,6 +1,9 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Класс, реализующий загрузку чанков вокруг какого-либо объекта.
+/// </summary>
 public class ChunkManager : MonoBehaviour
 {
     private static ChunkManager _instance;
@@ -9,6 +12,9 @@ public class ChunkManager : MonoBehaviour
     private HashSet<Vector2Int> _loadedChunks = new HashSet<Vector2Int>();
     private List<IChunkObserver> _observers = new List<IChunkObserver>();
 
+    /// <summary>
+    /// Singleton-объект.
+    /// </summary>
     public static ChunkManager Instance
     {
         get { return _instance; }
@@ -25,19 +31,6 @@ public class ChunkManager : MonoBehaviour
     private void FixedUpdate()
     {
         UpdateRequiredChunks();
-    }
-
-    public void RegisterObserver(IChunkObserver observer)
-    {
-        if (!_observers.Contains(observer))
-        {
-            _observers.Add(observer);
-        }
-    }
-
-    public void UnregisterObserver(IChunkObserver observer)
-    {
-        _observers.Remove(observer);
     }
 
     private void UpdateRequiredChunks()
@@ -63,7 +56,7 @@ public class ChunkManager : MonoBehaviour
 
         foreach (Vector2Int requiredChunk in _requiredChunks)
         {
-            // ��������� ����� �����
+            // Загружаем новые чанки
             if (!_loadedChunks.Contains(requiredChunk))
             {
                 Map.Instance.GenerateChunk(requiredChunk.x, requiredChunk.y);
@@ -71,7 +64,7 @@ public class ChunkManager : MonoBehaviour
             }
         }
 
-        // ������� ������
+        // Удаляем старые
         var chunksToRemove = new List<Vector2Int>();
         foreach (Vector2Int loadedChunk in _loadedChunks)
         {
@@ -86,5 +79,27 @@ public class ChunkManager : MonoBehaviour
             _loadedChunks.Remove(chunk);
             Map.Instance.DestroyChunk(chunk.x, chunk.y);
         }
+    }
+
+    /// <summary>
+    /// Подписывает объект на генерацию чанков.
+    /// Вокруг такого объекта будет генерироваться мир.
+    /// </summary>
+    /// <param name="observer"> Объект, вокруг которого требуется генерировать мир. </param>
+    public void RegisterObserver(IChunkObserver observer)
+    {
+        if (!_observers.Contains(observer))
+        {
+            _observers.Add(observer);
+        }
+    }
+
+    /// <summary>
+    /// Отписывает объект от генерации чанков.
+    /// </summary>
+    /// <param name="observer"> Отписываемый объект. </param>
+    public void UnregisterObserver(IChunkObserver observer)
+    {
+        _observers.Remove(observer);
     }
 }

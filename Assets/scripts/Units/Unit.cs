@@ -1,7 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Класс юнита, управляемого игроком.
+/// </summary>
 public class Unit : MonoBehaviour, IDamagable, IChunkObserver
 {
     private float _speed = 2f;
@@ -14,14 +17,29 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
     public UnitType unitType;
     public Player Owner;
 
+    /// <summary>
+    /// Положение юнита по X.
+    /// </summary>
     public int X => (int)transform.position.x;
 
+    /// <summary>
+    /// Положение юнита по Y.
+    /// </summary>
     public int Y => (int)transform.position.y;
 
+    /// <summary>
+    /// Текущее здоровье юнита.
+    /// </summary>
     public int CurrentHealth { get; set; }
 
+    /// <summary>
+    /// Текущая работа юнита.
+    /// </summary>
     public UnitWork CurrentUnitWork { get; private set; }
 
+    /// <summary>
+    /// Текущая цель атаки юнита.
+    /// </summary>
     public IDamagable Target
     {
         get => _target;
@@ -132,6 +150,12 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
         }
     }
 
+    /// <summary>
+    /// Наносит урон юниту.
+    /// </summary>
+    /// <param name="amount"> Количество урона </param>
+    /// <param name="Damager"> Игрок, нанёсший урон. </param>
+    /// <param name="unitType"> Тип юнита, нанёсшего урон. </param>
     public void TakeDamage(int amount, Player Damager, UnitTypeName unitType)
     {
         if (unitType == UnitTypeName.Soldier)

@@ -1,26 +1,38 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
+/// <summary>
+/// РљР»Р°СЃСЃ, СЂРµР°Р»РёР·СѓСЋС‰РёР№ РґРІРёР¶РµРЅРёРµ РєР°РјРµСЂС‹ РёРіСЂРѕРєР°.
+/// </summary>
 public class CameraMove : MonoBehaviour
 {
-    public float smoothSpeed = 0.125f; // Скорость сглаживания 
-    public Vector3 offset; // Смещение камеры относительно игрока 
+    /// <summary>
+    /// РЎРєРѕСЂРѕСЃС‚СЊ СЃРіР»Р°Р¶РёРІР°РЅРёСЏ.
+    /// </summary>
+    public float smoothSpeed = 0.125f;
 
+    /// <summary>
+    /// РЎРјРµС‰РµРЅРёРµ РєР°РјРµСЂС‹ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РёРіСЂРѕРєР°.
+    /// </summary>
+    public Vector3 offset;
+
+    /// <summary>
+    /// РљР°Р¶РґС‹Р№ РєР°РґСЂ РїСЂРѕРІРµСЂСЏРµС‚ РЅР°Р¶Р°С‚С‹Рµ РєРЅРѕРїРєРё Рё РґРІРёРіР°РµС‚ РєР°РјРµСЂСѓ РёРіСЂРѕРєР°. 
+    /// </summary>
     void LateUpdate()
     {
-
         float moveHorizontal = Input.GetAxis("Horizontal");
 
         float moveVertical = Input.GetAxis("Vertical");
 
         Vector3 movement = new Vector3(moveHorizontal, moveVertical, 0.0f);
 
-        // Желаемая позиция камеры с учетом смещения 
+        // Р–РµР»Р°РµРјР°СЏ РїРѕР·РёС†РёСЏ РєР°РјРµСЂС‹ СЃ СѓС‡РµС‚РѕРј СЃРјРµС‰РµРЅРёСЏ 
         Vector3 desiredPosition = Camera.main.transform.position + offset + movement;
 
-        // Интерполяция позиции камеры для плавного следования 
+        // РРЅС‚РµСЂРїРѕР»СЏС†РёСЏ РїРѕР·РёС†РёРё РєР°РјРµСЂС‹ РґР»СЏ РїР»Р°РІРЅРѕРіРѕ СЃР»РµРґРѕРІР°РЅРёСЏ 
         Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
 
-        // Обновление позиции камеры 
+        // РћР±РЅРѕРІР»РµРЅРёРµ РїРѕР·РёС†РёРё РєР°РјРµСЂС‹ 
         transform.position = smoothedPosition;
     }
 }

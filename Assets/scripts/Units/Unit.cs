@@ -5,7 +5,8 @@ using UnityEngine;
 public class Unit : MonoBehaviour, IDamagable, IChunkObserver
 {
     private float _speed = 2f;
-    //private float _jumpForce = 8f;
+    private float _jumpForce = 4f;
+    private bool _isGrounded = true;
     private IDamagable _target;
     private Coroutine _currentAction;
 
@@ -27,8 +28,29 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
         set => SetTarget(value);
     }
 
-    private void Start() => ChunkManager.Instance.RegisterObserver(this);
+    private void Start()
+    {
+        ChunkManager.Instance.RegisterObserver(this);
+        if (rb == null)
+            rb = GetComponent<Rigidbody2D>();
+    }
+
     private void OnDestroy() => ChunkManager.Instance.UnregisterObserver(this);
+    private void FixedUpdate()
+    {
+        // Простая проверка через raycast вниз (длина 0.1f, слой "Ground" — настройте под вашу игру)
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 0.1f, LayerMask.GetMask("Default"));
+        _isGrounded = hit.collider != null;
+    }
+
+    public void Jump()
+    {
+        if (rb != null)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, _jumpForce);
+            _isGrounded = false;
+        }
+    }
 
     /// <summary>
     /// Начать последовательность: движение -> атака
@@ -69,7 +91,7 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
             _target = null;
             yield break;
         }
-        foreach (Vector2 point in path)
+        foreach (Vector2Int point in path)
         {
             Vector3 direction = Vector2.right;
             if (point.x <= X)
@@ -77,14 +99,13 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
                 direction = Vector2.left;
             }
 
-            if(point.y > Y)
+            while (Vector3.Distance(transform.position, new Vector3(point.x, point.y, 0)) > 1.5f)
             {
                 transform.Translate(_speed * Time.deltaTime * direction);
-            }
-
-            while (Vector3.Distance(transform.position, point) > 1.5f)
-            {
-                transform.Translate(_speed * Time.deltaTime * direction);
+                if (point.y > Y + 0.5f && _isGrounded)
+                {
+                    Jump();
+                }
 
                 yield return null;
             }

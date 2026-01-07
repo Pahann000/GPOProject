@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Gold
   m_EditorClassIdentifier: 
   Sprite: {fileID: -3988769855312385993, guid: aea87080337dc3645a4d2d2e171bb6d2, type: 3}
-  Name: Gold
+  Name: Mineral
   Hardness: 5

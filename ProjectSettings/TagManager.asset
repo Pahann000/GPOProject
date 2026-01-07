@@ -8,13 +8,13 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - Terrain
+  - Ground
   - Water
   - UI
   - Building
-  - Obstacles
-  - 
-  - 
+  - Obstacle
+  - Buildable
+  - Resources
   - 
   - 
   - 

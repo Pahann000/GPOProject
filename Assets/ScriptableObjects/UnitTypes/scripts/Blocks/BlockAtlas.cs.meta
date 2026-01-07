@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 9256540d485a60c41bc715052de4ab53
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - Gold: {fileID: 11400000, guid: a9310726fc99ec149b2ccf6586f361e5, type: 2}
+  - Rock: {fileID: 11400000, guid: 8085c4a4697fb724c92db9312fc48cc2, type: 2}
+  - Ice: {fileID: 11400000, guid: fd1d919af15a3a14f9bcc36cc2ba72b4, type: 2}
+  - Root: {fileID: 11400000, guid: 6202ae337e3790b4894eec058ca6e9a7, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,5 +1,5 @@
-/// <summary>
-/// Имена типов юнитов.
+п»ї/// <summary>
+/// РРјРµРЅР° С‚РёРїРѕРІ СЋРЅРёС‚РѕРІ.
 /// </summary>
 public enum UnitTypeName
 {

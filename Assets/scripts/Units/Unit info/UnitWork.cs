@@ -1,5 +1,5 @@
-/// <summary>
-/// Состояние юнита.
+п»ї/// <summary>
+/// РЎРѕСЃС‚РѕСЏРЅРёРµ СЋРЅРёС‚Р°.
 /// </summary>
 public enum UnitWork
 {

@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 334aaa10a263aa749964dcbb25c08dc3, type: 3}
   m_Name: Miner
   m_EditorClassIdentifier: 
+  Health: 10
   MoveSpeed: 1
   AttackCooldown: 1
   AttackRange: 5
-  DamagePerHit: 2
+  DamagePerHit: 20
   UnitTypeName: 0
   Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}

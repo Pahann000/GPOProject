@@ -1,10 +1,15 @@
+﻿using System.Collections.Generic;
 using UnityEngine;
+
+// в пизду, сами пишите комментарии здесь
 
 /// <summary>
 /// ����� ��� ��������� ����� ����.
 /// </summary>
 public class WorldManager : MonoBehaviour
 {
+    [SerializeField]private BlockAtlas atlas;
+    [SerializeField]private Material atlasMaterial;
     /// <summary>
     /// ������ �������� ���� ����.
     /// </summary>
@@ -13,16 +18,8 @@ public class WorldManager : MonoBehaviour
     /// ������ �������� ���� ������.
     /// </summary>
     private Texture2D _goldNoise;
-    /// <summary>
-    /// ������ ���� ������.
-    /// </summary>
-    private static GameObject[] _chunks;
 
-    [Header("Atlases")]
-    /// <summary>
-    /// ����� �� ����� ������ ������.
-    /// </summary>
-    public BlockAtlas blockAtlas;
+    private Dictionary<Texture2D, BlockType> Noises = new();
 
     [Header("Noise settings")]
     /// <summary>
@@ -56,11 +53,11 @@ public class WorldManager : MonoBehaviour
     /// <summary>
     /// ������ ���� � ������.
     /// </summary>
-    public int WorldWidth = 10;
+    public int WorldWidth = 100;
     /// <summary>
     /// ������ ���� � ������.
     /// </summary>
-    public int WorldHigh = 100;
+    public int WorldHeight = 100;
     /// <summary>
     /// ������ ����������� � �������. 
     /// </summary>
@@ -79,55 +76,35 @@ public class WorldManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        GenerateMapObject();
+
         Seed = Random.Range(-100000, 100000);
         _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
         _goldNoise = GenerateNoiseTexture(GoldFrequency, GoldSize);
-        CreateChunks();
-        GenerateTerrain();
+
+        Noises.Add(_goldNoise, BlockType.Gold);
+        Noises.Add(_worldNoise, BlockType.Stone);
+
+        GenerateChunkManager();
     }
 
-    /// <summary>
-    /// ������ ������ ������.
-    /// </summary>
-    public void CreateChunks()
+    private Map GenerateMapObject()
     {
-        _chunks = new GameObject[WorldWidth];
-        for (int i = 0; i < WorldWidth; i++)
-        {
-            GameObject newChunk = new GameObject();
-            newChunk.name = i.ToString();
-            newChunk.transform.parent = this.transform;
-            _chunks[i] = newChunk;
-        }
+        GameObject MapGameObject = new GameObject("Map");
+        Map map = MapGameObject.AddComponent<Map>();
+        map.atlas = atlas;
+        map.atlasMaterial = atlasMaterial;
+        map.Noises = Noises;
+        map.width = WorldWidth * chunkSize;
+        map.height = WorldHeight * chunkSize;
+        return map;
     }
 
-    /// <summary>
-    /// ���������� ����������� � ����������� ����� ���� � ����.
-    /// </summary>
-    private void GenerateTerrain()
+    private ChunkManager GenerateChunkManager()
     {
-        
-        for (int x = 0; x < _worldNoise.width; x++)
-        {
-            float height = Mathf.PerlinNoise((x + Seed) * TerrainFreq, Seed * TerrainFreq) * HighMultiplier + HighAddition;
-            for (int y = 0; y < height; y++)
-            {
-                BlockType blockType = blockAtlas.Rock;
-                if (_goldNoise.GetPixel(x,y).r > 0.5f)
-                {
-                    blockType = blockAtlas.Gold;
-                }
-                else if (_worldNoise.GetPixel(x, y).r > 0.5f)
-                {
-                    blockType = blockAtlas.Rock;
-                }
-
-                if (_worldNoise.GetPixel(x,y).r>0.5f)
-                {
-                    PlaceBlock(blockType, x, y);
-                }
-            }
-        }
+        GameObject chunkManagerGameObject = new GameObject("ChunkManager");
+        ChunkManager chunkManager = chunkManagerGameObject.AddComponent<ChunkManager>();
+        return chunkManager;
     }
 
     /// <summary>
@@ -137,7 +114,7 @@ public class WorldManager : MonoBehaviour
     /// <returns>Texture2D</returns>
     private Texture2D GenerateNoiseTexture(float frequency, float limit)
     {
-        Texture2D noise = new Texture2D(WorldWidth * chunkSize, WorldHigh);
+        Texture2D noise = new Texture2D(WorldWidth * chunkSize, WorldHeight * chunkSize);
         for (int x = 0; x < noise.width; x++)
         {
             for (int y = 0; y < noise.height; y++)
@@ -158,31 +135,5 @@ public class WorldManager : MonoBehaviour
         noise.Apply();
 
         return noise;
-    }
-
-    /// <summary>
-    /// ������� ���������� �����.
-    /// </summary>
-    /// <param name="blockType">��� �����.</param>
-    /// <param name="x">x ������� ����������.</param>
-    /// <param name="y">y ������� ����������</param>
-    public void PlaceBlock(BlockType blockType, int x, int y)
-    {
-        GameObject newTile = new GameObject();
-
-        int chunkCoord = Mathf.RoundToInt(x / chunkSize) * chunkSize;
-        chunkCoord /= chunkSize;
-        newTile.transform.parent = _chunks[chunkCoord].transform;
-
-        newTile.AddComponent<Block>();
-        newTile.GetComponent<Block>().BlockType = blockType;
-
-        newTile.AddComponent<SpriteRenderer>();
-        newTile.GetComponent<SpriteRenderer>().sprite = blockType.Sprite;
-
-        newTile.AddComponent<BoxCollider2D>();
-        newTile.GetComponent<BoxCollider2D>().size = Vector2.one;
-
-        newTile.transform.position = new Vector3(x, y, 0);
     }
 }

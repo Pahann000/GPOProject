@@ -156,9 +156,9 @@ MonoBehaviour:
   HighMultiplier: 20
   Seed: 2140
   chunkSize: 16
-  WorldWidth: 5
-  WorldHeight: 5
-  HighAddition: 4
+  WorldWidth: 50
+  WorldHeight: 50
+  HighAddition: 45
   GoldFrequency: 0.03
   GoldSize: 0.8
 --- !u!4 &288573034

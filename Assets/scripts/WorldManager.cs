@@ -119,21 +119,18 @@ public class WorldManager : MonoBehaviour
         {
             for (int y = 0; y < noise.height; y++)
             {
-                float v = Mathf.PerlinNoise((x + Seed) * frequency, (y + Seed) * frequency);
+                // ���������� ������ �������� ��� ������ �������
+                float xCoord = (x + Seed) * frequency;
+                float yCoord = (y + Seed) * frequency;
 
-                if (v > limit)
-                {
-                    noise.SetPixel(x, y, Color.white);
-                }
-                else
-                {
-                    noise.SetPixel(x, y, Color.black);
-                }
+                float value = Mathf.PerlinNoise(xCoord, yCoord);
+
+                // Normalize �������� ��� ������ ���������
+                noise.SetPixel(x, y, value > limit ? Color.white : Color.black);
             }
         }
 
         noise.Apply();
-
         return noise;
     }
 }

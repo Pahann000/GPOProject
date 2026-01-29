@@ -13,7 +13,7 @@ public class BuildingUI : MonoBehaviour
 
     private void Start()
     {
-        _buildingSystem = FindObjectOfType<BuildingSystem>();
+        _buildingSystem = FindFirstObjectByType<BuildingSystem>();
         CreateBuildingButtons();
     }
 

@@ -34,7 +34,7 @@ public class ResearchLab : Building
     /// Если лаборатория функционирует и есть текущий проект исследования,
     /// вызывает обработку исследования раз в секунду.
     /// </remarks>
-    private void Update()
+    public override void Update()
     {
         if (State != BuildingState.Operational || _currentProject == null) return;
 

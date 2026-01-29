@@ -15,8 +15,8 @@ public class BuildingSystemTester : MonoBehaviour
 
     void Start()
     {
-        _buildingSystem = FindObjectOfType<BuildingSystem>();
-        _resourceManager = FindObjectOfType<ResourceManager>();
+        _buildingSystem = FindFirstObjectByType<BuildingSystem>();
+        _resourceManager = FindFirstObjectByType<ResourceManager>();
 
         if (addTestResourcesOnStart && _resourceManager != null)
         {
@@ -89,7 +89,7 @@ public class BuildingSystemTester : MonoBehaviour
 
     private void ClearAllBuildings()
     {
-        Building[] buildings = FindObjectsOfType<Building>();
+        Building[] buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
         foreach (Building building in buildings)
         {
             Destroy(building.gameObject);

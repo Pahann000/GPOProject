@@ -113,7 +113,6 @@ public class MapChunk : MonoBehaviour
         {
             GameObject rowCollider = new GameObject("RowCollider_" + y);
             rowCollider.transform.parent = _collidersParent;
-            rowCollider.layer = LayerMask.NameToLayer("Terrain");
             rowCollider.transform.localPosition = Vector3.zero;
 
             int currentSegmentStart = -1;
@@ -161,7 +160,6 @@ public class MapChunk : MonoBehaviour
     {
         GameObject segmentObj = new GameObject($"Segment_{startX}_{y}");
         segmentObj.transform.parent = parent.transform;
-        segmentObj.layer = parent.layer;
 
         BoxCollider2D collider = segmentObj.AddComponent<BoxCollider2D>();
 

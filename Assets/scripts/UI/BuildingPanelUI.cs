@@ -24,8 +24,8 @@ public class BuildingPanelUI : MonoBehaviour
 
     void Start()
     {
-        _buildingSystem = FindObjectOfType<BuildingSystem>();
-        _resourceManager = FindObjectOfType<ResourceManager>();
+        _buildingSystem = FindFirstObjectByType<BuildingSystem>();
+        _resourceManager = FindFirstObjectByType<ResourceManager>();
         
         if (toggleButton != null)
             toggleButton.onClick.AddListener(TogglePanel);

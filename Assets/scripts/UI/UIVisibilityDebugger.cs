@@ -14,7 +14,7 @@ public class UIVisibilityDebugger : MonoBehaviour
     void Start()
     {
         canvas = GetComponent<Canvas>();
-        if (canvas == null) canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) canvas = FindFirstObjectByType<Canvas>();
 
         if (debugOnStart)
         {

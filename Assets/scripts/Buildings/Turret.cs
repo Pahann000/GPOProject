@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 
 /// <summary>
@@ -29,7 +30,7 @@ public class Turret : Building
     /// Если турель функционирует (<see cref="Building.State"/> == <see cref="BuildingState.Operational"/>),
     /// ищет цели и атакует их при соблюдении условий.
     /// </summary>
-    private void Update()
+    public override void Update()
     {
         if (State != BuildingState.Operational) return;
 

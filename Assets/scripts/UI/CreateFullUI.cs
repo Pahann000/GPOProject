@@ -22,7 +22,7 @@ public class CreateFullUI : MonoBehaviour
         Debug.Log("=== СОЗДАНИЕ ПОЛНОГО UI ===");
 
         // 1. Создаем или находим Canvas
-        Canvas canvas = FindObjectOfType<Canvas>();
+        Canvas canvas = FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             Debug.Log("Canvas не найден, создаю новый...");
@@ -58,7 +58,7 @@ public class CreateFullUI : MonoBehaviour
         canvasGO.AddComponent<GraphicRaycaster>();
 
         // EventSystem если нет
-        if (FindObjectOfType<EventSystem>() == null)
+        if (FindFirstObjectByType<EventSystem>() == null)
         {
             GameObject eventSystem = new GameObject("EventSystem");
             eventSystem.AddComponent<EventSystem>();

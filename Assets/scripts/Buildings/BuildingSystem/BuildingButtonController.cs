@@ -52,7 +52,7 @@ public class BuildingButtonController : MonoBehaviour
     {
         Debug.Log($"Нажата кнопка: {_buildingData.DisplayName}");
 
-        BuildingSystem buildingSystem = FindObjectOfType<BuildingSystem>();
+        BuildingSystem buildingSystem = FindFirstObjectByType<BuildingSystem>();
         if (buildingSystem == null)
         {
             Debug.LogError("BuildingSystem не найден в сцене!");
@@ -68,7 +68,7 @@ public class BuildingButtonController : MonoBehaviour
         buildingSystem.StartBuildingPlacement(_buildingData);
 
         // Закрываем панель после выбора
-        BuildingPanelUI panelUI = FindObjectOfType<BuildingPanelUI>();
+        BuildingPanelUI panelUI = FindFirstObjectByType<BuildingPanelUI>();
         if (panelUI != null)
         {
             panelUI.SetBuildingsVisible(false);

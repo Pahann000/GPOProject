@@ -4,9 +4,9 @@ using System.Collections;
 [CreateAssetMenu(fileName = "GreenhouseData", menuName = "Buildings/Greenhouse Data")]
 public class Greenhouse : ProductionBuilding
 {
-    [Header("Greenhouse Settings")]
-    [SerializeField] private int waterConsumption = 3;
-    [SerializeField] private int foodProduction = 5;
+    //[Header("Greenhouse Settings")]
+    //[SerializeField] private int waterConsumption = 3;
+    //[SerializeField] private int foodProduction = 5;
 
     protected override void Start()
     {

@@ -15,7 +15,7 @@ public class BuildingDebugger : MonoBehaviour
     {
         _buildingSystem = GetComponent<BuildingSystem>();
         if (_buildingSystem == null)
-            _buildingSystem = FindObjectOfType<BuildingSystem>();
+            _buildingSystem = FindFirstObjectByType<BuildingSystem>();
 
         Debug.Log("=== BuildingDebugger запущен ===");
         Debug.Log($"BuildingSystem найден: {_buildingSystem != null}");
@@ -59,7 +59,7 @@ public class BuildingDebugger : MonoBehaviour
         Debug.Log($"Иконка: {testBuildingData.Icon != null}");
 
         // Проверяем ресурсы
-        ResourceManager resourceManager = FindObjectOfType<ResourceManager>();
+        ResourceManager resourceManager = FindFirstObjectByType<ResourceManager>();
         if (resourceManager != null)
         {
             bool hasResources = resourceManager.HasResources(testBuildingData.ConstructionCost);

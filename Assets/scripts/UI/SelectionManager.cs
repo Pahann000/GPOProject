@@ -74,7 +74,7 @@ public class SelectionManager : MonoBehaviour
         _selectedBuilding.Select();
 
         // Показываем информацию в UI
-        UIManager uiManager = FindObjectOfType<UIManager>();
+        UIManager uiManager = FindFirstObjectByType<UIManager>();
         if (uiManager != null && building.Data != null)
         {
             string info = $"{building.Data.DisplayName}\nЗдоровье: {building.CurrentHealth}/{building.Data.MaxHealth}";

@@ -4,8 +4,8 @@ using System.Collections;
 [CreateAssetMenu(fileName = "PowerPlantData", menuName = "Buildings/PowerPlant Data")]
 public class PowerPlant : ProductionBuilding
 {
-    [Header("Power Plant Settings")]
-    [SerializeField] private int energyProduction = 10;
+    //[Header("Power Plant Settings")]
+    //[SerializeField] private int energyProduction = 10;
 
     protected override void Start()
     {

@@ -7,4 +7,7 @@ public enum BlockType
     Dirt, 
     Stone, 
     Gold,
+    Minerals,
+    Ice,
+    Root,
 }

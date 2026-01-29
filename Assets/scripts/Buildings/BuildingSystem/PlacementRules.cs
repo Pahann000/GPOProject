@@ -38,8 +38,8 @@ public class NearWaterRule : PlacementRule
 public class OnBuildableSurfaceRule : PlacementRule
 {
     [Header("Настройки")]
-    [Tooltip("Минимальное количество точек на поверхности")]
-    [SerializeField] private int minSurfacePoints = 2;
+    //[Tooltip("Минимальное количество точек на поверхности")]
+    //[SerializeField] private int minSurfacePoints = 2;
     [Tooltip("Расстояние проверки под точкой")]
     [SerializeField] private float checkDistance = 2f;
     [Tooltip("Слой строительной поверхности")]
@@ -53,7 +53,7 @@ public class OnBuildableSurfaceRule : PlacementRule
         if (hit.collider != null)
         {
             Block block = hit.collider.GetComponent<Block>();
-            if (block != null && block.BlockType != null)
+            if (block != null && block.tileData.type != BlockType.Air)
             {
                 // Проверяем, можно ли строить на этом блоке
                 // Если у BlockType есть свойство CanBuildOn, используем его
@@ -67,7 +67,7 @@ public class OnBuildableSurfaceRule : PlacementRule
     private bool IsResourceBlock(Block block)
     {
         // Определяем, является ли блок ресурсом
-        string blockName = block.BlockType.Name.ToLower();
+        string blockName = block.tileData.type.ToString().ToLower();
         return blockName.Contains("gold") || blockName.Contains("mineral") ||
                blockName.Contains("ice") || blockName.Contains("root");
     }

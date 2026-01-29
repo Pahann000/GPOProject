@@ -34,11 +34,11 @@ public class BuildingSystem : MonoBehaviour
         _mainCamera = Camera.main;
 
         if (resourceManager == null)
-            resourceManager = FindObjectOfType<ResourceManager>();
+            resourceManager = FindFirstObjectByType<ResourceManager>();
         if (uiManager == null)
-            uiManager = FindObjectOfType<UIManager>();
+            uiManager = FindFirstObjectByType<UIManager>();
         if (worldManager == null)
-            worldManager = FindObjectOfType<WorldManager>(); // Автопоиск WorldManager
+            worldManager = FindFirstObjectByType<WorldManager>(); // Автопоиск WorldManager
 
         InitializeResourceTracking();
     }
@@ -289,10 +289,10 @@ public class BuildingSystem : MonoBehaviour
                 // Если это ресурсный блок (золото, корни, лед) - нельзя строить
                 if (IsResourceBlock(block))
                 {
-                    Debug.Log($"Найден ресурсный блок: {block.BlockType?.Name}");
+                    Debug.Log($"Найден ресурсный блок: {block.tileData.type.ToString()}");
                     validObstacles++;
                 }
-                else if (block.BlockType != null && block.BlockType.Name.ToLower().Contains("rock"))
+                else if (block.tileData.type != BlockType.Air && block.tileData.type == BlockType.Stone)
                 {
                     // Камень - можно строить (но не является препятствием сам по себе)
                     continue;
@@ -349,22 +349,22 @@ public class BuildingSystem : MonoBehaviour
                 totalPoints++;
 
                 // Получаем тип блока в этой позиции
-                BlockType blockType = worldManager.GetBlockTypeAt(
+                BlockType blockType = Map.Instance.GetBlockInfo(
                     Mathf.RoundToInt(checkPoint.x),
                     Mathf.RoundToInt(checkPoint.y)
-                );
+                ).tileData.type;
 
-                if (blockType != null)
+                if (blockType != BlockType.Air)
                 {
                     // Проверяем, можно ли строить на этом типе блока
                     if (IsBuildableBlockType(blockType))
                     {
                         validPoints++;
-                        Debug.Log($"Точка {checkPoint}: {blockType.Name} - МОЖНО СТРОИТЬ");
+                        Debug.Log($"Точка {checkPoint}: {blockType.ToString()} - МОЖНО СТРОИТЬ");
                     }
                     else
                     {
-                        Debug.Log($"Точка {checkPoint}: {blockType.Name} - НЕЛЬЗЯ СТРОИТЬ");
+                        Debug.Log($"Точка {checkPoint}: {blockType.ToString()} - НЕЛЬЗЯ СТРОИТЬ");
                     }
                 }
                 else
@@ -401,9 +401,9 @@ public class BuildingSystem : MonoBehaviour
             {
                 // Проверяем, можно ли строить на этом блоке
                 Block block = hit.collider.GetComponent<Block>();
-                if (block != null && block.BlockType != null)
+                if (block != null && block.tileData.type != BlockType.Air)
                 {
-                    if (IsBuildableBlockType(block.BlockType))
+                    if (IsBuildableBlockType(block.tileData.type))
                         validPoints++;
                 }
             }
@@ -416,32 +416,27 @@ public class BuildingSystem : MonoBehaviour
     // Определяет, можно ли строить на данном типе блока
     private bool IsBuildableBlockType(BlockType blockType)
     {
-        if (blockType == null) return false;
+        if (blockType == BlockType.Air) return false;
 
-        string blockName = blockType.Name.ToLower();
+        string blockName = blockType.ToString().ToLower();
 
         // Можно строить на камне, грязи, песке, земле
         return blockName.Contains("rock") ||
                blockName.Contains("dirt") ||
                blockName.Contains("sand") ||
-               blockName.Contains("grass") ||
-               blockName.Contains("земля") ||
-               blockName.Contains("камень");
+               blockName.Contains("grass");
     }
 
     // Определяет, является ли блок ресурсом (нельзя строить)
     private bool IsResourceBlock(Block block)
     {
-        if (block == null || block.BlockType == null) return false;
+        if (block == null || block.tileData.type == BlockType.Air) return false;
 
-        string blockName = block.BlockType.Name.ToLower();
+        string blockName = block.tileData.type.ToString().ToLower();
         return blockName.Contains("mineral") ||
                blockName.Contains("ice") ||
                blockName.Contains("root") ||
-               blockName.Contains("gold") ||
-               blockName.Contains("золото") ||
-               blockName.Contains("лед") ||
-               blockName.Contains("корень");
+               blockName.Contains("gold");
     }
 
     private void PlaceBuilding()

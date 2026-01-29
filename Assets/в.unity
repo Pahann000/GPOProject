@@ -446,7 +446,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1558543668}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -729,34 +729,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdf907ff006c8444aa97ef96a84a2891, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockAtlas: {fileID: 11400000, guid: 8d4747b03b5984840bce5c57464ccf51, type: 2}
-  unitAtlas: {fileID: 11400000, guid: 1c182a2b8e932794a8c51263e7fa24e0, type: 2}
+  atlas: {fileID: 11400000, guid: 9035713f356193c4a91f63e279b97d6d, type: 2}
+  atlasMaterial: {fileID: 2100000, guid: e2722fc755d33e64cb7173d0ac419d2c, type: 2}
+  _buildingObstacleMask:
+    serializedVersion: 2
+    m_Bits: 392
+  _buildableBlockTypes: 00000000
+  _resourceBlockTypes: 000000000000000000000000
+  CaveSize: 0.25
+  CaveFreq: 0.01
+  TerrainFreq: 0.04
+  HighMultiplier: 25
   Seed: 0
   chunkSize: 16
   WorldWidth: 20
-  WorldHigh: 100
+  WorldHeight: 100
   HighAddition: 50
-  TerrainFreq: 0.04
-  HighMultiplier: 25
-  CaveFreq: 0.01
-  CaveSize: 0.25
   GoldFrequency: 0.0916
   GoldSize: 0.829
-  RootsFrequency: 0.0877
-  RootsSize: 0.783
-  MaxRootsHeight: 100
-  IceFrequency: 0.0877
-  IceSize: 0.752
-  MinIceHeight: 0
-  _buildingObstacleMask:
-    serializedVersion: 2
-    m_Bits: 136
-  _buildableBlockTypes:
-  - {fileID: 11400000, guid: 8085c4a4697fb724c92db9312fc48cc2, type: 2}
-  _resourceBlockTypes:
-  - {fileID: 11400000, guid: 6202ae337e3790b4894eec058ca6e9a7, type: 2}
-  - {fileID: 11400000, guid: fd1d919af15a3a14f9bcc36cc2ba72b4, type: 2}
-  - {fileID: 11400000, guid: a9310726fc99ec149b2ccf6586f361e5, type: 2}
 --- !u!4 &136096433
 Transform:
   m_ObjectHideFlags: 0
@@ -805,7 +795,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.0000076293945}
+  m_AnchoredPosition: {x: 0, y: 30.409582}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &174170705
@@ -4624,12 +4614,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ce58b6ca3275243983ca1c4b58a98e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _panSpeed: 20
-  _edgePanSpeed: 25
-  _zoomSpeed: 5
-  _zoomRange: {x: 15, y: 50}
-  _panLimitX: {x: -1000, y: 1000}
-  _panLimitY: {x: -1000, y: 1000}
 --- !u!114 &1693046309 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 131945078571971957, guid: b417bbd0e4bc3b14096ff088197760af, type: 3}

@@ -25,19 +25,19 @@ public class UIManager : MonoBehaviour
         // Автоматический поиск компонентов если не назначены
         if (resourcePanel == null)
         {
-            resourcePanel = FindObjectOfType<ResourcePanelUI>();
+            resourcePanel = FindFirstObjectByType<ResourcePanelUI>();
             Debug.Log($"ResourcePanel: {(resourcePanel != null ? "найден" : "не найден")}");
         }
 
         if (buildingPanel == null)
         {
-            buildingPanel = FindObjectOfType<BuildingPanelUI>();
+            buildingPanel = FindFirstObjectByType<BuildingPanelUI>();
             Debug.Log($"BuildingPanel: {(buildingPanel != null ? "найден" : "не найден")}");
         }
 
         if (selectionPanel == null)
         {
-            selectionPanel = FindObjectOfType<SelectionPanelUI>();
+            selectionPanel = FindFirstObjectByType<SelectionPanelUI>();
             Debug.Log($"SelectionPanel: {(selectionPanel != null ? "найден" : "не найден")}");
         }
 

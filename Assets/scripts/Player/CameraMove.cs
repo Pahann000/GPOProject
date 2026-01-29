@@ -1,38 +1,72 @@
-﻿using UnityEngine;
+using UnityEngine;
 
-/// <summary>
-/// Класс, реализующий движение камеры игрока.
-/// </summary>
 public class CameraMove : MonoBehaviour
 {
-    /// <summary>
-    /// Скорость сглаживания.
-    /// </summary>
-    public float smoothSpeed = 0.125f;
+    [Header("Movement Settings")]
+    [SerializeField] private float _panSpeed = 20f;         // ������� �������� ��������
+    [SerializeField] private float _zoomSpeed = 5f;         // �������� ����
+    [SerializeField] private Vector2 _zoomRange = new(5, 15); // Min/Max ���
+    [SerializeField] private Vector2 _panLimitX = new(0, Map.Instance.chunkSize*Map.Instance.width); // ������� �� X
+    [SerializeField] private Vector2 _panLimitY = new(0, Map.Instance.chunkSize * Map.Instance.height); // ������� �� Y
 
-    /// <summary>
-    /// Смещение камеры относительно игрока.
-    /// </summary>
-    public Vector3 offset;
-
-    /// <summary>
-    /// Каждый кадр проверяет нажатые кнопки и двигает камеру игрока. 
-    /// </summary>
-    void LateUpdate()
+    private Camera _mainCamera;
+    private Vector3 _dragOrigin;
+    
+    void Start()
     {
-        float moveHorizontal = Input.GetAxis("Horizontal");
+        _mainCamera = GetComponent<Camera>();
+    }
 
-        float moveVertical = Input.GetAxis("Vertical");
+    void Update()
+    {
+        HandleKeyboardMovement();
+        HandleMousePan();
+        HandleMouseZoom();
+    }
 
-        Vector3 movement = new Vector3(moveHorizontal, moveVertical, 0.0f);
+    private void HandleKeyboardMovement()
+    {
+        Vector3 moveDir = new Vector3(
+            Input.GetAxis("Horizontal"),
+            Input.GetAxis("Vertical"),
+            0
+        );
 
-        // Желаемая позиция камеры с учетом смещения 
-        Vector3 desiredPosition = Camera.main.transform.position + offset + movement;
+        transform.position += _panSpeed * Time.deltaTime * moveDir;
+        ClampCameraPosition();
+    }
 
-        // Интерполяция позиции камеры для плавного следования 
-        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
+    private void HandleMousePan()
+    {
+        // ���� ������ ���
+        if (Input.GetMouseButtonDown(1))
+        {
+            _dragOrigin = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        }
 
-        // Обновление позиции камеры 
-        transform.position = smoothedPosition;
+        if (Input.GetMouseButton(1))
+        {
+            Vector3 difference = _dragOrigin - _mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            transform.position += difference;
+            ClampCameraPosition();
+        }
+    }
+
+    private void HandleMouseZoom()
+    {
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        _mainCamera.orthographicSize = Mathf.Clamp(
+            _mainCamera.orthographicSize - scroll * _zoomSpeed,
+            _zoomRange.x,
+            _zoomRange.y
+        );
+    }
+
+    private void ClampCameraPosition()
+    {
+        Vector3 pos = transform.position;
+        pos.x = Mathf.Clamp(pos.x, _panLimitX.x, _panLimitX.y);
+        pos.y = Mathf.Clamp(pos.y, _panLimitY.x, _panLimitY.y);
+        transform.position = pos;
     }
 }

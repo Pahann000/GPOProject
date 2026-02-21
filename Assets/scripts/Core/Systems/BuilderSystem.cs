@@ -174,6 +174,7 @@ public class BuilderSystem : IGameSystem
         {
             // Спавним настоящее здание
             GameObject buildingObj = Object.Instantiate(_selectedBuilding.Prefab, position, Quaternion.identity);
+            buildingObj.layer = LayerMask.NameToLayer("Building");  
 
             Building building = buildingObj.GetComponent<Building>();
             if (building != null) building.Initialize(_selectedBuilding);
@@ -192,4 +193,6 @@ public class BuilderSystem : IGameSystem
             CancelBuilding();
         }
     }
+
+    public bool IsPlacingBuilding() => _isPlacing;
 }

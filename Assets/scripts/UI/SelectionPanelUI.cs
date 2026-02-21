@@ -37,15 +37,44 @@ public class SelectionPanelUI : MonoBehaviour
        
 
         // Назначаем обработчики кнопок
-        if (upgradeButton != null)
-            upgradeButton.onClick.AddListener(UpgradeBuilding);
+        if (upgradeButton != null) upgradeButton.onClick.AddListener(UpgradeBuilding);
 
-        if (repairButton != null)
-            repairButton.onClick.AddListener(RepairBuilding);
+        if (repairButton != null) repairButton.onClick.AddListener(RepairBuilding);
 
-        if (demolishButton != null)
-            demolishButton.onClick.AddListener(DemolishBuilding);
-        StartCoroutine(TestPanel());
+        if (demolishButton != null) demolishButton.onClick.AddListener(DemolishBuilding);
+
+        if (GameKernel.Instance != null)
+        {
+            GameKernel.Instance.EventBus.Subscribe<BuildingSelectedEvent>(OnBuildableSelected);
+            GameKernel.Instance.EventBus.Subscribe<BuildingDeselectedEvent>(OnBuildableDeselected);
+        }
+
+        if (panel != null) panel.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        if (GameKernel.Instance != null)
+        {
+            GameKernel.Instance.EventBus.Unsubscribe<BuildingSelectedEvent>(OnBuildableSelected);
+            GameKernel.Instance.EventBus.Unsubscribe<BuildingDeselectedEvent>(OnBuildableDeselected);
+        }
+    }
+
+    private void OnBuildableSelected(BuildingSelectedEvent evt)
+    {
+        selectedBuilding = evt.SelectedBuilding;
+
+        if (panel != null) panel.SetActive(true);
+
+        UpdateUI();
+    }
+
+    private void OnBuildableDeselected(BuildingDeselectedEvent evt)
+    {
+        selectedBuilding = null;
+
+        if (panel != null) panel.SetActive(false);
     }
 
     public void SelectBuilding(Building building)

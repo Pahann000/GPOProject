@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7527621213876754217}
   - component: {fileID: 1111439755540929011}
   - component: {fileID: 4485002821508590937}
+  - component: {fileID: 279837752087699710}
   m_Layer: 0
   m_Name: New Prefab
   m_TagString: Untagged
@@ -125,7 +126,7 @@ BoxCollider2D:
   m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
+    pivot: {x: 0.5, y: 0}
     oldSize: {x: 2.04, y: 2.89}
     newSize: {x: 2.04, y: 2.89}
     adaptiveTilingThreshold: 0.5
@@ -134,3 +135,19 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 16, y: 16}
   m_EdgeRadius: 0
+--- !u!114 &279837752087699710
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3106463480208296258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 010b91a68e947ef4bb2cb66ad80b241b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _data: {fileID: 11400000, guid: eafe8f0da9f20794ab584d434478ca0f, type: 2}
+  State: 2
+  selectionEffect: {fileID: 0}
+  constructionEffect: {fileID: 0}

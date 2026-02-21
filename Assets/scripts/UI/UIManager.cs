@@ -107,8 +107,8 @@ public class UIManager : MonoBehaviour
 
     private void HandleSelection()
     {
-        Debug.Log($"HandleSelection: EventSystem.current = {EventSystem.current}");
-        Debug.Log($"HandleSelection: mainCamera = {mainCamera}");
+        //Debug.Log($"HandleSelection: EventSystem.current = {EventSystem.current}");
+        //Debug.Log($"HandleSelection: mainCamera = {mainCamera}");
 
         if (EventSystem.current == null)
         {

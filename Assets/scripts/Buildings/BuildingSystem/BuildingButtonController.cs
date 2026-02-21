@@ -52,20 +52,24 @@ public class BuildingButtonController : MonoBehaviour
     {
         Debug.Log($"Нажата кнопка: {_buildingData.DisplayName}");
 
-        BuildingSystem buildingSystem = FindFirstObjectByType<BuildingSystem>();
-        if (buildingSystem == null)
-        {
-            Debug.LogError("BuildingSystem не найден в сцене!");
-            return;
-        }
+        if (_buildingData == null) return;
 
-        if (_buildingData == null)
+        if (GameKernel.Instance != null)
         {
-            Debug.LogError("BuildingData не назначен!");
-            return;
+            var builder = GameKernel.Instance.GetSystem<BuilderSystem>();
+            if (builder != null)
+            {
+                builder.StartPlacement(_buildingData);
+            }
+            else
+            {
+                Debug.LogError("BuilderSystem не найдена в Ядре!");
+            }
         }
-
-        buildingSystem.StartBuildingPlacement(_buildingData);
+        else
+        {
+            Debug.LogError("GameKernel не найдена!");
+        }
 
         // Закрываем панель после выбора
         BuildingPanelUI panelUI = FindFirstObjectByType<BuildingPanelUI>();

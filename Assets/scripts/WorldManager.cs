@@ -182,7 +182,7 @@ public class WorldManager : MonoBehaviour
             return null;
         }
 
-        if (!ResourceManager.Instance.TrySpendResources(data.ConstructionCost))
+        if (!GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(data.ConstructionCost))
         {
             Debug.Log("WorldManager: Íå óäàëîñü ñïèñàòü ðåñóðñû");
             return null;

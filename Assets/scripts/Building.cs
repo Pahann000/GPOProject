@@ -13,7 +13,7 @@ public class Building : MonoBehaviour
     [SerializeField] private GameObject selectionEffect;
     [SerializeField] private GameObject constructionEffect;
 
-    private ResourceManager _resourceManager;
+    private ResourceSystem _resourceManager;
     private float _productionTimer = 0f;
     private bool _isProducing = false;
 
@@ -22,7 +22,7 @@ public class Building : MonoBehaviour
     protected virtual void Start()
     {
         CurrentHealth = _data.MaxHealth;
-        _resourceManager = ResourceManager.Instance;
+        _resourceManager = GameKernel.Instance.GetSystem<ResourceSystem>();
 
         // ��������� ������������ ���� ���� �������� �������
         if (_data.OutputResources.Resources != null && _data.OutputResources.Resources.Count > 0)

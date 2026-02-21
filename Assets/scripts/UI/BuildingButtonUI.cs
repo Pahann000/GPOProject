@@ -123,9 +123,9 @@ public class BuildingButtonUI : MonoBehaviour
     /// </summary>
     public void UpdateAvailability()
     {
-        if (buildingData == null || ResourceManager.Instance == null) return;
+        if (buildingData == null || GameKernel.Instance.GetSystem<ResourceSystem>() == null) return;
 
-        bool canAfford = ResourceManager.Instance.HasResources(buildingData.ConstructionCost);
+        bool canAfford = GameKernel.Instance.GetSystem<ResourceSystem>().HasResources(buildingData.ConstructionCost);
 
         // Визуальная индикация доступности
         if (iconImage != null)

@@ -17,7 +17,7 @@ public class BuildingPanelUI : MonoBehaviour
     [SerializeField] private List<BuildingData> availableBuildings = new List<BuildingData>();
 
     private BuilderSystem _builderSystem;
-    private ResourceManager _resourceManager;
+    private ResourceSystem _resourceManager;
     private bool _isPanelOpen = false;
 
     private Dictionary<BuildingData, Button> _buildingButtons = new Dictionary<BuildingData, Button>();
@@ -25,7 +25,7 @@ public class BuildingPanelUI : MonoBehaviour
     void Start()
     {
         _builderSystem = GameKernel.Instance.GetSystem<BuilderSystem>();
-        _resourceManager = FindFirstObjectByType<ResourceManager>();
+        _resourceManager = GameKernel.Instance.GetSystem<ResourceSystem>();
         
         if (toggleButton != null)
             toggleButton.onClick.AddListener(TogglePanel);
@@ -205,7 +205,7 @@ public class BuildingPanelUI : MonoBehaviour
         }
     }
 
-    private void OnResourceChanged(ResourceType type)
+    private void OnResourceChangedBus(ResourceChangedEvent evt)
     {
         // Обновляем доступность всех кнопок при изменении ресурсов
         foreach (var kvp in _buildingButtons)
@@ -222,10 +222,10 @@ public class BuildingPanelUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (_resourceManager != null)
-        {
-            ResourceManager.OnResourceChanged -= OnResourceChanged;
-        }
+        if (GameKernel.Instance != null)
+    {
+        GameKernel.Instance.EventBus.Unsubscribe<ResourceChangedEvent>(OnResourceChangedBus);
+    }
     }
 
     // Публичные методы

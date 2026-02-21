@@ -5,8 +5,6 @@
 /// </summary>
 public class Player : MonoBehaviour, IChunkObserver
 {
-    private UnitController _unitController = new();
-
     private void Start() => ChunkManager.Instance.RegisterObserver(this);
     private void OnDestroy() => ChunkManager.Instance.UnregisterObserver(this);
 
@@ -16,11 +14,6 @@ public class Player : MonoBehaviour, IChunkObserver
     [SerializeField]private UnitAtlas unitAtlas;
 
     //[SerializeField] private BuildingAtlas buildingAtlas;
-
-    /// <summary>
-    /// временная реализация инвентаря игрока.
-    /// </summary>
-    public ObservableDictionary<string, int> Resources { get; } = new ObservableDictionary<string, int>();
 
     /// <summary>
     /// Положение игрока по X.
@@ -36,7 +29,6 @@ public class Player : MonoBehaviour, IChunkObserver
     void Awake()
     {
         Resources.Add("Gold", 10);
-        _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(10, 150));
     }
 
     /// <inheritdoc/>

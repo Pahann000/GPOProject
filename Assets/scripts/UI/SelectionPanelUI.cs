@@ -228,7 +228,7 @@ public class SelectionPanelUI : MonoBehaviour
 
         // Пример: проверка ресурсов и улучшение
         ResourceBundle upgradeCost = CalculateUpgradeCost(selectedBuilding);
-        if (ResourceManager.Instance.TrySpendResources(upgradeCost))
+        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(upgradeCost))
         {
             // Применить улучшения к зданию
             // selectedBuilding.Upgrade();
@@ -242,7 +242,7 @@ public class SelectionPanelUI : MonoBehaviour
         int repairCost = CalculateRepairCost(selectedBuilding);
         ResourceBundle costBundle = CreateResourceBundle(ResourceType.Minerals, repairCost);
 
-        if (ResourceManager.Instance.TrySpendResources(costBundle))
+        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(costBundle))
         {
             selectedBuilding.CurrentHealth = selectedBuilding.Data.MaxHealth;
             Debug.Log($"Здание {selectedBuilding.Data.DisplayName} отремонтировано");
@@ -255,7 +255,7 @@ public class SelectionPanelUI : MonoBehaviour
 
         // Возвращаем часть ресурсов при сносе
         ResourceBundle refund = CalculateRefund(selectedBuilding.Data.ConstructionCost);
-        ResourceManager.Instance.AddResources(refund);
+        GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(refund);
 
         // Уничтожаем здание
         Destroy(selectedBuilding.gameObject);

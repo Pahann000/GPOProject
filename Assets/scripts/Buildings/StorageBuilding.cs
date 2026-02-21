@@ -32,7 +32,7 @@ public class StorageBuilding : Building
     /// </summary>
     protected override void DestroyBuilding()
     {
-        ResourceManager.Instance.DecreaseStorage(StoredResource, StorageIncrease);
+        GameKernel.Instance.GetSystem<ResourceSystem>().DecreaseStorage(StoredResource, StorageIncrease);
         base.DestroyBuilding();
     }
 }

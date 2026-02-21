@@ -67,20 +67,20 @@ public class Player : MonoBehaviour, IChunkObserver
         {
             Vector3 vector3 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             var targetCollider = Physics2D.OverlapPoint(new Vector2(vector3.x, vector3.y));
-            if (targetCollider) 
+            if (targetCollider)
             {
                 Unit unit = targetCollider.gameObject.GetComponent<Unit>();
                 if (unit != null && !(unit.Owner == this))
                 {
                     target = unit;
                 }
-                else
-                {
-                    return;
-                }
+                else return;
             }
         }
 
-        _unitController.CommandUnit(target);
+        if (target != null && GameKernel.Instance != null)
+        {
+            GameKernel.Instance.EventBus.Raise(new UnitCommandEvent(target, position));
+        }
     }
 }

@@ -49,11 +49,39 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
     private void Start()
     {
         ChunkManager.Instance.RegisterObserver(this);
-        if (rb == null)
-            rb = GetComponent<Rigidbody2D>();
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+
+        // РЕГИСТРАЦИЯ В СИСТЕМЕ
+        if (GameKernel.Instance != null)
+        {
+            var unitSys = GameKernel.Instance.GetSystem<UnitSystem>();
+            unitSys?.RegisterUnit(this);
+        }
     }
 
-    private void OnDestroy() => ChunkManager.Instance.UnregisterObserver(this);
+    private void OnDestroy()
+    {
+        ChunkManager.Instance.UnregisterObserver(this);
+
+        // ОТПИСКА
+        if (GameKernel.Instance != null)
+        {
+            var unitSys = GameKernel.Instance.GetSystem<UnitSystem>();
+            unitSys?.UnregisterUnit(this);
+        }
+    }
+
+    private void Update()
+    {
+        if (GameKernel.Instance != null)
+        {
+            var unitSys = GameKernel.Instance.GetSystem<UnitSystem>();
+            if (unitSys != null && !unitSys.IsActive) return;
+        }
+
+        // Тут могла бы быть логика, если бы она не была в корутинах
+    }
+
     private void FixedUpdate()
     {
         // Простая проверка через raycast вниз (длина 0.1f, слой "Ground" — настройте под вашу игру)

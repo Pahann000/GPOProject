@@ -154,9 +154,14 @@ public class BuilderSystem : IGameSystem
             if (!col.isTrigger && col.gameObject != _currentPreview) return false;
         }
 
-        // ВАЖНО: Здесь нам нужен доступ к WorldSystem для проверки чанков (Map.Instance.GetBlockInfo)
-        // Пока мы это закомментируем, чтобы не ломать код. Добавим на следующем шаге.
-        // return _kernel.GetSystem<WorldSystem>().IsSurfaceBuildable(checkPos, checkSize);
+        var world = _kernel.GetSystem<WorldSystem>();
+        if (world != null)
+        {
+            if (!world.IsSurfaceBuildable(checkPos, checkSize))
+            {
+                return false;
+            }
+        }
 
         return true;
     }

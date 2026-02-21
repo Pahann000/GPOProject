@@ -139,6 +139,9 @@ public class GameKernel : MonoBehaviour
         RegisterSystem(new ResourceSystem());
 
         RegisterSystem(new UISystem());
-        // Позже добавить все системы.
+
+        RegisterSystem(new WorldSystem());
+
+        RegisterSystem(new BuilderSystem());
     }
 }

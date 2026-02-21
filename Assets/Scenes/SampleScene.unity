@@ -1026,7 +1026,7 @@ MonoBehaviour:
   atlasMaterial: {fileID: 2100000, guid: 47f54f92d3d29bb44a8f95d3b1da34ee, type: 2}
   _buildingObstacleMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 392
   _buildableBlockTypes: 01000000
   _resourceBlockTypes: 020000000300000004000000
   CaveSize: 0.2
@@ -1038,14 +1038,14 @@ MonoBehaviour:
   WorldWidth: 50
   WorldHeight: 50
   HighAddition: 45
-  MineralFrequency: 0.05
-  MinaralSize: 0.6
-  RootsFrequency: 0.04
-  RootsSize: 0.5
-  MaxRootsHeight: 30
-  IceFrequency: 0.03
-  IceSize: 0.7
-  MinIceHeight: 70
+  MineralFrequency: 0.01
+  MinaralSize: 0.1
+  RootsFrequency: 0.1
+  RootsSize: 0.568
+  MaxRootsHeight: 0
+  IceFrequency: 0.01
+  IceSize: 0.1
+  MinIceHeight: 0
 --- !u!4 &288573034
 Transform:
   m_ObjectHideFlags: 0
@@ -1659,7 +1659,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1200983165}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999502
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -4485,7 +4485,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00087076036}
+  m_AnchoredPosition: {x: 0, y: 28.206505}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &1622813889

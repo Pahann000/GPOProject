@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class BuildingSystemTester : MonoBehaviour
+public class BuilderSystemTester : MonoBehaviour
 {
     [Header("Тестовые здания")]
     [SerializeField] private BuildingData testHouse;
@@ -10,12 +10,12 @@ public class BuildingSystemTester : MonoBehaviour
     [Header("Тестовые ресурсы")]
     [SerializeField] private bool addTestResourcesOnStart = true;
 
-    private BuildingSystem _buildingSystem;
+    private BuilderSystem _builderSystem;
     private ResourceManager _resourceManager;
 
     void Start()
     {
-        _buildingSystem = FindFirstObjectByType<BuildingSystem>();
+        _builderSystem = GameKernel.Instance.GetSystem<BuilderSystem>();
         _resourceManager = FindFirstObjectByType<ResourceManager>();
 
         if (addTestResourcesOnStart && _resourceManager != null)
@@ -66,9 +66,9 @@ public class BuildingSystemTester : MonoBehaviour
 
     private void StartTestBuilding(BuildingData buildingData)
     {
-        if (_buildingSystem != null)
+        if (_builderSystem != null)
         {
-            _buildingSystem.StartBuildingPlacement(buildingData);
+            _builderSystem.StartPlacement(buildingData);
             Debug.Log($"Начато размещение: {buildingData.DisplayName}");
         }
     }

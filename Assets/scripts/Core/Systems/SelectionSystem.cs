@@ -52,65 +52,20 @@ public class SelectionSystem : IGameSystem
 
     private void HandleClick()
     {
-        Debug.Log("--- НАЧАЛО КЛИКА ---");
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
 
-        // 1. Проверка Камеры
-        if (_mainCamera == null)
-        {
-            Debug.LogError("ОШИБКА: _mainCamera is NULL! Ядро не нашло камеру.");
-            return;
-        }
-
-        // 2. Проверка UI
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-        {
-            Debug.Log("Клик заблокирован интерфейсом (UI).");
-            // Попробуем узнать, какой именно элемент UI перекрывает экран
-            GameObject uiObject = EventSystem.current.currentSelectedGameObject;
-            // К сожалению, currentSelectedGameObject не всегда показывает то, что под мышкой
-            // Но сам факт срабатывания условия говорит о том, что Raycast Target на Canvas мешает.
-            return;
-        }
-
-        // 3. Пускаем луч БЕЗ маски слоя (чтобы увидеть вообще всё, что под мышкой)
         Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        RaycastHit2D hit = Physics2D.GetRayIntersection(ray, Mathf.Infinity, _buildingLayer);
 
-        // Рисуем луч в редакторе (будет виден в окне Scene красной линией 2 секунды)
-        Debug.DrawRay(ray.origin, ray.direction * 100, Color.red, 2f);
-
-        RaycastHit2D[] hits = Physics2D.GetRayIntersectionAll(ray, Mathf.Infinity);
-
-        Debug.Log($"Луч выпущен. Найдено объектов под курсором: {hits.Length}");
-
-        foreach (var hit in hits)
+        if (hit.collider != null)
         {
-            string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
-            Debug.Log($"> Попали в: '{hit.collider.name}' | Слой: {layerName} | Есть Building компонент: {hit.collider.GetComponent<Building>() != null}");
-        }
-
-        // 4. Оригинальная логика
-        RaycastHit2D target = Physics2D.GetRayIntersection(ray, Mathf.Infinity, _buildingLayer);
-
-        if (target.collider != null)
-        {
-            Debug.Log(">>> УСПЕХ: Оригинальный рейкаст нашел цель!");
-            Building building = target.collider.GetComponent<Building>();
+            Building building = hit.collider.GetComponent<Building>();
             if (building != null)
             {
                 SelectBuilding(building);
                 return;
             }
-            else
-            {
-                Debug.LogWarning(">>> Но на объекте нет скрипта Building!");
-            }
         }
-        else
-        {
-            Debug.Log($">>> ПРОВАЛ: Оригинальный рейкаст с маской {_buildingLayer.value} ничего не нашел.");
-        }
-
-        Deselect();
     }
 
     private void SelectBuilding(Building building)

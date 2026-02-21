@@ -16,7 +16,7 @@ public class BuildingPanelUI : MonoBehaviour
     [Header("Доступные здания")]
     [SerializeField] private List<BuildingData> availableBuildings = new List<BuildingData>();
 
-    private BuildingSystem _buildingSystem;
+    private BuilderSystem _builderSystem;
     private ResourceManager _resourceManager;
     private bool _isPanelOpen = false;
 
@@ -24,7 +24,7 @@ public class BuildingPanelUI : MonoBehaviour
 
     void Start()
     {
-        _buildingSystem = FindFirstObjectByType<BuildingSystem>();
+        _builderSystem = GameKernel.Instance.GetSystem<BuilderSystem>();
         _resourceManager = FindFirstObjectByType<ResourceManager>();
         
         if (toggleButton != null)
@@ -167,9 +167,9 @@ public class BuildingPanelUI : MonoBehaviour
         // Назначаем обработчик клика
         button.onClick.AddListener(() =>
         {
-            if (_buildingSystem != null)
+            if (_builderSystem != null)
             {
-                _buildingSystem.StartBuildingPlacement(data);
+                _builderSystem.StartPlacement(data);
                 // Закрываем панель после выбора
                 TogglePanel();
             }

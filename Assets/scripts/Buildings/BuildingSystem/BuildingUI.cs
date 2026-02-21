@@ -9,11 +9,11 @@ public class BuildingUI : MonoBehaviour
     [SerializeField] private Button _buildingButtonPrefab;
     [SerializeField] private Transform _buttonsContainer;
 
-    private BuildingSystem _buildingSystem;
+    private BuilderSystem _builderSystem;
 
     private void Start()
     {
-        _buildingSystem = FindFirstObjectByType<BuildingSystem>();
+        _builderSystem = GameKernel.Instance.GetSystem<BuilderSystem>();
         CreateBuildingButtons();
     }
 
@@ -65,7 +65,7 @@ public class BuildingUI : MonoBehaviour
             }
 
             tooltip.SetText(sb.ToString());
-            btn.onClick.AddListener(() => _buildingSystem.StartBuildingPlacement(data));
+            btn.onClick.AddListener(() => _builderSystem.StartPlacement(data));
         }
     }
 }

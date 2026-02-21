@@ -162,12 +162,6 @@ public class Building : MonoBehaviour
         }
     }
 
-    private void OnMouseDown()
-    {
-        // ��������� ������ ��� �����
-        SelectionManager.Instance?.SelectBuilding(this);
-    }
-
     // ������������ ���� ������ � ���������
     private void OnDrawGizmosSelected()
     {

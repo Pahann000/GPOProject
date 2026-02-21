@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collection.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class EventBus
@@ -13,7 +13,7 @@ public class EventBus
 	/// <param name="callback"></param>
 	public void Subscribe<T>(Action<T> callback) where T : IGameEvent
 	{
-		Type type = typeof(t);
+		Type type = typeof(T);
 
 		if (!_subscribers.ContainsKey(type))
 		{
@@ -52,9 +52,9 @@ public class EventBus
 				{
 					callback?.Invoke(eventData);
 				}
-				catch (Expection e)
+				catch (Exception e)
 				{
-					Debug.LogError($"[EventBus] Ошибка при обработке события {type.Name}: {e}")
+					Debug.LogError($"[EventBus] Ошибка при обработке события {type.Name}: {e}");
 				}
 			}
 		}

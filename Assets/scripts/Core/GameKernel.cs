@@ -13,7 +13,7 @@ public class GameKernel : MonoBehaviour
     public EventBus EventBus { get; private set; }
 
     // Список всех подключнных систем
-    private readonly List<IGameSystem> _system = new List<IGameSystem>();
+    private readonly List<IGameSystem> _systems = new List<IGameSystem>();
 
     // Словарь для быстрого поиска систем по типу
     private readonly Dictionary<Type, IGameSystem> _systemMap = new Dictionary<Type, IGameSystem>();
@@ -42,7 +42,7 @@ public class GameKernel : MonoBehaviour
             try
             {
                 system.Initialize(this);
-                Debug.Log($"[Kernel] Система инициализирована: {system.SystemName}";
+                Debug.Log($"[Kernel] Система инициализирована: {system.SystemName}");
             }
             catch (Exception e)
             {
@@ -85,7 +85,7 @@ public class GameKernel : MonoBehaviour
             {
                 try
                 {
-                    systam.FixedTick(fdt);
+                    system.FixedTick(fdt);
                 }
                 catch (Exception e)
                 {
@@ -136,6 +136,7 @@ public class GameKernel : MonoBehaviour
     {
         Debug.Log("[Kernel] Регистрация систем...");
 
+        RegisterSystem(new ResourceSystem());
         // Позже добавить все системы.
     }
 }

@@ -66,6 +66,8 @@ public class SelectionSystem : IGameSystem
                 return;
             }
         }
+
+        Deselect();
     }
 
     private void SelectBuilding(Building building)

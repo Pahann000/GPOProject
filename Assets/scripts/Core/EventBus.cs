@@ -44,8 +44,10 @@ public class EventBus
 		Type type = typeof(T);
 
 		if (_subscribers.TryGetValue(type, out List<object> callbacks))
-		{
-			foreach (var obj in callbacks)
+        {
+            Debug.Log($"[EventBus] Рассылка события {type.Name}. Слушателей: {callbacks.Count}");
+
+            foreach (var obj in new List<object>(callbacks))
 			{
 				var callback = obj as Action<T>;
 				try
@@ -58,5 +60,9 @@ public class EventBus
 				}
 			}
 		}
+		else
+		{ 
+            Debug.LogWarning($"[EventBus] Событие {type.Name} никто не слушает!");
+        }
 	}
 }

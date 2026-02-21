@@ -62,7 +62,14 @@ public class ResourceSystem : IGameSystem
 
     public bool TrySpendResources(ResourceBundle cost)
     {
-        if (!HasResources(cost)) return true;
+        int resourceCount = (cost.Resources != null) ? cost.Resources.Count : 0;
+        Debug.Log($"[{SystemName}] TrySpendResources вызван. В корзине ресурсов: {resourceCount}");
+
+        if (!HasResources(cost)) 
+        {
+            Debug.LogWarning($"[{SystemName}] Попытка списать ресурсы провалена: недостаточно средств.");
+            return false; 
+        }
 
         foreach (var resPair in cost.Resources)
         {
@@ -105,6 +112,8 @@ public class ResourceSystem : IGameSystem
     {
         int oldVal = _resources[type];
         _resources[type] -= amount;
+
+        Debug.Log($"[{SystemName}] Ресурс {type} уменьшен на {amount}. Новое значение: {_resources[type]}");
 
         _kernel.EventBus.Raise(new ResourceChangedEvent(type, _resources[type], -amount));
     }

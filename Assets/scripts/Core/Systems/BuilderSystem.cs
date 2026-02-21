@@ -41,11 +41,9 @@ public class BuilderSystem : IGameSystem
     {
         if (!_isPlacing) return;
 
-        // Если камера потерялась (например, при смене сцены), находим заново
         if (_mainCamera == null) _mainCamera = Camera.main;
         if (_mainCamera == null) return;
 
-        // Проверка клика по UI (чтобы не строить сквозь кнопки)
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             return;
 
@@ -53,9 +51,18 @@ public class BuilderSystem : IGameSystem
         UpdatePreviewVisuals();
 
         // Обработка ввода
-        if (Input.GetMouseButtonDown(0) && CanPlaceBuilding())
+        if (Input.GetMouseButtonDown(0))
         {
-            PlaceBuilding();
+            Debug.Log($"[{SystemName}] ЛКМ нажата. Проверка CanPlaceBuilding: {CanPlaceBuilding()}");
+
+            if (CanPlaceBuilding())
+            {
+                PlaceBuilding();
+            }
+            else
+            {
+                Debug.LogWarning($"[{SystemName}] Нельзя строить здесь! (Проверь почву, ресурсы или препятствия)");
+            }
         }
 
         if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
@@ -63,6 +70,7 @@ public class BuilderSystem : IGameSystem
             CancelBuilding();
         }
     }
+
 
     public void FixedTick(float fixedDeltaTime) { }
 
@@ -168,13 +176,22 @@ public class BuilderSystem : IGameSystem
 
     private void PlaceBuilding()
     {
+        Debug.Log($"[{SystemName}] Запуск метода PlaceBuilding..."); // ЭТО ДОЛЖНО ПОЯВИТЬСЯ
+
         Vector2 position = _currentPreview.transform.position;
+
+        if (_resourceSystem == null)
+        {
+            Debug.LogError($"[{SystemName}] Ссылка на ResourceSystem потеряна!");
+            return;
+        }
 
         if (_resourceSystem.TrySpendResources(_selectedBuilding.ConstructionCost))
         {
-            // Спавним настоящее здание
+            Debug.Log($"[{SystemName}] Ресурсы успешно списаны через Ядро.");
+
             GameObject buildingObj = Object.Instantiate(_selectedBuilding.Prefab, position, Quaternion.identity);
-            buildingObj.layer = LayerMask.NameToLayer("Building");  
+            buildingObj.layer = LayerMask.NameToLayer("Building");
 
             Building building = buildingObj.GetComponent<Building>();
             if (building != null) building.Initialize(_selectedBuilding);
@@ -186,11 +203,11 @@ public class BuilderSystem : IGameSystem
                 collider.size = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
             }
 
-            Debug.Log($"[{SystemName}] Здание {_selectedBuilding.DisplayName} построено!");
-
-            // TODO: Отправить событие в EventBus "Здание построено"
-
             CancelBuilding();
+        }
+        else
+        {
+            Debug.LogError($"[{SystemName}] ResourceSystem.TrySpendResources вернул FALSE.");
         }
     }
 

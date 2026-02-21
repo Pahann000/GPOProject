@@ -65,6 +65,8 @@ public class ResourcePanelUI : MonoBehaviour
 
     private void OnResourceChangedBus(ResourceChangedEvent evt)
     {
+        Debug.Log($"[ResourcePanelUI] Получено событие об изменении {evt.Type} на {evt.Delta}");
+
         if (resourceControllers.TryGetValue(evt.Type, out var controller))
         {
             int limit = _resourceSystem != null ? _resourceSystem.GetStorageLimit(evt.Type) : 1000;

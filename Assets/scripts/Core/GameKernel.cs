@@ -49,6 +49,9 @@ public class GameKernel : MonoBehaviour
                 Debug.LogError($"[Kernel] Ошибка инициализации {system.SystemName}: {e}");
             }
         }
+
+        // Раскомментироват чтобы выключить карту
+        //GetSystem<WorldSystem>().IsActive = false;
     }
 
     private void Update()

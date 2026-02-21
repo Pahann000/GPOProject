@@ -137,6 +137,8 @@ public class GameKernel : MonoBehaviour
         Debug.Log("[Kernel] Регистрация систем...");
 
         RegisterSystem(new ResourceSystem());
+
+        RegisterSystem(new UISystem());
         // Позже добавить все системы.
     }
 }

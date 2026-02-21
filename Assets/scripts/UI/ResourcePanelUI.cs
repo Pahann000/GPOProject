@@ -19,19 +19,27 @@ public class ResourcePanelUI : MonoBehaviour
 
     private Dictionary<ResourceType, ResourceDisplayController> resourceControllers = new Dictionary<ResourceType, ResourceDisplayController>();
 
+    private ResourceSystem _resourceSystem;
+
     private void Start()
     {
-        InitializeResourceDisplays();
-        UpdateResourceDisplay();
+        if (GameKernel.Instance != null)
+        {
+            _resourceSystem = GameKernel.Instance.GetSystem<ResourceSystem>();
 
-        // Подписываемся на события изменения ресурсов
-        ResourceManager.OnResourceChanged += OnResourceChanged;
+            GameKernel.Instance.EventBus.Subscribe<ResourceChangedEvent>(OnResourceChangedBus);
+        }
+
+        InitializeResourceDisplays();
+        UpdateAllDisplays();
     }
 
     private void OnDestroy()
     {
-        // Отписываемся от событий
-        ResourceManager.OnResourceChanged -= OnResourceChanged;
+        if (GameKernel.Instance != null)
+        {
+            GameKernel.Instance.EventBus.Unsubscribe<ResourceChangedEvent>(OnResourceChangedBus);
+        }
     }
 
     private void InitializeResourceDisplays()
@@ -52,41 +60,33 @@ public class ResourcePanelUI : MonoBehaviour
                 controller.Initialize(type, icon);
                 resourceControllers[type] = controller;
             }
-            else
-            {
-                Debug.LogError($"ResourceDisplayController не найден на префабе для ресурса {type}");
-            }
         }
     }
 
-    private void Update()
+    private void OnResourceChangedBus(ResourceChangedEvent evt)
     {
-        UpdateResourceDisplay();
+        if (resourceControllers.TryGetValue(evt.Type, out var controller))
+        {
+            int limit = _resourceSystem != null ? _resourceSystem.GetStorageLimit(evt.Type) : 1000;
+            controller.UpdateDisplay(evt.NewAmount, limit);
+
+            // controller.PlayChangeAnimation(evt.Delta > 0);
+        }
     }
 
-    private void UpdateResourceDisplay()
+    private void UpdateAllDisplays()
     {
+        if (_resourceSystem == null) return;
+
         foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
         {
-            UpdateResourceDisplay(type);
+            int amount = _resourceSystem.GetResource(type);
+            int limit = _resourceSystem.GetStorageLimit(type);
+            if (resourceControllers.TryGetValue(type, out var controller))
+            {
+                controller.UpdateDisplay(amount, limit);
+            }
         }
-    }
-
-    private void UpdateResourceDisplay(ResourceType type)
-    {
-        if (resourceControllers.ContainsKey(type) && ResourceManager.Instance != null)
-        {
-            int amount = ResourceManager.Instance.GetResource(type);
-            int limit = ResourceManager.Instance.GetStorageLimit(type);
-
-            resourceControllers[type].UpdateDisplay(amount, limit);
-        }
-    }
-
-    private void OnResourceChanged(ResourceType type)
-    {
-        // При изменении ресурса обновляем только его отображение
-        UpdateResourceDisplay(type);
     }
 
     private Sprite GetIconForResourceType(ResourceType type)
@@ -99,25 +99,6 @@ public class ResourcePanelUI : MonoBehaviour
             case ResourceType.Root: return foodIcon;
             case ResourceType.Energy: return energyIcon;
             default: return null;
-        }
-    }
-
-    /// <summary>
-    /// Внешний метод для принудительного обновления отображения
-    /// </summary>
-    public void ForceRefresh()
-    {
-        UpdateResourceDisplay();
-    }
-
-    /// <summary>
-    /// Показывает/скрывает отображение конкретного ресурса
-    /// </summary>
-    public void SetResourceVisibility(ResourceType type, bool isVisible)
-    {
-        if (resourceControllers.ContainsKey(type))
-        {
-            resourceControllers[type].SetVisible(isVisible);
         }
     }
 }

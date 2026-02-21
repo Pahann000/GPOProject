@@ -14,8 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   blocks:
   - type: 3
-    uvPosition: {x: 0, y: 0.5}
+    uvPosition: {x: 0.5, y: 0.5}
+    uvSize: {x: 0.5, y: 0.5}
+  - type: 1
+    uvPosition: {x: 0.5, y: 0}
     uvSize: {x: 0.5, y: 0.5}
   - type: 2
-    uvPosition: {x: 0.5, y: 0.5}
+    uvPosition: {x: 0, y: 0.5}
+    uvSize: {x: 0.5, y: 0.5}
+  - type: 4
+    uvPosition: {x: 0, y: 0}
     uvSize: {x: 0.5, y: 0.5}

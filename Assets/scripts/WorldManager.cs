@@ -8,8 +8,8 @@ using UnityEngine;
 /// </summary>
 public class WorldManager : MonoBehaviour
 {
-    [SerializeField]private BlockAtlas atlas;
-    [SerializeField]private Material atlasMaterial;
+    [SerializeField] private BlockAtlas atlas;
+    [SerializeField] private Material atlasMaterial;
     [SerializeField] private LayerMask _buildingObstacleMask;
     [SerializeField] private List<BlockType> _buildableBlockTypes = new List<BlockType>();
     [SerializeField] private List<BlockType> _resourceBlockTypes = new List<BlockType>();
@@ -25,7 +25,12 @@ public class WorldManager : MonoBehaviour
     /// <summary>
     /// ������ �������� ���� ������.
     /// </summary>
-    private Texture2D _goldNoise;
+    private Texture2D _mineralNoise;
+
+    private Texture2D _iceNoise;
+
+    private Texture2D _rootNoise;
+
 
     private Dictionary<Texture2D, BlockType> Noises = new();
 
@@ -71,15 +76,19 @@ public class WorldManager : MonoBehaviour
     /// </summary>
     public int HighAddition = 50;
 
-    [Header("Ores")]
-    /// <summary>
-    /// ������� ��������� ������.
-    /// <summary/>
-    public float GoldFrequency;
-    /// <summary>
-    /// ������ ��������� ������ (������ �������� ������ ����).
-    /// </summary>
-    public float GoldSize;
+    [Header("Mineral Settings")]
+    [Range(0.01f, 0.1f)] public float MineralFrequency = 0.05f;
+    [Range(0.1f, 0.9f)] public float MinaralSize = 0.6f;
+
+    [Header("Roots Settings")]
+    [Range(0.01f, 0.1f)] public float RootsFrequency = 0.04f;
+    [Range(0.1f, 0.9f)] public float RootsSize = 0.5f;
+    [Range(0, 100)] public int MaxRootsHeight = 30;
+
+    [Header("Ice Settings")]
+    [Range(0.01f, 0.1f)] public float IceFrequency = 0.03f;
+    [Range(0.1f, 0.9f)] public float IceSize = 0.7f;
+    [Range(0, 100)] public int MinIceHeight = 70;
 
 
 
@@ -93,8 +102,8 @@ public class WorldManager : MonoBehaviour
         // Àâòîìàòè÷åñêè çàïîëíÿåì ñïèñîê ïðèãîäíûõ áëîêîâ
         if (_buildableBlockTypes.Count == 0)
         {
-            _buildableBlockTypes.Add(BlockType.Stone);
-            Debug.Log($"Äîáàâëåí ïðèãîäíûé áëîê: {BlockType.Stone.ToString()}");
+            _buildableBlockTypes.Add(BlockType.Rock);
+            Debug.Log($"Äîáàâëåí ïðèãîäíûé áëîê: {BlockType.Rock.ToString()}");
         }
 
         // Àâòîìàòè÷åñêè çàïîëíÿåì ñïèñîê ðåñóðñíûõ áëîêîâ
@@ -117,11 +126,16 @@ public class WorldManager : MonoBehaviour
         GenerateMapObject();
 
         Seed = Random.Range(-100000, 100000);
+        _mineralNoise = GenerateNoiseTexture(MineralFrequency, MinaralSize);
+        _iceNoise = GenerateNoiseTexture(IceFrequency, IceSize);
+        _rootNoise = GenerateNoiseTexture(RootsFrequency, RootsSize);
         _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
-        _goldNoise = GenerateNoiseTexture(GoldFrequency, GoldSize);
 
-        Noises.Add(_goldNoise, BlockType.Gold);
-        Noises.Add(_worldNoise, BlockType.Stone);
+        Noises.Add(_iceNoise, BlockType.Ice);
+        Noises.Add(_rootNoise, BlockType.Root);
+        Noises.Add(_worldNoise, BlockType.Rock);
+        Noises.Add(_mineralNoise, BlockType.Minerals);
+
 
         GenerateChunkManager();
     }

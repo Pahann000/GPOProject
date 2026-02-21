@@ -5,6 +5,11 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - buildingPreviewPrefab: {fileID: 3106463480208296258, guid: f3c691a0adff6a54f8b4676a8f38552c, type: 3}
+  - validMaterial: {fileID: 2100000, guid: 72ee838864403bb4cbf8b11b3597f4b1, type: 2}
+  - invalidMaterial: {fileID: 2100000, guid: 7e0756b41a185ec4ba37b69da712b513, type: 2}
+  - resourceManager: {instanceID: 0}
+  - uiManager: {instanceID: 0}
+  - worldManager: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

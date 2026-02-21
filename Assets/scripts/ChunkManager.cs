@@ -26,7 +26,11 @@ public class ChunkManager : MonoBehaviour
     {
         Instance = this;
         transform.position = Vector3.zero;
+        Debug.Log("ChunkManager создан и инициализирован");
+
+        
     }
+
 
     private void FixedUpdate()
     {
@@ -91,7 +95,9 @@ public class ChunkManager : MonoBehaviour
         if (!_observers.Contains(observer))
         {
             _observers.Add(observer);
+            Debug.Log($"Наблюдатель зарегистрирован. Всего наблюдателей: {_observers.Count}");
         }
+        Debug.Log($"Наблюдатель не зарегистрирован. Всего наблюдателей: {_observers.Count}");
     }
 
     /// <summary>

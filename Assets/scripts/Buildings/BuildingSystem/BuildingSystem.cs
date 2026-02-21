@@ -292,7 +292,7 @@ public class BuildingSystem : MonoBehaviour
                     Debug.Log($"Найден ресурсный блок: {block.tileData.type.ToString()}");
                     validObstacles++;
                 }
-                else if (block.tileData.type != BlockType.Air && block.tileData.type == BlockType.Stone)
+                else if (block.tileData.type != BlockType.Air && block.tileData.type == BlockType.Rock)
                 {
                     // Камень - можно строить (но не является препятствием сам по себе)
                     continue;

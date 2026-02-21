@@ -446,7 +446,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1558543668}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0
+  m_Size: 0.9999683
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -730,23 +730,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   atlas: {fileID: 11400000, guid: 9035713f356193c4a91f63e279b97d6d, type: 2}
-  atlasMaterial: {fileID: 2100000, guid: e2722fc755d33e64cb7173d0ac419d2c, type: 2}
+  atlasMaterial: {fileID: 2100000, guid: 47f54f92d3d29bb44a8f95d3b1da34ee, type: 2}
   _buildingObstacleMask:
     serializedVersion: 2
     m_Bits: 392
-  _buildableBlockTypes: 00000000
-  _resourceBlockTypes: 000000000000000000000000
-  CaveSize: 0.25
-  CaveFreq: 0.01
+  _buildableBlockTypes: 01000000
+  _resourceBlockTypes: 030000000400000002000000
+  CaveSize: 0.1
+  CaveFreq: 0.06
   TerrainFreq: 0.04
   HighMultiplier: 25
-  Seed: 0
+  Seed: 1000
   chunkSize: 16
   WorldWidth: 20
   WorldHeight: 100
   HighAddition: 50
-  GoldFrequency: 0.0916
-  GoldSize: 0.829
+  MineralFrequency: 0.05
+  MinaralSize: 0.6
+  RootsFrequency: 0.0621
+  RootsSize: 0.495
+  MaxRootsHeight: 100
+  IceFrequency: 0.01
+  IceSize: 0.9
+  MinIceHeight: 0
 --- !u!4 &136096433
 Transform:
   m_ObjectHideFlags: 0
@@ -759,8 +765,7 @@ Transform:
   m_LocalPosition: {x: -178.43456, y: 60.53127, z: -1.8079451}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1659436207}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &161010872
@@ -795,7 +800,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 30.409582}
+  m_AnchoredPosition: {x: 0, y: 0.00013367605}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &174170705
@@ -4552,11 +4557,11 @@ Transform:
   m_GameObject: {fileID: 1659436204}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 178.43456, y: -60.53127, z: -8.192055}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 136096433}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1659436208
 MonoBehaviour:
@@ -4611,9 +4616,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1659436204}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9ce58b6ca3275243983ca1c4b58a98e, type: 3}
+  m_Script: {fileID: 11500000, guid: 1ea9d7afffb38cf46bd3ce7eb21bbabf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _panSpeed: 20
+  _zoomSpeed: 5
+  _zoomRange: {x: 5, y: 15}
+  _panLimitX: {x: 0, y: 0}
+  _panLimitY: {x: 0, y: 0}
 --- !u!114 &1693046309 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 131945078571971957, guid: b417bbd0e4bc3b14096ff088197760af, type: 3}
@@ -5720,6 +5730,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 136096433}
+  - {fileID: 1659436207}
   - {fileID: 655633691}
   - {fileID: 1571507300}
   - {fileID: 805747345}

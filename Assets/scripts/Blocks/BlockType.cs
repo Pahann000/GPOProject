@@ -3,10 +3,8 @@
 /// </summary>
 public enum BlockType 
 { 
-    Air, 
-    Dirt, 
-    Stone, 
-    Gold,
+    Air,
+    Rock,
     Minerals,
     Ice,
     Root,

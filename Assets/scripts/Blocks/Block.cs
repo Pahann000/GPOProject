@@ -51,13 +51,9 @@ public class Block : IDamagable
 
     private void DropResources(Player player)
     {
-        if (!player.Resources.ContainsKey(tileData.type.ToString()))
+        if (GameKernel.Instance != null)
         {
-            player.Resources.Add(tileData.type.ToString(), 1);
-        }
-        else
-        {
-            player.Resources[tileData.type.ToString()] += 1;
+            GameKernel.Instance.GetSystem<ResourceSystem>().AddResource(ResourceType.Rock, 1);
         }
     }
 

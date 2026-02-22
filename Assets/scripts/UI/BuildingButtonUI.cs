@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Text;
 
 public class BuildingButtonUI : MonoBehaviour
 {
@@ -21,101 +20,67 @@ public class BuildingButtonUI : MonoBehaviour
     [SerializeField] private GameObject tooltipObject;
     [SerializeField] private TextMeshProUGUI tooltipText;
 
-    private BuildingData buildingData;
-    private System.Action onClickCallback;
+    private BuildingData _buildingData;
+    private BuildingPanelUI _parentPanel;
 
     /// <summary>
     /// Инициализирует кнопку с данными здания
     /// </summary>
-    public void Initialize(BuildingData data, System.Action onClick)
+    public void Initialize(BuildingData data, BuildingPanelUI parentPanel)
     {
-        buildingData = data;
-        onClickCallback = onClick;
+        _buildingData = data;
+        _parentPanel = parentPanel;
+
+        if (button == null) button = GetComponent<Button>();
 
         // Устанавливаем визуальные элементы
-        if (iconImage != null && data.Icon != null)
-            iconImage.sprite = data.Icon;
+        if (iconImage != null && data.Icon != null) iconImage.sprite = data.Icon;
 
-        if (nameText != null)
-            nameText.text = data.DisplayName;
+        if (nameText != null) nameText.text = data.DisplayName;
 
-        if (costText != null)
-            costText.text = FormatCost(data.ConstructionCost);
+        SetupTooltipAndCost(data);
+        
+        // Клик -> обращаемся к Ядру
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(OnButtonClicked);
 
-        // Назначаем обработчик клика
-        if (button != null)
-            button.onClick.AddListener(OnButtonClick);
-
-        // Настраиваем тултип
-        SetupTooltip(data);
+        var hoverHandler = gameObject.AddComponent<BuildingButtonHover>();
+        hoverHandler.Initialize(button, tooltipObject, backgroundImage, hoverColor);
 
         // Обновляем доступность
         UpdateAvailability();
-
-        // Добавляем обработчики наведения мыши
-        AddHoverEffects();
     }
 
-    private string FormatCost(ResourceBundle cost)
+    private void SetupTooltipAndCost(BuildingData data)
     {
-        if (cost.Resources == null || cost.Resources.Count == 0)
-            return "Бесплатно";
-
-        StringBuilder sb = new StringBuilder();
-        foreach (var resource in cost.Resources)
-        {
-            sb.AppendLine($"{resource.Type}: {resource.Amount}");
-        }
-        return sb.ToString();
-    }
-
-    private void SetupTooltip(BuildingData data)
-    {
-        if (tooltipText == null || tooltipObject == null) return;
-
-        StringBuilder sb = new StringBuilder();
-        sb.AppendLine($"<b>{data.DisplayName}</b>");
-        sb.AppendLine();
-
-        // Стоимость строительства
-        sb.AppendLine("<color=yellow>Стоимость:</color>");
+        string costString = "";
         if (data.ConstructionCost.Resources != null)
         {
-            foreach (var resource in data.ConstructionCost.Resources)
+            foreach (var res in data.ConstructionCost.Resources)
             {
-                sb.AppendLine($"{resource.Type}: {resource.Amount}");
+                costString += $"{res.Type}: {res.Amount}";
             }
         }
-        sb.AppendLine();
 
-        // Размер здания
-        sb.AppendLine($"<color=yellow>Размер:</color> {data.Width}x{data.Height}");
+        if (costText != null) costText.text = string.IsNullOrEmpty(costString) ? "Бесплатно" : costString;
 
-        // Производство (если есть)
-        if (data.OutputResources.Resources != null && data.OutputResources.Resources.Count > 0)
+        if (tooltipText != null && tooltipObject != null)
         {
-            sb.AppendLine();
-            sb.AppendLine("<color=yellow>Производит:</color>");
-            foreach (var output in data.OutputResources.Resources)
-            {
-                sb.AppendLine($"{output.Type}: {output.Amount}");
-            }
+            tooltipText.text = $"<b>{data.DisplayName}</b>\nРазмер: {data.Width}x{data.Height}";
+            tooltipObject.SetActive(false);
         }
-
-        tooltipText.text = sb.ToString();
-        tooltipObject.SetActive(false); // Скрываем по умолчанию
     }
 
-    private void AddHoverEffects()
+    private void OnButtonClicked()
     {
-        // Добавляем компоненты для обработки наведения
-        var hoverHandler = gameObject.AddComponent<BuildingButtonHover>();
-        hoverHandler.Initialize(button, tooltipObject, backgroundImage, hoverColor);
-    }
+        if (_buildingData == null || GameKernel.Instance == null) return;
 
-    private void OnButtonClick()
-    {
-        onClickCallback?.Invoke();
+        var builer = GameKernel.Instance.GetSystem<BuilderSystem>();
+        if (builer != null)
+        {
+            builer.StartPlacement(_buildingData);
+            _parentPanel.SetBuildingsVisible(false);
+        }
     }
 
     /// <summary>
@@ -123,45 +88,22 @@ public class BuildingButtonUI : MonoBehaviour
     /// </summary>
     public void UpdateAvailability()
     {
-        if (buildingData == null || GameKernel.Instance.GetSystem<ResourceSystem>() == null) return;
+        if (_buildingData == null || GameKernel.Instance == null) return;
 
-        bool canAfford = GameKernel.Instance.GetSystem<ResourceSystem>().HasResources(buildingData.ConstructionCost);
+        var resourceSys = GameKernel.Instance.GetSystem<ResourceSystem>();
+        bool canAfford = resourceSys != null && resourceSys.HasResources(_buildingData.ConstructionCost);
 
         // Визуальная индикация доступности
-        if (iconImage != null)
-            iconImage.color = canAfford ? affordableColor : unaffordableColor;
+        if (iconImage != null) iconImage.color = canAfford ? affordableColor : unaffordableColor;
 
-        if (button != null)
-            button.interactable = canAfford;
+        if (button != null) button.interactable = canAfford;
 
-        // Можно добавить дополнительные эффекты для недоступных зданий
-        if (!canAfford)
-        {
-            // Например, добавить затемнение
-            if (backgroundImage != null)
-                backgroundImage.color = new Color(0.3f, 0.3f, 0.3f, 0.7f);
-        }
-    }
-
-    private void Update()
-    {
-        // Динамически обновляем доступность (можно делать реже для оптимизации)
-        UpdateAvailability();
-    }
-
-    /// <summary>
-    /// Получает данные здания этой кнопки
-    /// </summary>
-    public BuildingData GetBuildingData()
-    {
-        return buildingData;
-    }
-
-    /// <summary>
-    /// Возвращает компонент кнопки
-    /// </summary>
-    public Button GetButton()
-    {
-        return button;
+        // TODO: Можно добавить дополнительные эффекты для недоступных зданий
+        //if (!canAfford)
+        //{
+        //    // Например, добавить затемнение
+        //    if (backgroundImage != null)
+        //        backgroundImage.color = new Color(0.3f, 0.3f, 0.3f, 0.7f);
+        //}
     }
 }

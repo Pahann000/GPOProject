@@ -26,10 +26,7 @@ public class Player : MonoBehaviour, IChunkObserver
     public int Y => (int)this.transform.position.y;
 
     /// <inheritdoc/>
-    void Awake()
-    {
-        Resources.Add("Gold", 10);
-    }
+    void Awake() { }
 
     /// <inheritdoc/>
     void Update()

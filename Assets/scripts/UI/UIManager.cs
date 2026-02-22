@@ -38,7 +38,8 @@ public class UIManager : MonoBehaviour
     {
         if (buildingPanel != null)
         {
-            bool currentState = buildingPanel.gameObject.activeSelf;
+            bool currentState = !buildingPanel.gameObject.activeSelf; 
+            buildingPanel.SetBuildingsVisible(currentState); 
         }
     }
 

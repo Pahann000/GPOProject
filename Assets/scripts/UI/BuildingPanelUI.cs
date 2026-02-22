@@ -26,7 +26,9 @@ public class BuildingPanelUI : MonoBehaviour
     {
         _builderSystem = GameKernel.Instance.GetSystem<BuilderSystem>();
         _resourceManager = GameKernel.Instance.GetSystem<ResourceSystem>();
-        
+
+        GameKernel.Instance.EventBus.Subscribe<ResourceChangedEvent>(OnResourceChangedBus);
+
         if (toggleButton != null)
             toggleButton.onClick.AddListener(TogglePanel);
         
@@ -64,14 +66,11 @@ public class BuildingPanelUI : MonoBehaviour
         GameObject buttonGO = Instantiate(buildingButtonPrefab, buttonsContainer);
         
         // Инициализируем контроллер кнопки
-        BuildingButtonController buttonController = buttonGO.GetComponent<BuildingButtonController>();
-        if (buttonController != null)
+        BuildingButtonUI buttonUI = buttonGO.GetComponent<BuildingButtonUI>();
+        if (buttonUI != null)
         {
-            buttonController.Initialize(buildingData);
-        }
-        else
-        {
-            Debug.LogError("На префабе кнопки нет BuildingButtonController!");
+            buttonUI.Initialize(buildingData, this);
+            _buildingButtons[buildingData] = buttonUI.GetComponent<Button>();
         }
     }
     
@@ -96,8 +95,8 @@ public class BuildingPanelUI : MonoBehaviour
     {
         foreach (Transform child in buttonsContainer)
         {
-            BuildingButtonController buttonController = child.GetComponent<BuildingButtonController>();
-            if (buttonController != null)
+            BuildingButtonUI buttonUI = child.GetComponent<BuildingButtonUI>();
+            if (buttonUI != null)
             {
                 // Нужно получить BuildingData для этой кнопки
                 // Это можно сделать, если сохранять ссылку в кнопке

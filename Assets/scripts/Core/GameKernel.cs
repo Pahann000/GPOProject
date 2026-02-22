@@ -2,20 +2,27 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Главный контроллер игры (Сердце).
+/// Инициализирует, хранит и управляет жизненным циклом всех модулей (IGameSystem).
+/// Единственный разрешенный Singleton в архитектуре.
+/// </summary>
 public class GameKernel : MonoBehaviour
 {
+    /// <summary> Глобальная ссылка на Ядро. </summary>
     public static GameKernel Instance { get; private set; }
 
     [Header("Global Settings")]
+    [Tooltip("Если true, логика систем в методах Tick и FixedTick ставится на паузу.")]
     public bool IsPaused = false;
 
-    // Шина событий
+    /// <summary> 
+    /// Главная шина событий для общения систем между собой и с UI. 
+    /// </summary>
     public EventBus EventBus { get; private set; }
 
-    // Список всех подключнных систем
+    // Внутренние хранилища систем
     private readonly List<IGameSystem> _systems = new List<IGameSystem>();
-
-    // Словарь для быстрого поиска систем по типу
     private readonly Dictionary<Type, IGameSystem> _systemMap = new Dictionary<Type, IGameSystem>();
 
     private void Awake()
@@ -32,6 +39,7 @@ public class GameKernel : MonoBehaviour
 
         EventBus = new EventBus();
 
+        // Сборка всех модулей при запуске игры
         RegisterSystems();
     }
 
@@ -109,13 +117,15 @@ public class GameKernel : MonoBehaviour
         _systemMap.Clear();
     }
 
-    // --- Управление системами ---
-
+    /// <summary>
+    /// Регистрирует новую систему в Ядре. Вызывается только при инициализации в Awake.
+    /// </summary>
+    /// <param name="system">Экземпляр системы, реализующей IGameSystem.</param>
     public void RegisterSystem(IGameSystem system)
     {
         if (_systemMap.ContainsKey(system.GetType()))
         {
-            Debug.Log($"[Kernel] Система {system.GetType().Name} уже зарегистрирована!");
+            Debug.LogWarning($"[Kernel] Система {system.GetType().Name} уже зарегистрирована!");
             return;
         }
 
@@ -123,6 +133,11 @@ public class GameKernel : MonoBehaviour
         _systemMap[system.GetType()] = system;
     }
 
+    /// <summary>
+    /// Позволяет получить доступ к любой зарегистрированной системе по ее типу (Service Locator).
+    /// </summary>
+    /// <typeparam name="T">Тип системы (например, ResourceSystem).</typeparam>
+    /// <returns>Экземпляр системы или null, если она не найдена.</returns>
     public T GetSystem<T>() where T : class, IGameSystem
     {
         var type = typeof(T);
@@ -135,6 +150,9 @@ public class GameKernel : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Метод-сборщик. Здесь определяется порядок запуска всех модулей игры.
+    /// </summary>
     private void RegisterSystems()
     {
         Debug.Log("[Kernel] Регистрация систем...");
@@ -144,11 +162,11 @@ public class GameKernel : MonoBehaviour
         RegisterSystem(new UISystem());
 
         RegisterSystem(new WorldSystem());
-
+        
         RegisterSystem(new BuilderSystem());
-
+        
         RegisterSystem(new SelectionSystem());
-
+        
         RegisterSystem(new UnitSystem());
     }
 }

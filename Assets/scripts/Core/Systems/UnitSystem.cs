@@ -1,6 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Главный контроллер всех юнитов в игре.
+/// Принимает приказы от игрока (через EventBus) и распределяет их между свободными рабочими.
+/// </summary>
 public class UnitSystem : IGameSystem
 {
     public string SystemName => "Unit System";

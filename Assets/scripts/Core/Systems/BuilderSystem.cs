@@ -1,6 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
+/// <summary>
+/// Управляет процессом размещения зданий на карте.
+/// Обрабатывает пользовательский ввод, проверяет возможность постройки и списывает ресурсы.
+/// </summary>
 public class BuilderSystem : IGameSystem
 {
     public string SystemName => "Builder System";
@@ -9,29 +13,23 @@ public class BuilderSystem : IGameSystem
     private GameKernel _kernel;
     private ResourceSystem _resourceSystem;
 
-    // Состояние стройки
+    // Состояние режима стройки
     private bool _isPlacing;
     private BuildingData _selectedBuilding;
     private GameObject _currentPreview;
     private SpriteRenderer _previewRenderer;
     private Camera _mainCamera;
 
-    // В будущем эти настройки можно вынести в отдельный ScriptableObject (Config)
+    // TODO: Вынести настройки слоев и материалов в ScriptableObject, чтобы не "хардкодить" их имена в скрипте.
     private LayerMask _obstacleLayer;
-    private Material _validMaterial;
-    private Material _invalidMaterial;
 
     public void Initialize(GameKernel kernel)
     {
         _kernel = kernel;
-
-        // Получаем нужные подсистемы сразу
         _resourceSystem = _kernel.GetSystem<ResourceSystem>();
 
-        // Загружаем настройки из ресурсов (позже сделаем красивее через конфиги)
+        // Слой, на котором ищутся препятствия (другие здания)
         _obstacleLayer = LayerMask.GetMask("Obstacle", "Building");
-
-        // Пока ищем камеру по старинке. По-хорошему, нужна CameraSystem.
         _mainCamera = Camera.main;
 
         Debug.Log($"[{SystemName}] Инициализирована.");
@@ -44,24 +42,17 @@ public class BuilderSystem : IGameSystem
         if (_mainCamera == null) _mainCamera = Camera.main;
         if (_mainCamera == null) return;
 
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-            return;
+        // Блокируем строительство, если мышка находится над кнопкой интерфейса
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
 
         UpdatePreviewPosition();
         UpdatePreviewVisuals();
 
-        // Обработка ввода
         if (Input.GetMouseButtonDown(0))
         {
-            Debug.Log($"[{SystemName}] ЛКМ нажата. Проверка CanPlaceBuilding: {CanPlaceBuilding()}");
-
             if (CanPlaceBuilding())
             {
                 PlaceBuilding();
-            }
-            else
-            {
-                Debug.LogWarning($"[{SystemName}] Нельзя строить здесь! (Проверь почву, ресурсы или препятствия)");
             }
         }
 
@@ -71,7 +62,6 @@ public class BuilderSystem : IGameSystem
         }
     }
 
-
     public void FixedTick(float fixedDeltaTime) { }
 
     public void Shutdown()
@@ -79,8 +69,10 @@ public class BuilderSystem : IGameSystem
         CancelBuilding();
     }
 
-    // --- Логика Строительства (публичный API) ---
-
+    /// <summary>
+    /// Активирует режим строительства выбранного здания. Вызывается из UI кнопок.
+    /// </summary>
+    /// <param name="buildingData">Данные о здании (цена, префаб, иконка).</param>
     public void StartPlacement(BuildingData buildingData)
     {
         if (buildingData == null) return;
@@ -89,8 +81,7 @@ public class BuilderSystem : IGameSystem
 
         if (!_resourceSystem.HasResources(buildingData.ConstructionCost))
         {
-            Debug.Log($"[{SystemName}] Недостаточно ресурсов для {buildingData.DisplayName}");
-            // TODO: Отправить событие в UI (через EventBus) "Ошибка: нет ресурсов"
+            // TODO: Вызвать событие "UINotificationEvent", чтобы показать всплывашку "Нет ресурсов".
             return;
         }
 
@@ -99,6 +90,9 @@ public class BuilderSystem : IGameSystem
         _isPlacing = true;
     }
 
+    /// <summary>
+    /// Отменяет текущий режим стройки и уничтожает голограмму-превью.
+    /// </summary>
     public void CancelBuilding()
     {
         if (_currentPreview != null)
@@ -110,8 +104,9 @@ public class BuilderSystem : IGameSystem
         _currentPreview = null;
     }
 
-    // --- Внутренние методы (урезанная версия твоего старого кода) ---
-
+    /// <summary>
+    /// Создает визуальную "голограмму" здания, которая следует за курсором.
+    /// </summary>
     private void CreatePreview()
     {
         _currentPreview = new GameObject("BuildingPreview");
@@ -123,28 +118,38 @@ public class BuilderSystem : IGameSystem
         }
         _previewRenderer.sortingOrder = 100;
 
+        // Коллайдер нужен для физической проверки пересечений с препятствиями
         BoxCollider2D collider = _currentPreview.AddComponent<BoxCollider2D>();
         collider.size = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
         collider.isTrigger = true;
     }
 
+    /// <summary>
+    /// Перемещает превью здания за курсором с привязкой к сетке (Snap to Grid).
+    /// </summary>
     private void UpdatePreviewPosition()
     {
         Vector2 mousePos = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
 
-        // Привязка к сетке 1x1
+        // TODO: Добавить поддержку сетки разного размера, если здания будут не 1x1.
         _currentPreview.transform.position = new Vector2(
             Mathf.Round(mousePos.x),
             Mathf.Round(mousePos.y)
         );
     }
 
+    /// <summary>
+    /// Окрашивает превью в зеленый или красный цвет в зависимости от возможности постройки.
+    /// </summary>
     private void UpdatePreviewVisuals()
     {
         bool canBuild = CanPlaceBuilding();
         _previewRenderer.color = canBuild ? new Color(0, 1, 0, 0.7f) : new Color(1, 0, 0, 0.7f);
     }
 
+    /// <summary>
+    /// Выполняет полную проверку: Ресурсы -> Препятствия -> Почва.
+    /// </summary>
     private bool CanPlaceBuilding()
     {
         if (_currentPreview == null || _selectedBuilding == null) return false;
@@ -152,16 +157,17 @@ public class BuilderSystem : IGameSystem
         Vector2 checkPos = _currentPreview.transform.position;
         Vector2 checkSize = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
 
-        // 1. Ресурсы
+        // 1. Проверка ресурсов
         if (!_resourceSystem.HasResources(_selectedBuilding.ConstructionCost)) return false;
 
-        // 2. Препятствия (упрощенная проверка)
+        // 2. Проверка препятствий (пересечение с другими зданиями)
         Collider2D[] overlaps = Physics2D.OverlapBoxAll(checkPos, checkSize, 0, _obstacleLayer);
         foreach (var col in overlaps)
         {
             if (!col.isTrigger && col.gameObject != _currentPreview) return false;
         }
 
+        // 3. Проверка взаимодействия с миром (опора под зданием)
         var world = _kernel.GetSystem<WorldSystem>();
         if (world != null)
         {
@@ -174,23 +180,18 @@ public class BuilderSystem : IGameSystem
         return true;
     }
 
+    /// <summary>
+    /// Окончательное размещение здания: списание ресурсов и создание объекта на сцене.
+    /// </summary>
     private void PlaceBuilding()
     {
-        Debug.Log($"[{SystemName}] Запуск метода PlaceBuilding..."); // ЭТО ДОЛЖНО ПОЯВИТЬСЯ
-
         Vector2 position = _currentPreview.transform.position;
-
-        if (_resourceSystem == null)
-        {
-            Debug.LogError($"[{SystemName}] Ссылка на ResourceSystem потеряна!");
-            return;
-        }
 
         if (_resourceSystem.TrySpendResources(_selectedBuilding.ConstructionCost))
         {
-            Debug.Log($"[{SystemName}] Ресурсы успешно списаны через Ядро.");
-
             GameObject buildingObj = Object.Instantiate(_selectedBuilding.Prefab, position, Quaternion.identity);
+
+            // Жестко задаем слой, чтобы SelectionSystem мог его найти
             buildingObj.layer = LayerMask.NameToLayer("Building");
 
             Building building = buildingObj.GetComponent<Building>();
@@ -203,11 +204,8 @@ public class BuilderSystem : IGameSystem
                 collider.size = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
             }
 
+            // TODO: Отправить событие "BuildingPlacedEvent" в EventBus для звуков и эффектов
             CancelBuilding();
-        }
-        else
-        {
-            Debug.LogError($"[{SystemName}] ResourceSystem.TrySpendResources вернул FALSE.");
         }
     }
 

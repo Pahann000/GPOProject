@@ -2,6 +2,11 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
+/// <summary>
+/// Отвечает за инициализацию пользовательского интерфейса.
+/// Динамически загружает префаб UI из папки Resources при старте игры.
+/// Устраняет необходимость хранить Canvas на игровой сцене.
+/// </summary>
 public class UISystem : IGameSystem
 {
     public string SystemName => "UI System";
@@ -28,7 +33,7 @@ public class UISystem : IGameSystem
         // Можно будет обработать горячие клавиши тут. Пока лень
     }
 
-    public void FixedTick(float deltaTime) { }
+    public void FixedTick(float fixedDeltaTime) { }
 
     public void Shutdown()
     {

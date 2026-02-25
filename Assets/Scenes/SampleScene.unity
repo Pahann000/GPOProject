@@ -348,8 +348,8 @@ MonoBehaviour:
   _panSpeed: 20
   _zoomSpeed: 5
   _zoomRange: {x: 5, y: 15}
-  _panLimitX: {x: -50, y: 50}
-  _panLimitY: {x: -50, y: 50}
+  _panLimitX: {x: -50, y: 5000}
+  _panLimitY: {x: -50, y: 5000}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

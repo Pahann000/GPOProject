@@ -37,6 +37,8 @@ public class Player : MonoBehaviour, IChunkObserver
     {
         Resources.Add("Gold", 10);
         _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(10, 150));
+        _unitController.PlaceUnit(unitAtlas.Miner, this, new Vector2(11, 150));
+        _unitController.PlaceUnit(unitAtlas.Soldier, this, new Vector2(12, 151));
     }
 
     /// <inheritdoc/>
@@ -47,6 +49,9 @@ public class Player : MonoBehaviour, IChunkObserver
             var mousePos = Camera.main.ScreenPointToRay(Input.mousePosition);
             SelectTarget(new Vector2(mousePos.origin.x, mousePos.origin.y));
         }
+
+        _unitController.CheckActiveTasks();
+        _unitController.DistributeTasks();
     }
 
     //TODO: сделать нормальное выделение, и вообще работу игрока с блоками
@@ -62,6 +67,7 @@ public class Player : MonoBehaviour, IChunkObserver
         if (selectedBlock.tileData.type != BlockType.Air)
         {
             target = selectedBlock;
+            _unitController.AddTask(target, UnitTypeName.Miner);
         }
         else
         {
@@ -73,6 +79,7 @@ public class Player : MonoBehaviour, IChunkObserver
                 if (unit != null && !(unit.Owner == this))
                 {
                     target = unit;
+                    _unitController.AddTask(target, UnitTypeName.Soldier);
                 }
                 else
                 {
@@ -81,6 +88,5 @@ public class Player : MonoBehaviour, IChunkObserver
             }
         }
 
-        _unitController.CommandUnit(target);
     }
 }

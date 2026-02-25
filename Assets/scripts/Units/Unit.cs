@@ -17,6 +17,9 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
     public UnitType unitType;
     public Player Owner;
 
+    public delegate void OnTaskEnded(Unit unit);
+    public event OnTaskEnded? EndTask;
+
     /// <summary>
     /// Положение юнита по X.
     /// </summary>
@@ -91,6 +94,8 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
             yield return StartCoroutine(PerformAttack());
             yield return new WaitForSeconds(unitType.AttackCooldown);
         }
+
+        EndTask?.Invoke(this);
     }
 
     private IEnumerator MoveToTarget()

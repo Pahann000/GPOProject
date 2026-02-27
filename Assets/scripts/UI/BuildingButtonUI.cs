@@ -21,13 +21,13 @@ public class BuildingButtonUI : MonoBehaviour
     [SerializeField] private GameObject tooltipObject;
     [SerializeField] private TextMeshProUGUI tooltipText;
 
-    private BuildingData buildingData;
+    private BaseBuildingData buildingData;
     private System.Action onClickCallback;
 
     /// <summary>
     /// Инициализирует кнопку с данными здания
     /// </summary>
-    public void Initialize(BuildingData data, System.Action onClick)
+    public void Initialize(BaseBuildingData data, System.Action onClick)
     {
         buildingData = data;
         onClickCallback = onClick;
@@ -69,7 +69,7 @@ public class BuildingButtonUI : MonoBehaviour
         return sb.ToString();
     }
 
-    private void SetupTooltip(BuildingData data)
+    private void SetupTooltip(BaseBuildingData data)
     {
         if (tooltipText == null || tooltipObject == null) return;
 
@@ -90,17 +90,6 @@ public class BuildingButtonUI : MonoBehaviour
 
         // Размер здания
         sb.AppendLine($"<color=yellow>Размер:</color> {data.Width}x{data.Height}");
-
-        // Производство (если есть)
-        if (data.OutputResources.Resources != null && data.OutputResources.Resources.Count > 0)
-        {
-            sb.AppendLine();
-            sb.AppendLine("<color=yellow>Производит:</color>");
-            foreach (var output in data.OutputResources.Resources)
-            {
-                sb.AppendLine($"{output.Type}: {output.Amount}");
-            }
-        }
 
         tooltipText.text = sb.ToString();
         tooltipObject.SetActive(false); // Скрываем по умолчанию
@@ -152,7 +141,7 @@ public class BuildingButtonUI : MonoBehaviour
     /// <summary>
     /// Получает данные здания этой кнопки
     /// </summary>
-    public BuildingData GetBuildingData()
+    public BaseBuildingData GetBuildingData()
     {
         return buildingData;
     }

@@ -15,7 +15,6 @@ public class Player : MonoBehaviour, IChunkObserver
     /// </summary>
     [SerializeField]private UnitAtlas unitAtlas;
 
-    //[SerializeField] private BuildingAtlas buildingAtlas;
 
     /// <summary>
     /// временная реализация инвентаря игрока.

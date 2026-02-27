@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8dabff29a44ccc4f91cae2a12521c86, type: 3}
+  m_Name: Storage(1lvl)
+  m_EditorClassIdentifier: 
+  DisplayName: Storage
+  Icon: {fileID: -6433847079836243096, guid: 88787d4b95bcf2347b7e5adc473c90ed, type: 3}
+  Prefab: {fileID: 4475733308806076885, guid: 20d4971523ddf0e46859c165ce2db5f3, type: 3}
+  MaxHealth: 150
+  Width: 1
+  Height: 1
+  ConstructionCost:
+    Resources:
+    - Type: 0
+      Amount: 10
+  PlacementRules: []
+  ExtendType: 1
+  BonusValue: 1000
+  StoredResource: 0
+  AvailableProjects: []

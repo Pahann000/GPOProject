@@ -3,9 +3,9 @@
 public class BuildingSystemTester : MonoBehaviour
 {
     [Header("Тестовые здания")]
-    [SerializeField] private BuildingData testHouse;
-    [SerializeField] private BuildingData testFarm;
-    [SerializeField] private BuildingData testBarracks;
+    [SerializeField] private BaseBuildingData testHouse;
+    [SerializeField] private BaseBuildingData testFarm;
+    [SerializeField] private BaseBuildingData testBarracks;
 
     [Header("Тестовые ресурсы")]
     [SerializeField] private bool addTestResourcesOnStart = true;
@@ -64,7 +64,7 @@ public class BuildingSystemTester : MonoBehaviour
         }
     }
 
-    private void StartTestBuilding(BuildingData buildingData)
+    private void StartTestBuilding(BaseBuildingData buildingData)
     {
         if (_buildingSystem != null)
         {
@@ -77,11 +77,11 @@ public class BuildingSystemTester : MonoBehaviour
     {
         if (_resourceManager != null)
         {
-            _resourceManager.AddResource(ResourceType.Rock, 100);
-            _resourceManager.AddResource(ResourceType.Minerals, 50);
-            _resourceManager.AddResource(ResourceType.Ice, 20);
-            _resourceManager.AddResource(ResourceType.Root, 10);
-            _resourceManager.AddResource(ResourceType.Energy, 5);
+            //_resourceManager.AddResource(ResourceType.Rock, 100);
+            //_resourceManager.AddResource(ResourceType.Minerals, 50);
+            //_resourceManager.AddResource(ResourceType.Ice, 20);
+            //_resourceManager.AddResource(ResourceType.Root, 10);
+            //_resourceManager.AddResource(ResourceType.Energy, 5);
 
             Debug.Log("Добавлены тестовые ресурсы");
         }

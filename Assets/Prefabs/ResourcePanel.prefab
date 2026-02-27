@@ -122,7 +122,7 @@ MonoBehaviour:
   mineralsIcon: {fileID: 3452003437791708593, guid: e15b2a6d3d5903049b9d0a43b54f24bd, type: 3}
   IceIcon: {fileID: -7293136561871713164, guid: 5a4c598e656c1664084c8a8098b543c7, type: 3}
   foodIcon: {fileID: 1757657175861619870, guid: b6430bf072082f748bcd34b677f2796c, type: 3}
-  energyIcon: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  energyIcon: {fileID: 7222066130240952562, guid: 36d6f020fb0ae7e4f84436bbbf69f2b8, type: 3}
 --- !u!1001 &1392979462282714922
 PrefabInstance:
   m_ObjectHideFlags: 0

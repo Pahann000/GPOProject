@@ -9,7 +9,7 @@ public class BuildingButtonController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI costText;
 
-    private BuildingData _buildingData;
+    private BaseBuildingData _buildingData;
     private Button _button;
 
     void Awake()
@@ -19,7 +19,7 @@ public class BuildingButtonController : MonoBehaviour
             _button = gameObject.AddComponent<Button>();
     }
 
-    public void Initialize(BuildingData buildingData)
+    public void Initialize(BaseBuildingData buildingData)
     {
         _buildingData = buildingData;
 

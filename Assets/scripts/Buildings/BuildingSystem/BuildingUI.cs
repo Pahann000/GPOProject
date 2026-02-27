@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class BuildingUI : MonoBehaviour
 {
     [Header("Building Settings")]
-    [SerializeField] private BuildingData[] _availableBuildings;
+    [SerializeField] private BaseBuildingData[] _availableBuildings;
     [SerializeField] private Button _buildingButtonPrefab;
     [SerializeField] private Transform _buttonsContainer;
 

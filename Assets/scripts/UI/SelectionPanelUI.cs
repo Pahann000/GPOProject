@@ -104,7 +104,7 @@ public class SelectionPanelUI : MonoBehaviour
         }
 
         // Информация о производстве (для производственных зданий)
-        ProductionBuilding productionBuilding = selectedBuilding as ProductionBuilding;
+        ProduceBuilding productionBuilding = selectedBuilding as ProduceBuilding;
         if (productionBuilding != null && productionInfoPanel != null)
         {
             productionInfoPanel.SetActive(true);
@@ -119,13 +119,13 @@ public class SelectionPanelUI : MonoBehaviour
         UpdateButtonsAvailability();
     }
 
-    private void UpdateProductionInfo(ProductionBuilding production)
+    private void UpdateProductionInfo(ProduceBuilding production)
     {
         if (inputResourcesText != null)
-            inputResourcesText.text = FormatResources(production.inputResources, "Вход:");
+            inputResourcesText.text = FormatResources(production.ProduceData.InputResources, "Вход:");
 
         if (outputResourcesText != null)
-            outputResourcesText.text = FormatResources(production.outputResources, "Выход:");
+            outputResourcesText.text = FormatResources(production.ProduceData.OutputResources, "Выход:");
 
         // Прогресс производства (примерная реализация)
         if (productionProgress != null)

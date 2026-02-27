@@ -1171,17 +1171,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   buildingButtonPrefab: {fileID: 3620070468645192847, guid: c85a00a2e1cab4846b8bafe628264380, type: 3}
-  buildingButtonsContainer: {fileID: 7457581126104384205}
+  buttonsContainer: {fileID: 7272133328297808104, guid: c85a00a2e1cab4846b8bafe628264380, type: 3}
   panel: {fileID: 7451572301834241993}
   toggleButton: {fileID: 130136763644668417}
   toggleButtonText: {fileID: 184645108869624281}
-  buildingCategories:
-  - categoryName: House
-    buildings:
-    - {fileID: 11400000, guid: 5987ae446914d9543a9962bd84e70dec, type: 2}
-  - categoryName: Plants
-    buildings:
-    - {fileID: 11400000, guid: d50d90893acbef040a701400a9965646, type: 2}
+  availableBuildings:
+  - {fileID: 11400000, guid: 4c18865a3de82f1429f024cf328b24ec, type: 2}
+  - {fileID: 11400000, guid: 7ff404af053e67445af5ac3cd5fd86cc, type: 2}
+  - {fileID: 11400000, guid: 84c978d85e155cb43be0b1f6c9a15c24, type: 2}
 --- !u!1 &7714685339953316014
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a065490d35fc96d4dadf6cc67b8a82b5, type: 3}
+  m_Name: Mine(1lvl)
+  m_EditorClassIdentifier: 
+  DisplayName: Mine
+  Icon: {fileID: 5368710002378998782, guid: 49d44360b59a86741a0c60790728dec1, type: 3}
+  Prefab: {fileID: 1795599091307537050, guid: 80d99b8656d7da449970ab2046caf7ad, type: 3}
+  MaxHealth: 100
+  Width: 1
+  Height: 1
+  ConstructionCost:
+    Resources:
+    - Type: 0
+      Amount: 10
+  PlacementRules: []
+  InputResources:
+    Resources:
+    - Type: 0
+      Amount: 0
+  OutputResources:
+    Resources:
+    - Type: 0
+      Amount: 5
+  ProductionInterval: 5
+  SpawnsUnits: 0
+  UnitPrefab: {fileID: 0}
+  UnitsPerCycle: 1
+  SpawnPoint: {fileID: 0}

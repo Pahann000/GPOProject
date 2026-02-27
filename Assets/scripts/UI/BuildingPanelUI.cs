@@ -14,13 +14,13 @@ public class BuildingPanelUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI toggleButtonText;
 
     [Header("Доступные здания")]
-    [SerializeField] private List<BuildingData> availableBuildings = new List<BuildingData>();
+    [SerializeField] private List<BaseBuildingData> availableBuildings = new List<BaseBuildingData>();
 
     private BuildingSystem _buildingSystem;
     private ResourceManager _resourceManager;
     private bool _isPanelOpen = false;
 
-    private Dictionary<BuildingData, Button> _buildingButtons = new Dictionary<BuildingData, Button>();
+    private Dictionary<BaseBuildingData, Button> _buildingButtons = new Dictionary<BaseBuildingData, Button>();
 
     void Start()
     {
@@ -50,7 +50,7 @@ public class BuildingPanelUI : MonoBehaviour
             Destroy(child.gameObject);
         
         // Создаем новые кнопки
-        foreach (BuildingData buildingData in availableBuildings)
+        foreach (BaseBuildingData buildingData in availableBuildings)
         {
             if (buildingData == null) continue;
             
@@ -58,7 +58,7 @@ public class BuildingPanelUI : MonoBehaviour
         }
     }
     
-    void CreateButtonForBuilding(BuildingData buildingData)
+    void CreateButtonForBuilding(BaseBuildingData buildingData)
     {
         // Создаем кнопку
         GameObject buttonGO = Instantiate(buildingButtonPrefab, buttonsContainer);
@@ -114,7 +114,7 @@ public class BuildingPanelUI : MonoBehaviour
             Destroy(child.gameObject);
 
         // Создаем кнопки для каждого здания
-        foreach (BuildingData buildingData in availableBuildings)
+        foreach (BaseBuildingData buildingData in availableBuildings)
         {
             if (buildingData == null) continue;
 
@@ -122,7 +122,7 @@ public class BuildingPanelUI : MonoBehaviour
         }
     }
 
-    private void CreateBuildingButton(BuildingData data)
+    private void CreateBuildingButton(BaseBuildingData data)
     {
         GameObject buttonGO = Instantiate(buildingButtonPrefab, buttonsContainer);
         Button button = buttonGO.GetComponent<Button>();
@@ -179,7 +179,7 @@ public class BuildingPanelUI : MonoBehaviour
         UpdateButtonAvailability(data, button);
     }
 
-    private void UpdateButtonAvailability(BuildingData data, Button button)
+    private void UpdateButtonAvailability(BaseBuildingData data, Button button)
     {
         if (button == null || data == null || _resourceManager == null) return;
 
@@ -229,7 +229,7 @@ public class BuildingPanelUI : MonoBehaviour
     }
 
     // Публичные методы
-    public void AddBuilding(BuildingData buildingData)
+    public void AddBuilding(BaseBuildingData buildingData)
     {
         if (!availableBuildings.Contains(buildingData))
         {
@@ -238,7 +238,7 @@ public class BuildingPanelUI : MonoBehaviour
         }
     }
 
-    public void RemoveBuilding(BuildingData buildingData)
+    public void RemoveBuilding(BaseBuildingData buildingData)
     {
         if (availableBuildings.Contains(buildingData))
         {

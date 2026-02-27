@@ -1,185 +1,187 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using System; // ← Добавьте эту директиву для Action
+﻿using System;
+using UnityEngine;
 
 public class ResourceManager : MonoBehaviour
 {
-    // Добавляем событие для уведомления об изменениях ресурсов
-    public static event Action<ResourceType> OnResourceChanged;
-
-    private Dictionary<ResourceType, int> resources = new Dictionary<ResourceType, int>();
-    private Dictionary<ResourceType, int> storageLimits = new Dictionary<ResourceType, int>();
-
     public static ResourceManager Instance { get; private set; }
+
+    [Header("Текущие ресурсы")]
+    [SerializeField] private int _minerals;
+    [SerializeField] private int _energy;
+    [SerializeField] private int _food;
+    [SerializeField] private int _water;
+    [SerializeField] private int _ice;
+    [SerializeField] private int _population;
+    [SerializeField] private int _maxPopulation = 10;
+
+    [Header("Лимиты хранилищ")]
+    [SerializeField] private int _maxMinerals = 100;
+    [SerializeField] private int _maxEnergy = 100;
+    [SerializeField] private int _maxFood = 100;
+    [SerializeField] private int _maxWater = 100;
+    [SerializeField] private int _maxIce = 100;
+
+    public static event Action<ResourceType> OnResourceChanged;
+    public static event Action<int> OnPopulationChanged;
+    public static event Action<int> OnMaxPopulationChanged;
+    public static event Action<ResourceType, int> OnStorageChanged;
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            InitializeResources();
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
-    private void InitializeResources()
+    public int GetResource(ResourceType type)
     {
-        foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
+        return type switch
         {
-            resources[type] = 0;
-            storageLimits[type] = 1000;
-        }
-
-        // Пример стартовых ресурсов
-        AddResources(new ResourceBundle(
-            new ResourceBundle.ResourcePair { Type = ResourceType.Minerals, Amount = 500 },
-            new ResourceBundle.ResourcePair { Type = ResourceType.Ice, Amount = 200 }
-        ));
+            ResourceType.Minerals => _minerals,
+            ResourceType.Energy => _energy,
+            ResourceType.Food => _food,
+            ResourceType.Water => _water,
+            ResourceType.Ice => _ice,
+            _ => 0
+        };
     }
 
-    public bool HasResources(ResourceBundle cost)
+    public int GetMaxResource(ResourceType type)
     {
-        // Если стоимость пустая, значит ресурсы есть
-        if (cost.Resources == null || cost.Resources.Count == 0)
-            return true;
-
-        foreach (var resPair in cost.Resources)
+        return type switch
         {
-            if (!resources.ContainsKey(resPair.Type)) return false;
-            if (resources[resPair.Type] < resPair.Amount) return false;
-        }
+            ResourceType.Minerals => _maxMinerals,
+            ResourceType.Energy => _maxEnergy,
+            ResourceType.Food => _maxFood,
+            ResourceType.Water => _maxWater,
+            ResourceType.Ice => _maxIce,
+            _ => 0
+        };
+    }
+
+    public bool HasResources(ResourceBundle bundle)
+    {
+        foreach (var pair in bundle.Resources)
+            if (GetResource(pair.Type) < pair.Amount) return false;
         return true;
     }
 
-    public bool TrySpendResources(ResourceBundle cost)
+    public bool TrySpendResources(ResourceBundle bundle)
     {
-        if (!HasResources(cost)) return false;
-
-        foreach (var resPair in cost.Resources)
-        {
-            resources[resPair.Type] -= resPair.Amount;
-            // Уведомляем об изменении ресурса
-            OnResourceChanged?.Invoke(resPair.Type);
-        }
+        if (!HasResources(bundle)) return false;
+        foreach (var pair in bundle.Resources)
+            SpendResource(pair.Type, pair.Amount);
         return true;
     }
 
-    public void AddResources(ResourceBundle income)
+    public void AddResources(ResourceBundle bundle)
     {
-        foreach (var resPair in income.Resources)
-        {
-            if (resources.ContainsKey(resPair.Type))
-            {
-                int oldAmount = resources[resPair.Type];
-                resources[resPair.Type] = Mathf.Min(
-                    resources[resPair.Type] + resPair.Amount,
-                    storageLimits[resPair.Type]
-                );
-
-                // Уведомляем об изменении, только если количество действительно изменилось
-                if (oldAmount != resources[resPair.Type])
-                {
-                    OnResourceChanged?.Invoke(resPair.Type);
-                }
-            }
-        }
+        foreach (var pair in bundle.Resources)
+            AddResource(pair.Type, pair.Amount);
     }
 
-    /// <summary>
-    /// Добавляет определенное количество конкретного ресурса
-    /// </summary>
     public void AddResource(ResourceType type, int amount)
     {
-        if (resources.ContainsKey(type))
-        {
-            int oldAmount = resources[type];
-            resources[type] = Mathf.Min(resources[type] + amount, storageLimits[type]);
-
-            if (oldAmount != resources[type])
-            {
-                OnResourceChanged?.Invoke(type);
-            }
-        }
+        int current = GetResource(type);
+        int max = GetMaxResource(type);
+        SetResource(type, Mathf.Min(current + amount, max));
     }
 
-    /// <summary>
-    /// Тратит определенное количество конкретного ресурса
-    /// </summary>
-    public bool TrySpendResource(ResourceType type, int amount)
+    private void SpendResource(ResourceType type, int amount)
     {
-        if (!resources.ContainsKey(type) || resources[type] < amount)
-            return false;
-
-        resources[type] -= amount;
-        OnResourceChanged?.Invoke(type);
-        return true;
+        SetResource(type, GetResource(type) - amount);
     }
 
-    public int GetResource(ResourceType type) => resources.ContainsKey(type) ? resources[type] : 0;
-    public int GetStorageLimit(ResourceType type) => storageLimits.ContainsKey(type) ? storageLimits[type] : 0;
+    private void SetResource(ResourceType type, int value)
+    {
+        switch (type)
+        {
+            case ResourceType.Minerals: _minerals = value; break;
+            case ResourceType.Energy: _energy = value; break;
+            case ResourceType.Food: _food = value; break;
+            case ResourceType.Water: _water = value; break;
+            case ResourceType.Ice: _ice = value; break;
+        }
+        OnResourceChanged?.Invoke(type);
+    }
 
     public void IncreaseStorage(ResourceType type, int amount)
     {
-        if (storageLimits.ContainsKey(type))
+        switch (type)
         {
-            storageLimits[type] += amount;
-            // Можно добавить событие для уведомления об изменении лимита, если нужно
-            // OnStorageLimitChanged?.Invoke(type);
+            case ResourceType.Minerals: _maxMinerals += amount; break;
+            case ResourceType.Energy: _maxEnergy += amount; break;
+            case ResourceType.Food: _maxFood += amount; break;
+            case ResourceType.Water: _maxWater += amount; break;
+            case ResourceType.Ice: _maxIce += amount; break;
         }
+        OnStorageChanged?.Invoke(type, GetMaxResource(type));
     }
 
     public void DecreaseStorage(ResourceType type, int amount)
     {
-        if (storageLimits.ContainsKey(type))
+        switch (type)
         {
-            storageLimits[type] = Mathf.Max(0, storageLimits[type] - amount);
-            // OnStorageLimitChanged?.Invoke(type);
+            case ResourceType.Minerals: _maxMinerals = Mathf.Max(0, _maxMinerals - amount); break;
+            case ResourceType.Energy: _maxEnergy = Mathf.Max(0, _maxEnergy - amount); break;
+            case ResourceType.Food: _maxFood = Mathf.Max(0, _maxFood - amount); break;
+            case ResourceType.Water: _maxWater = Mathf.Max(0, _maxWater - amount); break;
+            case ResourceType.Ice: _maxIce = Mathf.Max(0, _maxIce - amount); break;
         }
+        OnStorageChanged?.Invoke(type, GetMaxResource(type));
     }
 
-    /// <summary>
-    /// Устанавливает конкретное значение для ресурса (для отладки или cheat-команд)
-    /// </summary>
-    public void SetResource(ResourceType type, int amount)
+    public void IncreaseAllStorage(int amount)
     {
-        if (resources.ContainsKey(type))
-        {
-            resources[type] = Mathf.Min(amount, storageLimits[type]);
-            OnResourceChanged?.Invoke(type);
-        }
+        _maxMinerals += amount;
+        _maxEnergy += amount;
+        _maxFood += amount;
+        _maxWater += amount;
+        _maxIce += amount;
     }
 
-    /// <summary>
-    /// Возвращает процент заполнения хранилища для указанного ресурса
-    /// </summary>
-    public float GetStoragePercentage(ResourceType type)
+    public void DecreaseAllStorage(int amount)
     {
-        if (!resources.ContainsKey(type) || storageLimits[type] <= 0)
-            return 0f;
-
-        return (float)resources[type] / storageLimits[type];
+        _maxMinerals = Mathf.Max(0, _maxMinerals - amount);
+        _maxEnergy = Mathf.Max(0, _maxEnergy - amount);
+        _maxFood = Mathf.Max(0, _maxFood - amount);
+        _maxWater = Mathf.Max(0, _maxWater - amount);
+        _maxIce = Mathf.Max(0, _maxIce - amount);
     }
 
-    /// <summary>
-    /// Проверяет, достигнут ли лимит хранилища для указанного ресурса
-    /// </summary>
-    public bool IsStorageFull(ResourceType type)
+    public int Population => _population;
+    public int MaxPopulation => _maxPopulation;
+
+    public void AddPopulation(int amount)
     {
-        return resources.ContainsKey(type) && resources[type] >= storageLimits[type];
+        _population = Mathf.Min(_population + amount, _maxPopulation);
+        OnPopulationChanged?.Invoke(_population);
     }
 
-    /// <summary>
-    /// Возвращает оставшееся место в хранилище для указанного ресурса
-    /// </summary>
-    public int GetRemainingStorage(ResourceType type)
+    public void RemovePopulation(int amount)
     {
-        if (!resources.ContainsKey(type))
-            return 0;
+        _population = Mathf.Max(0, _population - amount);
+        OnPopulationChanged?.Invoke(_population);
+    }
 
-        return Mathf.Max(0, storageLimits[type] - resources[type]);
+    public void IncreasePopulationLimit(int amount)
+    {
+        _maxPopulation += amount;
+        OnMaxPopulationChanged?.Invoke(_maxPopulation);
+    }
+
+    public void DecreasePopulationLimit(int amount)
+    {
+        _maxPopulation = Mathf.Max(0, _maxPopulation - amount);
+        OnMaxPopulationChanged?.Invoke(_maxPopulation);
+    }
+
+    public int GetStorageLimit(ResourceType type)
+    {
+        return GetMaxResource(type);
     }
 }

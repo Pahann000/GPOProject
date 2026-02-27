@@ -7,7 +7,7 @@ public class BuildingDebugger : MonoBehaviour
     [SerializeField] private KeyCode testKey = KeyCode.T;
 
     [Header("Тестовые данные")]
-    [SerializeField] private BuildingData testBuildingData;
+    [SerializeField] private BaseBuildingData testBuildingData;
 
     private BuildingSystem _buildingSystem;
 

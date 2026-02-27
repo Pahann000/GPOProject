@@ -131,10 +131,10 @@ public class WorldManager : MonoBehaviour
         _rootNoise = GenerateNoiseTexture(RootsFrequency, RootsSize);
         _worldNoise = GenerateNoiseTexture(CaveFreq, CaveSize);
 
-        Noises.Add(_iceNoise, BlockType.Ice);
-        Noises.Add(_rootNoise, BlockType.Root);
-        Noises.Add(_worldNoise, BlockType.Rock);
         Noises.Add(_mineralNoise, BlockType.Minerals);
+        Noises.Add(_rootNoise, BlockType.Root);
+        Noises.Add(_iceNoise, BlockType.Ice);
+        Noises.Add(_worldNoise, BlockType.Rock);
 
 
         GenerateChunkManager();
@@ -159,11 +159,7 @@ public class WorldManager : MonoBehaviour
         return chunkManager;
     }
 
-    /// <summary>
-    /// ���������� ����� ���� �������.
-    /// </summary>
-    /// <param name="frequency">������� ��������� �������� �������</param>
-    /// <returns>Texture2D</returns>
+    
     private Texture2D GenerateNoiseTexture(float frequency, float limit)
     {
         Texture2D noise = new Texture2D(WorldWidth * chunkSize, WorldHeight * chunkSize);
@@ -171,13 +167,13 @@ public class WorldManager : MonoBehaviour
         {
             for (int y = 0; y < noise.height; y++)
             {
-                // ���������� ������ �������� ��� ������ �������
+                
                 float xCoord = (x + Seed) * frequency;
                 float yCoord = (y + Seed) * frequency;
 
                 float value = Mathf.PerlinNoise(xCoord, yCoord);
 
-                // Normalize �������� ��� ������ ���������
+                
                 noise.SetPixel(x, y, value > limit ? Color.white : Color.black);
             }
         }
@@ -186,7 +182,7 @@ public class WorldManager : MonoBehaviour
         return noise;
     }
 
-    public Building PlaceBuilding(BuildingData data, Vector2 position)
+    public Building PlaceBuilding(BaseBuildingData data, Vector2 position)
     {
         Debug.Log($"WorldManager: Ïîïûòêà ðàçìåñòèòü {data.DisplayName} íà {position}");
 
@@ -214,16 +210,19 @@ public class WorldManager : MonoBehaviour
         return building;
     }
 
-    private GameObject CreateBuildingObject(BuildingData data, Vector2 position)
+    private GameObject CreateBuildingObject(BaseBuildingData data, Vector2 position)
     {
 
         GameObject obj = Instantiate(data.Prefab, position, Quaternion.identity);
         return obj;
     }
 
-    private Building InitializeBuildingComponent(GameObject obj, BuildingData data)
+    private Building InitializeBuildingComponent(GameObject obj, BaseBuildingData data)
     {
-        Building building = obj.AddComponent<Building>();
+      
+
+        Building building = obj.GetComponent<Building>();
+        
         building.Initialize(data);
 
         BoxCollider2D collider = obj.AddComponent<BoxCollider2D>();
@@ -233,11 +232,11 @@ public class WorldManager : MonoBehaviour
         return building;
     }
 
-    public bool CanPlaceBuilding(BuildingData data, Vector2 position)
+    public bool CanPlaceBuilding(BaseBuildingData data, Vector2 position)
     {
         Debug.Log($"WorldManager: Ïðîâåðêà âîçìîæíîñòè ðàçìåùåíèÿ {data.DisplayName} íà {position}");
 
-        // Ïðîâåðêà êîëëèçèé
+        
         Collider2D[] collisions = Physics2D.OverlapBoxAll(
             position,
             new Vector2(data.Width, data.Height),
@@ -254,20 +253,20 @@ public class WorldManager : MonoBehaviour
             return false;
         }
 
-        // Ïðîâåðêà ñïåöèàëüíûõ ïðàâèë
+        
         if (data.PlacementRules != null)
         {
             foreach (PlacementRule rule in data.PlacementRules)
             {
                 if (!rule.IsSatisfied(position))
                 {
-                    Debug.Log($"WorldManager: Ïðàâèëî {rule.name} íå âûïîëíåíî");
+                    Debug.Log($"WorldManager:  {rule.name} ");
                     return false;
                 }
             }
         }
 
-        Debug.Log("WorldManager: Âñå ïðîâåðêè ïðîéäåíû");
+        Debug.Log("WorldManager: ");
         return true;
     }
 }

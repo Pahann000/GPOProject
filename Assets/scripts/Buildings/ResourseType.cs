@@ -7,5 +7,7 @@ public enum ResourceType
     Ice,
     Rock,
     Root,
-    Energy
+    Energy,
+    Food,
+    Water
 }

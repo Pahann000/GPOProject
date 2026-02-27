@@ -68,8 +68,7 @@ public class OnBuildableSurfaceRule : PlacementRule
     {
         // Определяем, является ли блок ресурсом
         string blockName = block.tileData.type.ToString().ToLower();
-        return blockName.Contains("gold") || blockName.Contains("mineral") ||
-               blockName.Contains("ice") || blockName.Contains("root");
+        return blockName.Contains("mineral") || blockName.Contains("ice") || blockName.Contains("root");
     }
 }
 

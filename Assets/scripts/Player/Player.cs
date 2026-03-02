@@ -5,8 +5,15 @@
 /// </summary>
 public class Player : MonoBehaviour, IChunkObserver
 {
-    private void Start() => ChunkManager.Instance.RegisterObserver(this);
-    private void OnDestroy() => ChunkManager.Instance.UnregisterObserver(this);
+    private bool _isRegistered = false;
+
+    private void OnDestroy()
+    {
+        if (_isRegistered && GameKernel.Instance != null)
+        {
+            GameKernel.Instance.GetSystem<WorldSystem>()?.WorldChunks?.UnregisterObserver(this);
+        }
+    }
 
     /// <summary>
     /// Атлас со всеми видами юнитов.
@@ -14,6 +21,12 @@ public class Player : MonoBehaviour, IChunkObserver
     [SerializeField]private UnitAtlas unitAtlas;
 
     //[SerializeField] private BuildingAtlas buildingAtlas;
+
+    // TODO: Необходимо доделать инфентарь игрока.
+    /// <summary>
+    /// временная реализация инвентаря игрока.
+    /// </summary>
+    public ObservableDictionary<string, int> Resources { get; } = new ObservableDictionary<string, int>();
 
     /// <summary>
     /// Положение игрока по X.
@@ -31,6 +44,17 @@ public class Player : MonoBehaviour, IChunkObserver
     /// <inheritdoc/>
     void Update()
     {
+        if (!_isRegistered && GameKernel.Instance != null)
+        {
+            var worldSys = GameKernel.Instance.GetSystem<WorldSystem>();
+            if (worldSys != null && worldSys.WorldChunks != null)
+            {
+                worldSys.WorldChunks.RegisterObserver(this);
+                _isRegistered = true;
+                Debug.Log("[Player] Успешно зарегистрирован в системе чанков.");
+            }
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
             var mousePos = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -46,7 +70,7 @@ public class Player : MonoBehaviour, IChunkObserver
     private void SelectTarget(Vector2 position)
     {
         IDamagable target = null;
-        Block selectedBlock = Map.Instance.GetBlockObj(((int)position.x), ((int)position.y));
+        Block selectedBlock = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockObj(((int)position.x), ((int)position.y));
 
         if (selectedBlock.tileData.type != BlockType.Air)
         {

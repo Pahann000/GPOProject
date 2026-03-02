@@ -64,7 +64,7 @@ public class MapChunk : MonoBehaviour
             for (int y = 0; y < _chunkSize; y++)
             {
                 Vector2Int worldPos = GetWorldPosition(x, y);
-                Block tile = Map.Instance.GetBlockInfo(worldPos.x, worldPos.y);
+                Block tile = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockInfo(worldPos.x, worldPos.y);
 
                 if (tile.tileData.type == BlockType.Air) 
                 {
@@ -103,7 +103,7 @@ public class MapChunk : MonoBehaviour
             for (int y = 0; y < _chunkSize; y++)
             {
                 Vector2Int worldPos = GetWorldPosition(x, y);
-                Block tile = Map.Instance.GetBlockInfo(worldPos.x, worldPos.y);
+                Block tile = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockInfo(worldPos.x, worldPos.y);
                 solidMap[x, y] = (tile.tileData.type != BlockType.Air);
             }
         }

@@ -6,30 +6,25 @@ using UnityEngine;
 /// </summary>
 public class ChunkManager : MonoBehaviour
 {
+    private Map _map;
+
     private static ChunkManager _instance;
     [SerializeField] private int LoadingRadius = 2;
     private HashSet<Vector2Int> _requiredChunks = new HashSet<Vector2Int>();
     private HashSet<Vector2Int> _loadedChunks = new HashSet<Vector2Int>();
     private List<IChunkObserver> _observers = new List<IChunkObserver>();
 
-    /// <summary>
-    /// Singleton-объект.
-    /// </summary>
-    public static ChunkManager Instance
+    public void Initialize(Map map)
     {
-        get { return _instance; }
-        private set { _instance = value; }
-
-    }
-
-    void Awake()
-    {
-        Instance = this;
-        transform.position = Vector3.zero;
+        _map = map;
+        Debug.Log("[ChunkManager] Инициализирована.");
     }
 
     private void FixedUpdate()
     {
+        // Если карта не инициализирована или модуль выключен - ничего не делай, блин.
+        if (_map == null) return;
+
         UpdateRequiredChunks();
     }
 
@@ -37,18 +32,26 @@ public class ChunkManager : MonoBehaviour
     {
         _requiredChunks.Clear();
 
+        if (_observers.Count == 0)
+        {
+            Debug.LogWarning("[ChunkManager] Нет активных наблюдателей!");
+            return;
+        }
+
         foreach (var observer in _observers)
         {
+            if (observer == null) continue;
+
             Vector2Int ObserverPosition = new Vector2Int(observer.X, observer.Y);
 
             for (int x = -LoadingRadius; x <= LoadingRadius; x++)
             {
                 for (int y = -LoadingRadius; y <= LoadingRadius; y++)
                 {
-                    int ChunkPosX = ObserverPosition.x + x * Map.Instance.chunkSize;
-                    int ChunkPosy = ObserverPosition.y + y * Map.Instance.chunkSize;
+                    int ChunkPosX = ObserverPosition.x + x * _map.ChunkSize;
+                    int ChunkPosy = ObserverPosition.y + y * _map.ChunkSize;
 
-                    Vector2Int newChunkPosition = Map.Instance.GetChunkPosition(ChunkPosX, ChunkPosy);
+                    Vector2Int newChunkPosition = _map.GetChunkPosition(ChunkPosX, ChunkPosy);
                     _requiredChunks.Add(newChunkPosition);
                 }
             }
@@ -59,7 +62,7 @@ public class ChunkManager : MonoBehaviour
             // Загружаем новые чанки
             if (!_loadedChunks.Contains(requiredChunk))
             {
-                Map.Instance.GenerateChunk(requiredChunk.x, requiredChunk.y);
+                _map.GenerateChunk(requiredChunk.x, requiredChunk.y);
                 _loadedChunks.Add(requiredChunk);
             }
         }
@@ -77,7 +80,7 @@ public class ChunkManager : MonoBehaviour
         foreach (Vector2Int chunk in chunksToRemove)
         {
             _loadedChunks.Remove(chunk);
-            Map.Instance.DestroyChunk(chunk.x, chunk.y);
+            _map.DestroyChunk(chunk.x, chunk.y);
         }
     }
 

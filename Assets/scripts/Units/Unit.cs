@@ -48,26 +48,33 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
 
     private void Start()
     {
-        ChunkManager.Instance.RegisterObserver(this);
         if (rb == null) rb = GetComponent<Rigidbody2D>();
 
-        // РЕГИСТРАЦИЯ В СИСТЕМЕ
         if (GameKernel.Instance != null)
         {
             var unitSys = GameKernel.Instance.GetSystem<UnitSystem>();
             unitSys?.RegisterUnit(this);
+
+            var worldSys = GameKernel.Instance.GetSystem<WorldSystem>();
+            if (worldSys != null && worldSys.WorldChunks != null)
+            {
+                worldSys.WorldChunks.RegisterObserver(this);
+            }
         }
     }
 
     private void OnDestroy()
     {
-        ChunkManager.Instance.UnregisterObserver(this);
-
-        // ОТПИСКА
         if (GameKernel.Instance != null)
         {
             var unitSys = GameKernel.Instance.GetSystem<UnitSystem>();
             unitSys?.UnregisterUnit(this);
+
+            var worldSys = GameKernel.Instance.GetSystem<WorldSystem>();
+            if (worldSys != null && worldSys.WorldChunks != null)
+            {
+                worldSys.WorldChunks.UnregisterObserver(this);
+            }
         }
     }
 

@@ -11,9 +11,6 @@ public class WorldSystem : IGameSystem
 
     private GameKernel _kernel;
 
-    // Ссылки на старые MonoBehaviour генераторы
-    private WorldManager _worldManager;
-
     // TODO: В будущем избавиться от синглтонов Map и ChunkManager
     // и хранить ссылки на них прямо здесь.
 
@@ -21,36 +18,34 @@ public class WorldSystem : IGameSystem
     /// Kill Switch: Включает или выключает физическое обновление чанков на сцене.
     /// Полезно для отладки производительности.
     /// </summary>
-    public bool IsActive
-    {
-        get => _worldManager != null && _worldManager.enabled;
-        set
-        {
-            if (_worldManager != null)
-            {
-                _worldManager.enabled = value;
-                if (ChunkManager.Instance != null)
-                {
-                    ChunkManager.Instance.enabled = value;
-                }
-            }
-        }
-    }
+    public bool IsActive { get; set; } = true;
+    public Map WorldMap { get; private set; }
+    public ChunkManager WorldChunks { get; private set; }
 
     public void Initialize(GameKernel kernel)
     {
         _kernel = kernel;
 
-        // Находим генератор мира на сцене
-        _worldManager = Object.FindFirstObjectByType<WorldManager>();
-
-        if (_worldManager == null)
+        WorldConfig config = Resources.Load<WorldConfig>("MainWorldConfig");
+        if (config == null)
         {
-            Debug.LogError($"[{SystemName}] CRITICAL: WorldManager не найден на сцене! Карта не сгенерируется.");
+            Debug.LogError($"[{SystemName}] CRITICAL: Не найден MainWorldConfig в Resources!");
             return;
         }
 
-        Debug.Log($"[{SystemName}] Успешно привязана к WorldManager.");
+        // Чистый GO для мира
+        GameObject worldObj = new GameObject("World_Root");
+        Object.DontDestroyOnLoad(worldObj);
+
+        WorldMap = worldObj.AddComponent<Map>();
+        WorldChunks = worldObj.AddComponent<ChunkManager>();
+
+        WorldMap.Initialize(config);
+
+        // АХТУНГ: Зачем было удалять Map.Instance? Я забыл. Придётся передавать Map в ChunkManager вручную(
+        WorldChunks.Initialize(WorldMap);
+
+        Debug.Log($"[{SystemName}] Мир создан.");
     }
 
     public void Tick(float deltaTime)
@@ -68,9 +63,9 @@ public class WorldSystem : IGameSystem
     /// </summary>
     public BlockType GetBlockTypeAt(int x, int y)
     {
-        if (Map.Instance == null) return BlockType.Air;
+        if (WorldMap == null) return BlockType.Air;
 
-        Block block = Map.Instance.GetBlockInfo(x, y);
+        Block block = WorldMap.GetBlockInfo(x, y);
         return block != null ? block.tileData.type : BlockType.Air;
     }
 
@@ -83,7 +78,7 @@ public class WorldSystem : IGameSystem
     /// <returns>True, если место пригодно для стройки.</returns>
     public bool IsSurfaceBuildable(Vector2 position, Vector2 size, float minPercentage = 0.5f)
     {
-        if (Map.Instance == null) return false;
+        if (WorldMap == null) return false;
 
         // Проверяем, что ВНУТРИ самого здания (в его центре) находится воздух.
         // Это предотвращает постройку зданий прямо внутри скалы.

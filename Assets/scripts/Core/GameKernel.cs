@@ -72,14 +72,7 @@ public class GameKernel : MonoBehaviour
         {
             if (system.IsActive)
             {
-                try
-                {
-                    system.Tick(dt);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[Kernel] Ошибка в Tick системы {system.SystemName}: {e}");
-                }
+                system.Tick(dt);
             }
         }
     }
@@ -94,14 +87,7 @@ public class GameKernel : MonoBehaviour
         {
             if (system.IsActive)
             {
-                try
-                {
-                    system.FixedTick(fdt);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[Kernel] Ошибка в FixedTick системы {system.SystemName}: {e}");
-                }
+                system.FixedTick(fdt);
             }
         }
     }

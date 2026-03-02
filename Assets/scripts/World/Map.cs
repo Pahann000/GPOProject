@@ -6,61 +6,57 @@ using System.Collections.Generic;
 /// </summary>
 public class Map : MonoBehaviour
 {
-    private static Map _instance;
+    private WorldConfig _config;
     private Dictionary<Vector2Int, MapChunk> _chunks = new Dictionary<Vector2Int, MapChunk>();
     private Dictionary<Vector2Int, Block> _tileData = new Dictionary<Vector2Int, Block>();
-
-    /// <summary>
-    /// Размер чанка.
-    /// </summary>
-    public int chunkSize { get; set; } = 16;
-
-    /// <summary>
-    /// Атлас со всеми типами блоков.
-    /// </summary>
-    public BlockAtlas atlas { get; set; }
-
-    /// <summary>
-    /// Материал для отображения блоков (текстуры). 
-    /// </summary>
-    public Material atlasMaterial { get; set; }
-
-    /// <summary>
-    /// Ширина карты.
-    /// </summary>
-    public int width { get; set; }
-
-    /// <summary>
-    /// Высота карты.
-    /// </summary>
-    public int height { get; set; }
-
     /// <summary>
     /// Словарь с шумами для каждого типа блоков.
     /// </summary>
-    public Dictionary<Texture2D, BlockType> Noises { get; set; }
+    private Dictionary<Texture2D, BlockType> _noises = new Dictionary<Texture2D, BlockType>();
 
-    /// <summary>
-    /// Singleton-объект.
-    /// </summary>
-    public static Map Instance
+    public int ChunkSize => _config.ChunkSize;
+    public int Width => _config.WorldWidth * _config.ChunkSize;
+    public int Height => _config.WorldHeight * _config.ChunkSize;
+
+    public void Initialize(WorldConfig config)
     {
-        get 
-        {
-            if (_instance == null)
-            {
-                _instance  = new Map();
-            }
-            return _instance;
-        }
-        private set {  _instance = value; }
+        _config = config;
+
+        GenerateNoises();
+
+        Debug.Log("[Map] Карта инициализирована и шумы сгенерированы");
     }
 
-
-    void Awake()
+    private void GenerateNoises()
     {
-        Instance = this;
-        transform.position = Vector3.zero;
+        float seed = string.IsNullOrEmpty(_config.SeedString)
+            ? Random.Range(-10000f, 10000f)
+            : _config.SeedString.GetHashCode();
+
+        Texture2D caveNoise = GenerateNoiseTexture(_config.CaveFreq, _config.CaveSize, seed);
+        Texture2D goldNoise = GenerateNoiseTexture(_config.GoldFrequency, _config.GoldSize, seed + 100);
+
+        _noises.Add(goldNoise, BlockType.Gold);
+        _noises.Add(caveNoise, BlockType.Stone);
+    }
+
+    private Texture2D GenerateNoiseTexture(float frequency, float limit, float seed)
+    {
+        Texture2D noise = new Texture2D(Width, Height);
+        for (int x = 0; x < Width; x++)
+        {
+            for (int y = 0; y < Height; y++)
+            {
+                float xCoord = (x + seed) * frequency;
+                float yCoord = (y + seed) * frequency;
+                float value = Mathf.PerlinNoise(xCoord, yCoord);
+
+                noise.SetPixel(x, y, value > limit ? Color.white : Color.black);
+            }
+        }
+
+        noise.Apply();
+        return noise;
     }
 
     private MapChunk CreateChunk(Vector2Int chunkPos)
@@ -68,13 +64,13 @@ public class Map : MonoBehaviour
         GameObject chunkObj = new GameObject($"Chunk_{chunkPos.x}_{chunkPos.y}");
         chunkObj.transform.SetParent(transform);
         chunkObj.transform.position = new Vector3(
-            chunkPos.x * chunkSize,
-            chunkPos.y * chunkSize,
+            chunkPos.x * ChunkSize,
+            chunkPos.y * ChunkSize,
             0
         );
 
         MapChunk chunk = chunkObj.AddComponent<MapChunk>();
-        chunk.Init(chunkSize, atlas, atlasMaterial);
+        chunk.Init(ChunkSize, _config.BlockAtlas, _config.AtlasMaterial);
         return chunk;
     }
 
@@ -117,19 +113,22 @@ public class Map : MonoBehaviour
     /// <returns> <see cref="Block"/> не привязанный к карте. </returns>
     public Block GetBlockInfo(int x, int y)
     {
-        if (x > width || x < 0 || y > height || y < 0)
+        // Проверка границ
+        if (x > Width || x < 0 || y > Height || y < 0)
         {
             return new Block(new BlockData(BlockType.Air), this, x, y);
         }
 
         Vector2Int pos = new Vector2Int(x, y);
+        // Если блок уже был создан, возвращаем его
         if (_tileData.TryGetValue(pos, out Block data))
         {
             return data;
         }
 
+        // Если блока нет в памяти вычичляем его тип по шуму
         BlockType type = BlockType.Air;
-        foreach (var (noise, blockType) in Noises)
+        foreach (var (noise, blockType) in _noises)
         {
             if (noise.GetPixel(x, y).r > 0.5f)
             {
@@ -144,7 +143,7 @@ public class Map : MonoBehaviour
     }
 
     /// <summary>
-    /// получает позицию чанка по мировым координатам. 
+    /// Получает позицию чанка по мировым координатам. 
     /// </summary>
     /// <param name="x"></param>
     /// <param name="y"></param>
@@ -152,8 +151,8 @@ public class Map : MonoBehaviour
     public Vector2Int GetChunkPosition(int x, int y)
     {
         return new Vector2Int(
-            Mathf.FloorToInt(x / (float)chunkSize),
-            Mathf.FloorToInt(y / (float)chunkSize)
+            Mathf.FloorToInt(x / (float)ChunkSize),
+            Mathf.FloorToInt(y / (float)ChunkSize)
         );
     }
 
@@ -175,7 +174,7 @@ public class Map : MonoBehaviour
     }
 
     /// <summary>
-    /// уничтожает чанк по его координатам.
+    /// Уничтожает чанк по его координатам.
     /// </summary>
     /// <param name="x"> Позиция чанка по X. </param>
     /// <param name="y"> Позиция чанка по Y. </param>
@@ -187,5 +186,20 @@ public class Map : MonoBehaviour
             _chunks.Remove(chunkPos);
             Destroy(chunk.gameObject);
         }
+    }
+
+    /// <summary>
+    /// Очищает всю карту. 
+    /// P.S. добавил на будущее.
+    /// </summary>
+    private void CleanUp()
+    {
+        foreach (var chunk in _chunks.Values)
+        {
+            if (chunk != null) Destroy(chunk.gameObject);
+        }
+        _chunks.Clear();
+        _tileData.Clear();
+        _noises.Clear();
     }
 }

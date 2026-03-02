@@ -128,9 +128,9 @@ public static class Pathfinding
     //TODO: создать алгоритм нахождения блоков, до которых юнит может добраться.
     private static bool IsWalkable(int x, int y)
     {
-        Block block = Map.Instance.GetBlockInfo(x, y);
-        Block blockUnder = Map.Instance.GetBlockInfo(x, y - 1);
-        Block blockUnderUnder = Map.Instance.GetBlockInfo(x, y - 2);
+        Block block = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockInfo(x, y);
+        Block blockUnder = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockInfo(x, y - 1);
+        Block blockUnderUnder = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockInfo(x, y - 2);
 
         return block != null && block.tileData.type == BlockType.Air && 
             (blockUnder.tileData.type != BlockType.Air || blockUnderUnder.tileData.type != BlockType.Air);

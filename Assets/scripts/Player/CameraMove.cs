@@ -1,27 +1,37 @@
-using UnityEngine;
+п»їusing UnityEngine;
+using Mirror;
 
-public class CameraMove : MonoBehaviour
+public class CameraMove : NetworkBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] private float _panSpeed = 20f;         // Базовая скорость движения
-    [SerializeField] private float _zoomSpeed = 5f;         // Скорость зума
-    [SerializeField] private Vector2 _zoomRange = new(5, 15); // Min/Max зум
-    [SerializeField] private Vector2 _panLimitX = new(0, GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.ChunkSize * GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.Width); // Границы по X
-    [SerializeField] private Vector2 _panLimitY = new(0, GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.ChunkSize * GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.Height); // Границы по Y
+    [SerializeField] private float _panSpeed = 20f;         // Р‘Р°Р·РѕРІР°СЏ СЃРєРѕСЂРѕСЃС‚СЊ РґРІРёР¶РµРЅРёСЏ
+    [SerializeField] private float _zoomSpeed = 5f;         // РЎРєРѕСЂРѕСЃС‚СЊ Р·СѓРјР°
+    [SerializeField] private Vector2 _zoomRange = new(5, 15); // Min/Max Р·СѓРј
+    //[SerializeField] private Vector2 _panLimitX = new(0, Map.Instance.chunkSize*Map.Instance.width); // Р“СЂР°РЅРёС†С‹ РїРѕ X
+    //[SerializeField] private Vector2 _panLimitY = new(0, Map.Instance.chunkSize * Map.Instance.height); // Р“СЂР°РЅРёС†С‹ РїРѕ Y
 
     private Camera _mainCamera;
     private Vector3 _dragOrigin;
-    
+
     void Start()
     {
-        _mainCamera = GetComponent<Camera>();
+        _mainCamera = Camera.main;
     }
 
     void Update()
     {
+        if (!isLocalPlayer) return;
+
         HandleKeyboardMovement();
         HandleMousePan();
         HandleMouseZoom();
+        MoveCamera();
+    }
+
+    private void MoveCamera()
+    {
+        _mainCamera.transform.localPosition = new Vector3(transform.position.x, transform.position.y, -1f);
+        transform.position = Vector2.MoveTowards(transform.position, _mainCamera.transform.localPosition, Time.deltaTime);
     }
 
     private void HandleKeyboardMovement()
@@ -33,12 +43,12 @@ public class CameraMove : MonoBehaviour
         );
 
         transform.position += _panSpeed * Time.deltaTime * moveDir;
-        ClampCameraPosition();
+        //ClampCameraPosition();
     }
 
     private void HandleMousePan()
     {
-        // Драг камеры ПКМ
+        // Р”СЂР°Рі РєР°РјРµСЂС‹ РџРљРњ
         if (Input.GetMouseButtonDown(1))
         {
             _dragOrigin = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
@@ -48,7 +58,7 @@ public class CameraMove : MonoBehaviour
         {
             Vector3 difference = _dragOrigin - _mainCamera.ScreenToWorldPoint(Input.mousePosition);
             transform.position += difference;
-            ClampCameraPosition();
+            //ClampCameraPosition();
         }
     }
 
@@ -62,11 +72,11 @@ public class CameraMove : MonoBehaviour
         );
     }
 
-    private void ClampCameraPosition()
-    {
-        Vector3 pos = transform.position;
-        pos.x = Mathf.Clamp(pos.x, _panLimitX.x, _panLimitX.y);
-        pos.y = Mathf.Clamp(pos.y, _panLimitY.x, _panLimitY.y);
-        transform.position = pos;
-    }
+    //private void ClampCameraPosition()
+    //{
+    //    Vector3 pos = transform.position;
+    //    pos.x = Mathf.Clamp(pos.x, _panLimitX.x, _panLimitX.y);
+    //    pos.y = Mathf.Clamp(pos.y, _panLimitY.x, _panLimitY.y);
+    //    transform.position = pos;
+    //}
 }

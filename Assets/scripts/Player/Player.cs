@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
+using Mirror;
 
 /// <summary>
 /// Класс, обеспечивающий взаимодействие игрока с игровым миром.
 /// </summary>
-public class Player : MonoBehaviour, IChunkObserver
+public class Player : NetworkBehaviour, IChunkObserver
 {
     private bool _isRegistered = false;
 
@@ -14,13 +15,6 @@ public class Player : MonoBehaviour, IChunkObserver
             GameKernel.Instance.GetSystem<WorldSystem>()?.WorldChunks?.UnregisterObserver(this);
         }
     }
-
-    /// <summary>
-    /// Атлас со всеми видами юнитов.
-    /// </summary>
-    [SerializeField]private UnitAtlas unitAtlas;
-
-    //[SerializeField] private BuildingAtlas buildingAtlas;
 
     // TODO: Необходимо доделать инфентарь игрока.
     /// <summary>

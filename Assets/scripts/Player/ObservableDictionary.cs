@@ -11,7 +11,7 @@ public class ObservableDictionary<TKey, TValue> : Dictionary<TKey, TValue>
     /// <summary>
     /// Событие изменения объекта в словаре.
     /// </summary>
-    public event Action<TKey> ItemCahnged;
+    public event Action<TKey> ItemChanged;
 
     /// <summary>
     /// Добавляет новый объект в словарь.
@@ -29,7 +29,7 @@ public class ObservableDictionary<TKey, TValue> : Dictionary<TKey, TValue>
             return;
         }
 
-        ItemCahnged?.Invoke(key);
+        ItemChanged?.Invoke(key);
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ public class ObservableDictionary<TKey, TValue> : Dictionary<TKey, TValue>
     {
         if (base.Remove(key))
         {
-            ItemCahnged?.Invoke(key);
+            ItemChanged?.Invoke(key);
             return true;
         }
         return false;
@@ -56,7 +56,7 @@ public class ObservableDictionary<TKey, TValue> : Dictionary<TKey, TValue>
         set
         {
             base[key] = value;
-            ItemCahnged?.Invoke(key);
+            ItemChanged?.Invoke(key);
         }
     }
 }

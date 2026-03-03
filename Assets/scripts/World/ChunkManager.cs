@@ -8,7 +8,6 @@ public class ChunkManager : MonoBehaviour
 {
     private Map _map;
 
-    private static ChunkManager _instance;
     [SerializeField] private int LoadingRadius = 2;
     private HashSet<Vector2Int> _requiredChunks = new HashSet<Vector2Int>();
     private HashSet<Vector2Int> _loadedChunks = new HashSet<Vector2Int>();

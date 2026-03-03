@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mirror;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,8 +8,10 @@ using UnityEngine;
 /// Инициализирует, хранит и управляет жизненным циклом всех модулей (IGameSystem).
 /// Единственный разрешенный Singleton в архитектуре.
 /// </summary>
-public class GameKernel : MonoBehaviour
+public class GameKernel : NetworkBehaviour
 {
+    private bool _started;
+
     /// <summary> Глобальная ссылка на Ядро. </summary>
     public static GameKernel Instance { get; private set; }
 
@@ -24,6 +27,7 @@ public class GameKernel : MonoBehaviour
     // Внутренние хранилища систем
     private readonly List<IGameSystem> _systems = new List<IGameSystem>();
     private readonly Dictionary<Type, IGameSystem> _systemMap = new Dictionary<Type, IGameSystem>();
+    [SerializeField] private GameObject networkSystemsPrefab;
 
     private void Awake()
     {
@@ -47,17 +51,10 @@ public class GameKernel : MonoBehaviour
     {
         foreach (var system in _systems)
         {
-            try
-            {
-                system.Initialize(this);
-                Debug.Log($"[Kernel] Система инициализирована: {system.SystemName}");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[Kernel] Ошибка инициализации {system.SystemName}: {e}");
-            }
+            InitSystem(system);
         }
 
+        _started = true;
         // Раскомментироват чтобы выключить карту
         //GetSystem<WorldSystem>().IsActive = false;
     }
@@ -103,6 +100,35 @@ public class GameKernel : MonoBehaviour
         _systemMap.Clear();
     }
 
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+
+        GameObject go = Instantiate(networkSystemsPrefab);
+        NetworkServer.Spawn(go);
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+
+        Debug.Log("[Kernel] Клиент подключён, ожидаем сетевые системы...");
+    }
+
+    private void InitSystem(IGameSystem system)
+    {
+        try
+        {
+            system.Initialize(this);
+            Debug.Log($"[Kernel] Система инициализирована: {system.SystemName}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[Kernel] Ошибка инициализации {system.SystemName}: {e}");
+        }
+    }
+
     /// <summary>
     /// Регистрирует новую систему в Ядре. Вызывается только при инициализации в Awake.
     /// </summary>
@@ -117,6 +143,12 @@ public class GameKernel : MonoBehaviour
 
         _systems.Add(system);
         _systemMap[system.GetType()] = system;
+
+        // Если ядро уже запущено, инициализируем сразу
+        if (_started)
+        {
+            InitSystem(system);
+        }
     }
 
     /// <summary>
@@ -146,8 +178,6 @@ public class GameKernel : MonoBehaviour
         RegisterSystem(new ResourceSystem());
 
         RegisterSystem(new UISystem());
-
-        RegisterSystem(new WorldSystem());
         
         RegisterSystem(new BuilderSystem());
         

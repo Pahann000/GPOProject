@@ -1,15 +1,21 @@
-﻿using UnityEngine;
+﻿using Mirror;
+using UnityEngine;
 
 /// <summary>
 /// Фасад для управления генерацией мира. 
 /// Скрывает в себе работу с объектами Map, MapChunk и ChunkManager.
 /// Предоставляет удобный API для получения информации о блоках на карте.
 /// </summary>
-public class WorldSystem : IGameSystem
+public class WorldSystem : NetworkBehaviour, IGameSystem
 {
     public string SystemName => "World System";
 
     private GameKernel _kernel;
+
+    private bool _initialized;
+
+    [SyncVar(hook = nameof(OnSeedChanged))]
+    private float _seed; 
 
     // TODO: В будущем избавиться от синглтонов Map и ChunkManager
     // и хранить ссылки на них прямо здесь.
@@ -22,6 +28,75 @@ public class WorldSystem : IGameSystem
     public Map WorldMap { get; private set; }
     public ChunkManager WorldChunks { get; private set; }
 
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        // Сервер генерирует случайный сид
+        _seed = UnityEngine.Random.Range(0, 100000);
+        Debug.Log($"server seed: {_seed}");
+    }
+
+    public override void OnStopClient()
+    {
+        base.OnStopClient();
+
+        Destroy(WorldMap.gameObject);
+        Destroy(WorldChunks.gameObject);
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        Debug.Log($"client seed: {_seed}");
+    }
+
+    private void OnSeedChanged(float oldSeed, float newSeed)
+    {
+        _seed = newSeed;
+        GenerateWorld(_seed);
+    }
+
+    void GenerateWorld(float seed)
+    {
+        GenerateMapObject();
+        WorldChunks = GenerateChunkManager();
+    }
+
+    private void GenerateMapObject()
+    {
+        GameObject MapGameObject = new GameObject("Map");
+        Map map = MapGameObject.AddComponent<Map>();
+        WorldConfig config = Resources.Load<WorldConfig>("MainWorldConfig");
+
+        map.Initialize(config, _seed);
+        WorldMap = map;
+    }
+
+    private ChunkManager GenerateChunkManager()
+    {
+        GameObject chunkManagerGameObject = new GameObject("ChunkManager");
+        ChunkManager chunkManager = chunkManagerGameObject.AddComponent<ChunkManager>();
+        chunkManager.Initialize(WorldMap);
+        return chunkManager;
+    }
+
+    private void Start()
+    {
+        if (GameKernel.Instance != null)
+        {
+            GameKernel.Instance.RegisterSystem(this);
+            if (!_initialized)
+            {
+                Initialize(GameKernel.Instance);
+                _initialized = true;
+            }
+        }
+        else
+        {
+            Debug.LogError($"[{SystemName}] GameKernel не найден!");
+        }
+    }
+
     public void Initialize(GameKernel kernel)
     {
         _kernel = kernel;
@@ -32,18 +107,6 @@ public class WorldSystem : IGameSystem
             Debug.LogError($"[{SystemName}] CRITICAL: Не найден MainWorldConfig в Resources!");
             return;
         }
-
-        // Чистый GO для мира
-        GameObject worldObj = new GameObject("World_Root");
-        Object.DontDestroyOnLoad(worldObj);
-
-        WorldMap = worldObj.AddComponent<Map>();
-        WorldChunks = worldObj.AddComponent<ChunkManager>();
-
-        WorldMap.Initialize(config);
-
-        // АХТУНГ: Зачем было удалять Map.Instance? Я забыл. Придётся передавать Map в ChunkManager вручную(
-        WorldChunks.Initialize(WorldMap);
 
         Debug.Log($"[{SystemName}] Мир создан.");
     }

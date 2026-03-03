@@ -7,6 +7,7 @@ using System.Collections.Generic;
 public class Map : MonoBehaviour
 {
     private WorldConfig _config;
+    private float _seed;
     private Dictionary<Vector2Int, MapChunk> _chunks = new Dictionary<Vector2Int, MapChunk>();
     private Dictionary<Vector2Int, Block> _tileData = new Dictionary<Vector2Int, Block>();
     /// <summary>
@@ -18,9 +19,10 @@ public class Map : MonoBehaviour
     public int Width => _config.WorldWidth * _config.ChunkSize;
     public int Height => _config.WorldHeight * _config.ChunkSize;
 
-    public void Initialize(WorldConfig config)
+    public void Initialize(WorldConfig config, float seed)
     {
         _config = config;
+        _seed = seed;
 
         GenerateNoises();
 
@@ -29,12 +31,8 @@ public class Map : MonoBehaviour
 
     private void GenerateNoises()
     {
-        float seed = string.IsNullOrEmpty(_config.SeedString)
-            ? Random.Range(-10000f, 10000f)
-            : _config.SeedString.GetHashCode();
-
-        Texture2D caveNoise = GenerateNoiseTexture(_config.CaveFreq, _config.CaveSize, seed);
-        Texture2D goldNoise = GenerateNoiseTexture(_config.GoldFrequency, _config.GoldSize, seed + 100);
+        Texture2D caveNoise = GenerateNoiseTexture(_config.CaveFreq, _config.CaveSize, _seed);
+        Texture2D goldNoise = GenerateNoiseTexture(_config.GoldFrequency, _config.GoldSize, _seed + 100);
 
         _noises.Add(goldNoise, BlockType.Gold);
         _noises.Add(caveNoise, BlockType.Stone);
@@ -84,9 +82,12 @@ public class Map : MonoBehaviour
     {
         Vector2Int pos = new Vector2Int(x, y);
         _tileData[pos] = new Block(new BlockData(type), this, x, y);
-
+        
         Vector2Int chunkPos = GetChunkPosition(x, y);
-        GenerateChunk(chunkPos.x, chunkPos.y);
+        if (_chunks.ContainsKey(chunkPos))
+        {
+            GenerateChunk(chunkPos.x, chunkPos.y);
+        }
     }
 
     /// <summary>

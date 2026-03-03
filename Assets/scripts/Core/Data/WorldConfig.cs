@@ -9,17 +9,16 @@ public class WorldConfig : ScriptableObject
     public int WorldWidth = 100;
     public int HighAddition = 50;
     public int ChunkSize = 16;
-    public string SeedString = "";
 
     [Header("Visuals")]
     public BlockAtlas BlockAtlas;
     public Material AtlasMaterial;
 
     [Header("Noise Settings")]
-    public float CaveSize = 0.25f;
-    public float CaveFreq = 0.05f;
-    public float TerrainFreq = 0.04f;
+    public float CaveSize = 0.3f;
+    public float CaveFreq = 0.02f;
+    public float TerrainFreq = 0.03f;
     public float HighMultiplier = 25f;
-    public float GoldFrequency = 0.03f;
-    public float GoldSize = 0.08f;
+    public float GoldFrequency = 0.08f;
+    public float GoldSize = 0.8f;
 }

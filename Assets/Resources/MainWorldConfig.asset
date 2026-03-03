@@ -16,12 +16,11 @@ MonoBehaviour:
   WorldWidth: 100
   HighAddition: 50
   ChunkSize: 16
-  SeedString: 
   BlockAtlas: {fileID: 11400000, guid: 9035713f356193c4a91f63e279b97d6d, type: 2}
   AtlasMaterial: {fileID: 2100000, guid: e2722fc755d33e64cb7173d0ac419d2c, type: 2}
   CaveSize: 0.25
   CaveFreq: 0.05
   TerrainFreq: 0.04
   HighMultiplier: 25
-  GoldFrequency: 0.03
-  GoldSize: 0.08
+  GoldFrequency: 0.08
+  GoldSize: 0.8

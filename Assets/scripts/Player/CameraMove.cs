@@ -6,8 +6,8 @@ public class CameraMove : MonoBehaviour
     [SerializeField] private float _panSpeed = 20f;         // Базовая скорость движения
     [SerializeField] private float _zoomSpeed = 5f;         // Скорость зума
     [SerializeField] private Vector2 _zoomRange = new(5, 15); // Min/Max зум
-    [SerializeField] private Vector2 _panLimitX = new(0, GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.ChunkSize * GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.Width); // Границы по X
-    [SerializeField] private Vector2 _panLimitY = new(0, GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.ChunkSize * GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.Height); // Границы по Y
+    [SerializeField] private Vector2 _panLimitX; // Границы по X
+    [SerializeField] private Vector2 _panLimitY; // Границы по Y
 
     private Camera _mainCamera;
     private Vector3 _dragOrigin;
@@ -19,9 +19,23 @@ public class CameraMove : MonoBehaviour
 
     void Update()
     {
+        UpdateCameraLimits();
+
         HandleKeyboardMovement();
         HandleMousePan();
         HandleMouseZoom();
+    }
+
+    private void UpdateCameraLimits()
+    {
+        if (GameKernel.Instance == null) return;
+
+        var worldSys = GameKernel.Instance.GetSystem<WorldSystem>();
+        if (worldSys != null && worldSys.WorldMap != null)
+        {
+            _panLimitX = new Vector2(0, worldSys.WorldMap.Width);
+            _panLimitY = new Vector2(0, worldSys.WorldMap.Height);
+        }
     }
 
     private void HandleKeyboardMovement()

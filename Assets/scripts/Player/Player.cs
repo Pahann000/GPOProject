@@ -16,7 +16,7 @@ public class Player : NetworkBehaviour, IChunkObserver
         }
     }
 
-    // TODO: Необходимо доделать инфентарь игрока.
+    // TODO: Необходимо доделать инвентарь игрока.
     /// <summary>
     /// временная реализация инвентаря игрока.
     /// </summary>
@@ -33,9 +33,6 @@ public class Player : NetworkBehaviour, IChunkObserver
     public int Y => (int)this.transform.position.y;
 
     /// <inheritdoc/>
-    void Awake() { }
-
-    /// <inheritdoc/>
     void Update()
     {
         if (!_isRegistered && GameKernel.Instance != null)
@@ -44,6 +41,10 @@ public class Player : NetworkBehaviour, IChunkObserver
             if (worldSys != null && worldSys.WorldChunks != null)
             {
                 worldSys.WorldChunks.RegisterObserver(this);
+                if (isLocalPlayer)
+                {
+                    worldSys.CmdSpawnUnit(this);
+                }
                 _isRegistered = true;
                 Debug.Log("[Player] Успешно зарегистрирован в системе чанков.");
             }
@@ -52,7 +53,16 @@ public class Player : NetworkBehaviour, IChunkObserver
         if (Input.GetMouseButtonDown(0))
         {
             var mousePos = Camera.main.ScreenPointToRay(Input.mousePosition);
-            SelectTarget(new Vector2(mousePos.origin.x, mousePos.origin.y));
+            OnPlayerClicked(new Vector2(mousePos.origin.x, mousePos.origin.y));
+        }
+    }
+
+    [Command]
+    private void OnPlayerClicked(Vector2 position)
+    {
+        if (isServer)
+        {
+            SelectTarget(position);
         }
     }
 
@@ -61,6 +71,7 @@ public class Player : NetworkBehaviour, IChunkObserver
     /// выделяет блок(заглушка заставляющая юнита уничтожить блок).
     /// </summary>
     /// <param name="position">Позиция выделяемого блока.</param>
+    [Server]
     private void SelectTarget(Vector2 position)
     {
         IDamagable target = null;

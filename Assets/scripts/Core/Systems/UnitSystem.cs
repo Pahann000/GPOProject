@@ -12,6 +12,7 @@ public class UnitSystem : IGameSystem
 
     private GameKernel _kernel;
     private List<Unit> _allUnits = new List<Unit>();
+    private Dictionary<Player, List<Unit>> _allUnitsDict = new Dictionary<Player, List<Unit>>();
 
     public void Initialize(GameKernel kernel)
     {
@@ -30,7 +31,7 @@ public class UnitSystem : IGameSystem
     public void Shutdown()
     {
         _kernel.EventBus.Unsubscribe<UnitCommandEvent>(OnUnitCommandReceived);
-        _allUnits.Clear();
+        _allUnitsDict.Clear();
     }
 
     public void RegisterUnit(Unit unit)
@@ -50,7 +51,7 @@ public class UnitSystem : IGameSystem
 
         if (idleUnit != null)
         {
-            idleUnit.Target = evt.Target;
+            idleUnit.SetTarget(evt.Target);
             Debug.Log($"[{SystemName}] Юнит {idleUnit.name} отправлен на задание.");
         }
         else

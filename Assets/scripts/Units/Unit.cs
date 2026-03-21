@@ -1,19 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Mirror;
 
 /// <summary>
 /// Класс юнита, управляемого игроком.
 /// </summary>
-public class Unit : MonoBehaviour, IDamagable, IChunkObserver
+public class Unit : NetworkBehaviour, IDamagable, IChunkObserver
 {
     private float _speed = 2f;
     private float _jumpForce = 4f;
     private bool _isGrounded = true;
     private IDamagable _target;
     private Coroutine _currentAction;
+    private int _currentHealth;
+    private UnitWork _unitWork;
+    private Rigidbody2D rb;
 
-    public Rigidbody2D rb;
     public UnitType unitType;
     public Player Owner;
 
@@ -30,20 +33,31 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
     /// <summary>
     /// Текущее здоровье юнита.
     /// </summary>
-    public int CurrentHealth { get; set; }
+    public int CurrentHealth 
+    {
+        get
+        {
+            return _currentHealth;
+        }
+        private set
+        {
+            _currentHealth = value;
+            Debug.Log($"unit hp changed on {value}");
+        }
+    }
 
     /// <summary>
     /// Текущая работа юнита.
     /// </summary>
-    public UnitWork CurrentUnitWork { get; private set; }
-
-    /// <summary>
-    /// Текущая цель атаки юнита.
-    /// </summary>
-    public IDamagable Target
-    {
-        get => _target;
-        set => SetTarget(value);
+    public UnitWork CurrentUnitWork {
+        get
+        {
+            return _unitWork;
+        }
+        private set
+        {
+            _unitWork = value;
+        }
     }
 
     private void Start()
@@ -96,7 +110,7 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
         _isGrounded = hit.collider != null;
     }
 
-    public void Jump()
+    private void Jump()
     {
         if (rb != null)
         {
@@ -108,8 +122,9 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
     /// <summary>
     /// Начать последовательность: движение -> атака
     /// </summary>
-    private void SetTarget(IDamagable target)
+    public void SetTarget(IDamagable target)
     {
+        if (!isServer) { return; }
         if (_currentAction != null)
         {
             StopCoroutine(_currentAction);

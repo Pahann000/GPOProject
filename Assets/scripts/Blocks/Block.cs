@@ -46,7 +46,10 @@ public class Block : IDamagable
 
     private void Destroy()
     {
-        _map.PlaceBlock(x, y, BlockType.Air);
+        if (GameKernel.Instance != null)
+        {
+            GameKernel.Instance.GetSystem<WorldSystem>().RequestPlaceBlock(x, y, BlockType.Air);
+        }
     }
 
     private void DropResources(Player player)

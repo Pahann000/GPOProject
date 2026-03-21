@@ -112,8 +112,7 @@ public class GameKernel : NetworkBehaviour
     {
         base.OnStartClient();
 
-
-        Debug.Log("[Kernel] Клиент подключён, ожидаем сетевые системы...");
+        Debug.Log("[Kernel] Клиент подключён");
     }
 
     private void InitSystem(IGameSystem system)

@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17485e5b94b8f0c4382e47851cf8247f, type: 3}
   m_Name: MainWorldConfig
   m_EditorClassIdentifier: 
-  WorldHeight: 100
-  WorldWidth: 100
-  HighAddition: 50
+  WorldHeight: 5
+  WorldWidth: 5
+  HighAddition: 5
   ChunkSize: 16
   BlockAtlas: {fileID: 11400000, guid: 9035713f356193c4a91f63e279b97d6d, type: 2}
   AtlasMaterial: {fileID: 2100000, guid: e2722fc755d33e64cb7173d0ac419d2c, type: 2}

@@ -8,7 +8,6 @@ using UnityEngine;
 /// </summary>
 public class WorldSystem : NetworkBehaviour, IGameSystem
 {
-    public string SystemName => "World System";
 
     private GameKernel _kernel;
 
@@ -16,9 +15,6 @@ public class WorldSystem : NetworkBehaviour, IGameSystem
 
     [SyncVar(hook = nameof(OnSeedChanged))]
     private float _seed; 
-
-    // TODO: В будущем избавиться от синглтонов Map и ChunkManager
-    // и хранить ссылки на них прямо здесь.
 
     /// <summary>
     /// Kill Switch: Включает или выключает физическое обновление чанков на сцене.
@@ -28,20 +24,26 @@ public class WorldSystem : NetworkBehaviour, IGameSystem
     public Map WorldMap { get; private set; }
     public ChunkManager WorldChunks { get; private set; }
 
+    public string SystemName => "World System";
+
     public override void OnStartServer()
     {
         base.OnStartServer();
         // Сервер генерирует случайный сид
         _seed = UnityEngine.Random.Range(0, 100000);
+        GenerateWorld(_seed);
         Debug.Log($"server seed: {_seed}");
     }
 
     public override void OnStopClient()
     {
         base.OnStopClient();
-
-        Destroy(WorldMap.gameObject);
-        Destroy(WorldChunks.gameObject);
+        
+        if (isLocalPlayer)
+        {
+            Destroy(WorldMap.gameObject);
+            Destroy(WorldChunks.gameObject);
+        }
     }
 
     public override void OnStartClient()
@@ -58,18 +60,18 @@ public class WorldSystem : NetworkBehaviour, IGameSystem
 
     void GenerateWorld(float seed)
     {
-        GenerateMapObject();
+        WorldMap = GenerateMapObject();
         WorldChunks = GenerateChunkManager();
     }
 
-    private void GenerateMapObject()
+    private Map GenerateMapObject()
     {
         GameObject MapGameObject = new GameObject("Map");
         Map map = MapGameObject.AddComponent<Map>();
         WorldConfig config = Resources.Load<WorldConfig>("MainWorldConfig");
 
         map.Initialize(config, _seed);
-        WorldMap = map;
+        return map;
     }
 
     private ChunkManager GenerateChunkManager()
@@ -95,6 +97,22 @@ public class WorldSystem : NetworkBehaviour, IGameSystem
         {
             Debug.LogError($"[{SystemName}] GameKernel не найден!");
         }
+    }
+
+    public void RequestPlaceBlock(int x, int y, BlockType blockType)
+    {
+        if (isServer)
+        {
+            WorldMap.PlaceBlock(x, y, blockType);
+            RpcPlaceBlock(x, y, blockType);
+        }
+    }
+
+    [ClientRpc]
+    private void RpcPlaceBlock(int x, int y, BlockType blockType)
+    {
+        if (WorldMap == null) { return; }
+        WorldMap.PlaceBlock(x, y, blockType);
     }
 
     public void Initialize(GameKernel kernel)
@@ -195,5 +213,27 @@ public class WorldSystem : NetworkBehaviour, IGameSystem
 
         // Обычные блоки (камень, земля) считаются твердой почвой
         return true;
+    }
+
+    //временная штука для тестов
+    public GameObject unitPrefab;
+    public UnitAtlas unitAtlas;
+
+    [Command(requiresAuthority = false)]
+    public void CmdSpawnUnit(Player player)
+    {
+        GameObject unitObj = Instantiate(unitPrefab, new Vector2(10, 100), transform.rotation);
+        Unit unit = unitObj.GetComponent<Unit>();
+
+        if (unitAtlas == null)
+        {
+            Debug.LogError("unitAtlas не найден");
+            return;
+        }
+        
+        unit.Owner = player;
+        unit.unitType = unitAtlas.Miner;
+
+        NetworkServer.Spawn(unitObj);
     }
 }

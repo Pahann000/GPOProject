@@ -5,7 +5,7 @@ using static ResourceBundle;
 /// Хранит данные об исследовании.
 /// </summary>
 
-[CreateAssetMenu(fileName = "Talent", menuName = "Scriptable Objects/NewTalent")]
+[CreateAssetMenu(fileName = "Talent", menuName = "Talents/NewTalent")]
 public class TalentData : ScriptableObject
 {
     /// <summary>
@@ -44,7 +44,6 @@ public class TalentData : ScriptableObject
     [System.NonSerialized] public bool IsResearched;
     [System.NonSerialized] public bool IsAvailable;
 
-    // На будущее
     /// <summary>
     /// Позиция в дереве
     /// </summary

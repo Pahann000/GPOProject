@@ -233,4 +233,8 @@ public class TalentManager : MonoBehaviour
         return totalCost > 0 ? collected / totalCost : 0f;
     }
 
+    public List<TalentData> GetAllTechnologies()
+    {
+        return allTechnologies;
+    }
 }

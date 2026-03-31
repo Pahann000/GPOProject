@@ -1033,23 +1033,55 @@ MonoBehaviour:
     m_Bits: 392
   _buildableBlockTypes: 01000000
   _resourceBlockTypes: 020000000300000004000000
-  CaveSize: 0.4
-  CaveFreq: 0.04
-  TerrainFreq: 0.07
-  HighMultiplier: 20
-  Seed: 2140
+  CaveSize: 0.5
+  CaveFreq: 0.03
+  TerrainFreq: 0.09
+  HighMultiplier: 50
+  Seed: 1600
   chunkSize: 16
   WorldWidth: 50
   WorldHeight: 50
   HighAddition: 45
-  MineralFrequency: 0.01
-  MinaralSize: 0.494
-  RootsFrequency: 0.01
-  RootsSize: 0.443
-  MaxRootsHeight: 0
-  IceFrequency: 0.01
-  IceSize: 0.417
+  MineralFrequency: 0.0264
+  MinaralSize: 0.668
+  RootsFrequency: 0.0439
+  RootsSize: 0.466
+  MaxRootsHeight: 59
+  IceFrequency: 0.0676
+  IceSize: 0.304
   MinIceHeight: 0
+  tunnelSettings:
+    numberOfStartingPoints: 30
+    maxStepsPerTunnel: 200
+    tunnelRadius: 2
+    branchProbability: 0.831
+    maxBranchDepth: 2
+    minY: 0
+    maxY: 1000
+  mineralWarpSettings:
+    frequency: 0.06
+    threshold: 0.9
+    warpAmplitude: 10
+    warpFrequency: 0.03
+    seedOffset: 0
+  rootWarpSettings:
+    frequency: 0.06
+    threshold: 0.65
+    warpAmplitude: 8
+    warpFrequency: 0.035
+    seedOffset: 1000
+  iceWarpSettings:
+    frequency: 0.02
+    threshold: 0.6
+    warpAmplitude: 5
+    warpFrequency: 0.02
+    seedOffset: 2000
+  erosionSettings:
+    numberOfCanyons: 30
+    maxDepth: 10
+    canyonRadius: 15
+    turnProbability: 0.241
+    iterations: 15
 --- !u!4 &288573034
 Transform:
   m_ObjectHideFlags: 0
@@ -1663,7 +1695,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1200983165}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9991978
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -4494,7 +4526,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.000013941899}
+  m_AnchoredPosition: {x: 0, y: 0.007962282}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1557638179

@@ -11,7 +11,6 @@ public class UnitSystem : IGameSystem
     public bool IsActive { get; set; } = true;
 
     private GameKernel _kernel;
-    private List<Unit> _allUnits = new List<Unit>();
     private Dictionary<Player, List<Unit>> _allUnitsDict = new Dictionary<Player, List<Unit>>();
 
     public void Initialize(GameKernel kernel)
@@ -36,18 +35,37 @@ public class UnitSystem : IGameSystem
 
     public void RegisterUnit(Unit unit)
     {
-        if (!_allUnits.Contains(unit)) _allUnits.Add(unit);
+        if (unit && unit.Owner)
+        {
+            List <Unit> allUnits = _allUnitsDict[unit.Owner];
+            if (!allUnits.Contains(unit)) allUnits.Add(unit);
+        }
     }
 
     public void UnregisterUnit(Unit unit)
     {
-        _allUnits.Remove(unit);
+        if (unit && unit.Owner)
+        {
+            List<Unit> allUnits = _allUnitsDict[unit.Owner];
+            if (allUnits.Contains(unit)) allUnits.Remove(unit);
+        }
+    }
+
+    public void RegisterPlayer(Player player)
+    {
+        _allUnitsDict.Add(player, new List<Unit>());
+    }
+
+    public void UnregisterPlayer(Player player)
+    {
+        
     }
 
     private void OnUnitCommandReceived(UnitCommandEvent evt)
     {
         // Логика поиска свободного юнита
-        Unit idleUnit = _allUnits.Find(u => u.CurrentUnitWork == UnitWork.Idle);
+        List<Unit> allUnits = _allUnitsDict[evt.Owner];
+        Unit idleUnit = allUnits.Find(u => u.CurrentUnitWork == UnitWork.Idle);
 
         if (idleUnit != null)
         {

@@ -57,6 +57,22 @@ public class Player : NetworkBehaviour, IChunkObserver
         }
     }
 
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        RegisterClient();
+    }
+
+    [Command]
+    public void RegisterClient()
+    {
+        if (isServer)
+        {
+            GameKernel.Instance.GetSystem<UnitSystem>().RegisterPlayer(this);
+        }
+    }
+
     [Command]
     private void OnPlayerClicked(Vector2 position)
     {
@@ -98,7 +114,7 @@ public class Player : NetworkBehaviour, IChunkObserver
 
         if (target != null && GameKernel.Instance != null)
         {
-            GameKernel.Instance.EventBus.Raise(new UnitCommandEvent(target, position));
+            GameKernel.Instance.EventBus.Raise(new UnitCommandEvent(target, position, this));
         }
     }
 }

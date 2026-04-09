@@ -23,5 +23,5 @@ MonoBehaviour:
   CaveFreq: 0.05
   TerrainFreq: 0.04
   HighMultiplier: 25
-  GoldFrequency: 0.03
-  GoldSize: 0.08
+  GoldFrequency: 0.08
+  GoldSize: 0.8

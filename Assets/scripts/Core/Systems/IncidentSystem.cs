@@ -69,6 +69,6 @@ public class IncidentSystem : IGameSystem
 
         inc.Execute(_kernel);
 
-        // _kernel.EventBus.Raise(new IncidentTriggeredEvent(inc);
+        _kernel.EventBus.Raise(new IncidentTriggeredEvent(inc));
     }
 }

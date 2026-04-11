@@ -54,12 +54,14 @@ public class TalentData : ScriptableObject
     public bool CanUnlock(ResourceManager rm)
     {
         if (IsUnlocked) return false;
-        if (Prerequisites[0].Equals(null)) return true;
-        foreach (var prereq in Prerequisites)
-            if (!prereq.IsUnlocked)
-            {
-                return false;
-            }
+        if (Prerequisites != null)
+        {
+            foreach (var prereq in Prerequisites)
+                if (!prereq.IsUnlocked)
+                {
+                    return false;
+                }
+        }
         foreach (var c in cost )
             if (rm.GetResource(c.type) < c.amount) return false;
         return true;

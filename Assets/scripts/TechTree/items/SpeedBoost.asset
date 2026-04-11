@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d019b36459d1d044b7132a4fb979b0c, type: 3}
   m_Name: SpeedBoost
   m_EditorClassIdentifier: 
-  TalentName: 
+  TalentName: BBBBBBBBBBBBBBBB
   Description: 
   Icon: {fileID: -7293136561871713164, guid: 5a4c598e656c1664084c8a8098b543c7, type: 3}
   ResearchCost:
@@ -22,5 +22,5 @@ MonoBehaviour:
     - Type: 2
       Amount: 2
   Prerequisites:
-  - {fileID: 0}
-  NodePosition: {x: 0, y: 0}
+  - {fileID: 11400000, guid: 36f7d6affb823b244ae57e5e1a437036, type: 2}
+  NodePosition: {x: 350, y: 100}

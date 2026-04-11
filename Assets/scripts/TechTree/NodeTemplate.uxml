@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="TechNode" style="width: 140px; height: 160px; background-color: rgba(42, 42, 62, 0.95); border-radius: 12px; border-width: 1px; border-color: rgb(74, 111, 165);">
+        <ui:VisualElement name="Icon" style="width: 78px; height: 53px; margin-top: 12px; align-self: center; background-color: rgb(26, 26, 46); border-radius: 8px;" />
+        <ui:Label name="TechName" style="font-size: 11px; -unity-text-align: middle-center; margin-top: 8px; color: rgb(224, 224, 224); height: 12px;" />
+        <ui:Label name="CostLabel" style="font-size: 9px; -unity-text-align: middle-center; margin-top: 4px; color: rgb(170, 170, 170);" />
+        <ui:Button name="UnlockButton" text="исследовать" style="margin-top: 8px; margin-left: 8px; margin-right: 8px; margin-bottom: 8px; background-color: rgb(74, 111, 165); color: white; border-radius: 4px;" />
+    </ui:VisualElement>
+</ui:UXML>

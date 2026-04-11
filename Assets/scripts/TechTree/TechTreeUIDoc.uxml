@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="root" style="flex-grow: 1; background-color: rgb(26, 26, 46);">
+        <ui:Label name="TitleLabel" text="ДЕРЕВО ТЕХНОЛОГИЙ" style="font-size: 24px; -unity-text-align: middle-center; color: rgb(224, 224, 224); margin-top: 10px;"/>
+        <ui:VisualElement name="TreeContainer" style="flex-grow: 1; position: relative; margin-top: 50px;"/>
+    </ui:VisualElement>
+</ui:UXML>

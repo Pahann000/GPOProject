@@ -7,234 +7,83 @@ using System.Linq;
 /// </summary>
 public class TalentManager : MonoBehaviour
 {
-    // Синглтон
-    public static TalentManager Instance { get; private set; }
-
-    // Все технологии в игре
     [Header("Настройки")]
-    [SerializeField] private List<TalentData> allTechnologies;
+    public List<TalentData> allTechnologies;
+    public ResourceManager resourceManager;
 
-    // Ссылка на ResourceManager
-    [Header("Ссылка на существующий менеджер")]
-    [SerializeField] private ResourceManager resourceManager;
+    // События для UI
+    public System.Action OnTechnologyUnlocked;
+    public System.Action OnTechnologyTreeChanged;
 
-    // События
-    public System.Action<TalentData> OnTechnologyResearched;
-
-    public System.Action OnTechnologyTreeUpdated;
-
-    // Кэшированные данные
-    private Dictionary<string, TalentData> technologyDict;
-    private List<TalentData> availableTechnologies;
-    private List<TalentData> researchedTechnologies;
-
-    // Синглтон
-    private void Awake()
+    private void Start()
     {
-        if (Instance == null)
+        // Подписываемся на изменения ресурсов
+        if (resourceManager != null)
         {
-            Instance = this;
-            InitializeTechnologySystem();
-            DontDestroyOnLoad(gameObject);
+            ResourceManager.OnResourceChanged += OnResourceChanged;
         }
-        else
-        {
-            Destroy(gameObject);
-        }
-  
     }
 
-    /// <summary>
-    /// Происходит при разрушении объекта.
-    /// </summary>
     private void OnDestroy()
     {
-        // Отписываемся от событий
         if (resourceManager != null)
         {
             ResourceManager.OnResourceChanged -= OnResourceChanged;
         }
     }
 
-    /// <summary>
-    /// Инициализация системы
-    /// </summary>
-    private void InitializeTechnologySystem()
-    {
-        technologyDict = new Dictionary<string, TalentData>();
-        availableTechnologies = new List<TalentData>();
-        researchedTechnologies = new List<TalentData>();
-
-        // Заполняем словарь для быстрого доступа
-        foreach (var tech in allTechnologies)
-        {
-            if (tech != null && !technologyDict.ContainsKey(tech.name))
-            {
-                technologyDict[tech.name] = tech;
-                tech.IsResearched = false;
-                tech.IsAvailable = false;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Вызывается при изменении ресурсов - обновляем доступность технологий
-    /// </summary>
     private void OnResourceChanged(ResourceType type)
     {
-        UpdateAllTechnologiesAvailability();
+        OnTechnologyTreeChanged?.Invoke();
     }
 
-    /// <summary>
-    /// Обновляет доступность всех технологий на основе выполненных зависимостей
-    /// </summary>
-    private void UpdateAllTechnologiesAvailability()
+    public bool CanUnlock(TalentData tech)
     {
-        bool anyChanged = false;
+        if (tech == null || tech.IsUnlocked) return false;
 
-        foreach (var tech in allTechnologies)
+        // Проверяем зависимости
+        foreach (var prereq in tech.Prerequisites)
         {
-            if (tech == null || tech.IsResearched)
-                continue;
-
-            bool wasAvailable = tech.IsAvailable;
-            bool allPrerequisitesResearched = true;
-
-            // Проверяем все зависимости
-            foreach (var prerequisite in tech.Prerequisites)
-            {
-                if (prerequisite == null || !prerequisite.IsResearched)
-                {
-                    allPrerequisitesResearched = false;
-                    break;
-                }
-            }
-
-            tech.IsAvailable = allPrerequisitesResearched;
-
-            // Обновляем список доступных
-            if (tech.IsAvailable && !availableTechnologies.Contains(tech))
-            {
-                availableTechnologies.Add(tech);
-                anyChanged = true;
-            }
-            else if (!tech.IsAvailable && availableTechnologies.Contains(tech))
-            {
-                availableTechnologies.Remove(tech);
-                anyChanged = true;
-            }
-
-            if (wasAvailable != tech.IsAvailable)
-                anyChanged = true;
+            if (prereq == null || !prereq.IsUnlocked) return false;
         }
 
-        if (anyChanged)
+        // Проверяем ресурсы
+        foreach (var cost in tech.cost)
         {
-            OnTechnologyTreeUpdated?.Invoke();
+            if (resourceManager.GetResource(cost.type) < cost.amount) return false;
         }
-    }
 
-    /// <summary>
-    /// Проверяет, можно ли исследовать технологию
-    /// </summary>
-    public bool CanResearch(TalentData technology)
-    {
-        if (technology == null)
-            return false;
-
-        if (technology.IsResearched)
-            return false;
-
-        if (!technology.IsAvailable)
-            return false;
-
-        // Используем существующий метод ResourceManager для проверки ресурсов
-        return resourceManager != null && resourceManager.HasResources(technology.ResearchCost);
-    }
-
-    /// <summary>
-    /// Пытается исследовать технологию
-    /// </summary>
-    public bool ResearchTechnology(TalentData technology)
-    {
-        if (!CanResearch(technology))
-            return false;
-
-        // Используем существующий метод ResourceManager для списания ресурсов
-        bool spent = resourceManager.TrySpendResources(technology.ResearchCost);
-
-        if (!spent)
-            return false;
-
-        // Отмечаем как исследованное
-        technology.IsResearched = true;
-        researchedTechnologies.Add(technology);
-
-        if (availableTechnologies.Contains(technology))
-            availableTechnologies.Remove(technology);
-
-        // Применяем эффекты технологии
-        ApplyTechnologyEffects(technology);
-
-        // Обновляем доступность остальных технологий
-        UpdateAllTechnologiesAvailability();
-
-        // Вызываем событие
-        OnTechnologyResearched?.Invoke(technology);
-        OnTechnologyTreeUpdated?.Invoke();
-
-        Debug.Log($"Технология исследована: {technology.TalentName}");
         return true;
     }
 
-    /// <summary>
-    /// Применяет все эффекты технологии
-    /// </summary>
-    private void ApplyTechnologyEffects(TalentData technology)
+    public bool UnlockTechnology(TalentData tech)
     {
-        if (technology.UnlockEffects == null)
-            return;
+        if (!CanUnlock(tech)) return false;
 
-        foreach (var effect in technology.UnlockEffects)
+        // Списываем ресурсы
+        foreach (var cost in tech.cost)
         {
-            if (effect != null)
-            {
-                effect.Apply();
-                Debug.Log($"Применен эффект: {effect.GetEffectName()} от технологии {technology.TalentName}");
-            }
-        }
-    }
-
-    /// <summary>
-    /// Получает прогресс исследования (сколько ресурсов уже собрано)
-    /// </summary>
-    public float GetResearchProgress(TalentData technology)
-    {
-        if (technology == null || technology.IsResearched)
-            return technology != null && technology.IsResearched ? 1f : 0f;
-
-        if (!technology.IsAvailable)
-            return 0f;
-
-        if (technology.ResearchCost.Resources == null || technology.ResearchCost.Resources.Count == 0)
-            return 0f;
-
-        float totalCost = 0f;
-        float collected = 0f;
-
-        foreach (var cost in technology.ResearchCost.Resources)
-        {
-            totalCost += cost.Amount;
-            int currentAmount = resourceManager != null ?
-                resourceManager.GetResource(cost.Type) : 0;
-            collected += Mathf.Min(cost.Amount, currentAmount);
+            resourceManager.TrySpendResource(cost.type, cost.amount);
         }
 
-        return totalCost > 0 ? collected / totalCost : 0f;
+        // Отмечаем как исследованную
+        tech.IsUnlocked = true;
+
+        // Уведомляем
+        OnTechnologyUnlocked?.Invoke();
+        OnTechnologyTreeChanged?.Invoke();
+
+        Debug.Log($"Технология исследована: {tech.TalentName}");
+        return true;
     }
 
-    public List<TalentData> GetAllTechnologies()
+    public List<TalentData> GetUnlockedTechnologies()
     {
-        return allTechnologies;
+        return allTechnologies.Where(t => t.IsUnlocked).ToList();
+    }
+
+    public List<TalentData> GetAvailableTechnologies()
+    {
+        return allTechnologies.Where(t => !t.IsUnlocked && CanUnlock(t)).ToList();
     }
 }

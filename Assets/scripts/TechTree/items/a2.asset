@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d019b36459d1d044b7132a4fb979b0c, type: 3}
-  m_Name: HealthBoost
+  m_Name: a2
   m_EditorClassIdentifier: 
-  TalentName: AAAAAAAAAAAAAAAAA
-  Description: 
-  Icon: {fileID: 0}
+  TalentName: b1
+  Description: aaa!!
+  Icon: {fileID: 3452003437791708593, guid: e15b2a6d3d5903049b9d0a43b54f24bd, type: 3}
   Prerequisites:
-  - {fileID: 11400000, guid: 137bcf53c052b274fb52a0012c375ae9, type: 2}
-  NodePosition: {x: 100, y: 200}
+  - {fileID: 11400000, guid: 36f7d6affb823b244ae57e5e1a437036, type: 2}
+  NodePosition: {x: 500, y: 0}

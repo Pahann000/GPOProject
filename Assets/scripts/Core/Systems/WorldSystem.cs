@@ -40,7 +40,7 @@ public class WorldSystem : IGameSystem
         WorldMap = worldObj.AddComponent<Map>();
         WorldChunks = worldObj.AddComponent<ChunkManager>();
 
-        WorldMap.Initialize(config);
+        WorldMap.Initialize(config, _kernel.EventBus);
 
         // АХТУНГ: Зачем было удалять Map.Instance? Я забыл. Придётся передавать Map в ChunkManager вручную(
         WorldChunks.Initialize(WorldMap);

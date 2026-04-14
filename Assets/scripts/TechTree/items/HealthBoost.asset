@@ -13,8 +13,12 @@ MonoBehaviour:
   m_Name: HealthBoost
   m_EditorClassIdentifier: 
   TalentName: AAAAAAAAAAAAAAAAA
-  Description: 
+  Description: OpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanie
   Icon: {fileID: 0}
+  Cost:
+    Resources:
+    - Type: 1
+      Amount: 1
   Prerequisites:
-  - {fileID: 11400000, guid: 137bcf53c052b274fb52a0012c375ae9, type: 2}
+  - {fileID: 0}
   NodePosition: {x: 100, y: 200}

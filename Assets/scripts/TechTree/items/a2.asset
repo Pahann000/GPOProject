@@ -15,6 +15,8 @@ MonoBehaviour:
   TalentName: b1
   Description: aaa!!
   Icon: {fileID: 3452003437791708593, guid: e15b2a6d3d5903049b9d0a43b54f24bd, type: 3}
+  Cost:
+    Resources: []
   Prerequisites:
   - {fileID: 11400000, guid: 36f7d6affb823b244ae57e5e1a437036, type: 2}
   NodePosition: {x: 500, y: 0}

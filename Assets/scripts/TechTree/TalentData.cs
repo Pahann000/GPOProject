@@ -30,16 +30,27 @@ public class TalentData : ScriptableObject
     /// Стоимость исследования, может отсутствовать.
     /// </summary>
     [CanBeNull]
-    public ResourceCost[] cost;
+    public ResourceBundle Cost;
 
     /// <summary>
-    /// Стоимость исследования
+    /// Возвращает значение стоимости в виде строки.
     /// </summary>
-    public struct ResourceCost
+    /// <returns></returns>
+    public string GetCostString()
     {
-        public ResourceType type;
-        public int amount;
+        if (Cost.Resources == null || Cost.Resources.Count == 0)
+            return "";
+
+        string result = "";
+        foreach (var resource in Cost.Resources)
+        {
+            result += $"{resource.Type}: {resource.Amount}\n";
+        }
+        return result;
     }
+
+    // Проверка, есть ли у технологии стоимость
+    public bool HasCost => Cost.Resources != null && Cost.Resources.Count > 0;
 
     /// <summary>
     /// Зависимости (предыдущие технологии), могут отсутствовать.
@@ -50,22 +61,6 @@ public class TalentData : ScriptableObject
     // Состояние в текущей игре
     [System.NonSerialized] public bool IsResearched;
     [System.NonSerialized] public bool IsUnlocked;
-
-    public bool CanUnlock(ResourceManager rm)
-    {
-        if (IsUnlocked) return false;
-        if (Prerequisites != null)
-        {
-            foreach (var prereq in Prerequisites)
-                if (!prereq.IsUnlocked)
-                {
-                    return false;
-                }
-        }
-        foreach (var c in cost )
-            if (rm.GetResource(c.type) < c.amount) return false;
-        return true;
-    }
 
     /// <summary>
     /// Позиция в дереве

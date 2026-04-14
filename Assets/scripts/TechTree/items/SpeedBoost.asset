@@ -13,14 +13,10 @@ MonoBehaviour:
   m_Name: SpeedBoost
   m_EditorClassIdentifier: 
   TalentName: BBBBBBBBBBBBBBBB
-  Description: 
+  Description: OpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanieOpisanie
   Icon: {fileID: -7293136561871713164, guid: 5a4c598e656c1664084c8a8098b543c7, type: 3}
-  ResearchCost:
-    Resources:
-    - Type: 0
-      Amount: 2
-    - Type: 2
-      Amount: 2
+  Cost:
+    Resources: []
   Prerequisites:
   - {fileID: 11400000, guid: 36f7d6affb823b244ae57e5e1a437036, type: 2}
   NodePosition: {x: 350, y: 100}

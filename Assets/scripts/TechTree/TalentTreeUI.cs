@@ -3,11 +3,14 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+/// <summary>
+/// Хранит методы создания UI.
+/// </summary>
 public class TalentTreeUI : MonoBehaviour
 {
     [Header("Ссылки на компоненты")]
     [SerializeField] private UIDocument uiDocument;
-    [SerializeField] private TalentManager techManager;
+    [SerializeField] private TechTreeManager techManager;
     [SerializeField] private ResourceManager resourceManager;
 
     [Header("UI ресурсы")]
@@ -21,14 +24,11 @@ public class TalentTreeUI : MonoBehaviour
     private void Start()
     {
         // Ищем менеджеры
-        if (techManager == null)
-            techManager = FindObjectOfType<TalentManager>();
-        if (resourceManager == null)
-            resourceManager = FindObjectOfType<ResourceManager>();
+        if (techManager == null) techManager = FindObjectOfType<TechTreeManager>();
+        if (resourceManager == null) resourceManager = FindObjectOfType<ResourceManager>();
 
         // Получаем UIDocument
-        if (uiDocument == null)
-            uiDocument = GetComponent<UIDocument>();
+        if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
 
         if (uiDocument == null)
         {
@@ -39,21 +39,11 @@ public class TalentTreeUI : MonoBehaviour
         root = uiDocument.rootVisualElement;
 
         // Применяем стили
-        if (styleSheet != null)
-            root.styleSheets.Add(styleSheet);
+        if (styleSheet != null) root.styleSheets.Add(styleSheet);
 
-        // Ищем TreeContainer (он находится внутри MainPanel)
-        var mainPanel = root.Q<VisualElement>("MainPanel");
-        if (mainPanel != null)
-        {
-            treeContainer = mainPanel.Q<VisualElement>("TreeContainer");
-        }
-        else
-        {
-            // Если MainPanel не найден, ищем напрямую
-            treeContainer = root.Q<VisualElement>("TreeContainer");
-        }
-
+        // Ищем TreeContainer
+        treeContainer = root.Q<VisualElement>("TreeContainer");
+        
         if (treeContainer == null)
         {
             Debug.LogError("TechTreeUI: TreeContainer not found! Check UXML structure.");
@@ -72,6 +62,9 @@ public class TalentTreeUI : MonoBehaviour
         RefreshTree();
     }
 
+    /// <summary>
+    /// Отписка от событий и т д
+    /// </summary>
     private void OnDestroy()
     {
         if (techManager != null)
@@ -81,6 +74,9 @@ public class TalentTreeUI : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Обновляет дерево при изменении.
+    /// </summary>
     private void RefreshTree()
     {
         if (treeContainer == null) return;
@@ -95,13 +91,15 @@ public class TalentTreeUI : MonoBehaviour
             if (tech == null) continue;
             CreateTechNode(tech);
         }
-
-        // Рисуем линии связей
-        DrawConnections();
     }
 
+    /// <summary>
+    /// Создает узел дерева.
+    /// </summary>
+    /// <param name="tech"> Объект узла.</param>
     private void CreateTechNode(TalentData tech)
     {
+
         if (techNodeTemplate == null)
         {
             Debug.LogError("TechNodeTemplate не назначен!");
@@ -110,6 +108,13 @@ public class TalentTreeUI : MonoBehaviour
 
         // Создаем элемент из шаблона
         VisualElement node = techNodeTemplate.Instantiate();
+
+        if (node == null)
+        {
+            Debug.LogError($"CreateTechNode: Failed to instantiate node for {tech.TalentName}");
+            return;
+        }
+
         node.userData = tech;
         node.name = $"Node_{tech.TalentName}";
 
@@ -123,31 +128,17 @@ public class TalentTreeUI : MonoBehaviour
         Label costLabel = node.Q<Label>("CostLabel");
         VisualElement iconElement = node.Q<VisualElement>("Icon");
         Button unlockButton = node.Q<Button>("UnlockButton");
-
         if (nameLabel != null) nameLabel.text = tech.TalentName;
 
         // Формируем текст стоимости
-        if (costLabel != null && tech.cost != null && tech.cost.Length > 0)
-        {
-            string costText = "";
-            foreach (var c in tech.cost)
-            {
-                costText += $"{c.type}: {c.amount}\n";
-            }
-            costLabel.text = costText;
-        }
+        if (costLabel != null) costLabel.text = tech.GetCostString();
 
         // Устанавливаем иконку
-        if (iconElement != null && tech.Icon != null)
-        {
-            iconElement.style.backgroundImage = new StyleBackground(tech.Icon);
-        }
+        if (iconElement != null && tech.Icon != null) iconElement.style.backgroundImage = new StyleBackground(tech.Icon);
+
 
         // Настраиваем кнопку
-        if (unlockButton != null)
-        {
-            unlockButton.clicked += () => techManager.UnlockTechnology(tech);
-        }
+        if (unlockButton != null) unlockButton.clicked += () => techManager.UnlockTechnology(tech);
 
         // Применяем класс состояния
         UpdateNodeState(node, tech);
@@ -155,8 +146,14 @@ public class TalentTreeUI : MonoBehaviour
         // Добавляем в контейнер
         treeContainer.Add(node);
         nodeElements[tech] = node;
+
     }
 
+    /// <summary>
+    /// Обновляет состояние узла в процессе работы.
+    /// </summary>
+    /// <param name="node">Отображаемый узел. </param>
+    /// <param name="tech">Объект в программе. </param>
     private void UpdateNodeState(VisualElement node, TalentData tech)
     {
         // Удаляем старые классы
@@ -166,6 +163,7 @@ public class TalentTreeUI : MonoBehaviour
 
         Button button = node.Q<Button>("UnlockButton");
 
+        // Пометка узлов в списке.
         if (tech.IsUnlocked)
         {
             node.AddToClassList("researched");
@@ -195,57 +193,4 @@ public class TalentTreeUI : MonoBehaviour
         }
     }
 
-    private void DrawConnections()
-    {
-        if (treeContainer == null) return;
-
-        foreach (var tech in techManager.allTechnologies)
-        {
-            if (tech == null || tech.Prerequisites == null) continue;
-
-            foreach (var prereq in tech.Prerequisites)
-            {
-                if (prereq == null) continue;
-
-                if (nodeElements.TryGetValue(prereq, out var fromNode) &&
-                    nodeElements.TryGetValue(tech, out var toNode))
-                {
-                    DrawLine(fromNode, toNode);
-                }
-            }
-        }
-    }
-
-    private void DrawLine(VisualElement fromNode, VisualElement toNode)
-    {
-        // Получаем позиции узлов
-        float fromX = fromNode.resolvedStyle.left;
-        float fromY = fromNode.resolvedStyle.top;
-        float toX = toNode.resolvedStyle.left;
-        float toY = toNode.resolvedStyle.top;
-
-        // Центры узлов (предполагаем размер 140x160)
-        float x1 = fromX + 70;
-        float y1 = fromY + 80;
-        float x2 = toX + 70;
-        float y2 = toY + 80;
-
-        // Вычисляем расстояние и угол
-        float dx = x2 - x1;
-        float dy = y2 - y1;
-        float distance = Mathf.Sqrt(dx * dx + dy * dy);
-        float angle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
-
-        // Создаем линию
-        VisualElement line = new VisualElement();
-        line.style.position = Position.Absolute;
-        line.style.backgroundColor = new Color(0.5f, 0.5f, 0.5f, 0.8f);
-        line.style.height = 2;
-        line.style.width = distance;
-        line.style.left = x1;
-        line.style.top = y1;
-        line.style.rotate = new Rotate(Angle.Degrees(angle));
-
-        treeContainer.Add(line);
-    }
 }

@@ -5,7 +5,7 @@ using System.Linq;
 /// <summary>
 /// Класс управления исследованиями
 /// </summary>
-public class TalentManager : MonoBehaviour
+public class TechTreeManager : MonoBehaviour
 {
     [Header("Настройки")]
     public List<TalentData> allTechnologies;
@@ -37,20 +37,29 @@ public class TalentManager : MonoBehaviour
         OnTechnologyTreeChanged?.Invoke();
     }
 
+    /// <summary>
+    /// Проверяет можно ли изучить технологию.
+    /// </summary>
+    /// <param name="tech"></param>
+    /// <returns></returns>
     public bool CanUnlock(TalentData tech)
     {
         if (tech == null || tech.IsUnlocked) return false;
 
-        // Проверяем зависимости
-        foreach (var prereq in tech.Prerequisites)
+        if (tech.Prerequisites[0] != null)
         {
-            if (prereq == null || !prereq.IsUnlocked) return false;
+            foreach (var prereq in tech.Prerequisites)
+            {
+                if (prereq == null || !prereq.IsUnlocked) return false;
+            }
         }
 
-        // Проверяем ресурсы
-        foreach (var cost in tech.cost)
+        if (tech.HasCost)
         {
-            if (resourceManager.GetResource(cost.type) < cost.amount) return false;
+            if (!resourceManager.HasResources(tech.Cost))
+            {
+                return false;
+            }
         }
 
         return true;
@@ -60,10 +69,14 @@ public class TalentManager : MonoBehaviour
     {
         if (!CanUnlock(tech)) return false;
 
-        // Списываем ресурсы
-        foreach (var cost in tech.cost)
+        if (tech.HasCost)
         {
-            resourceManager.TrySpendResource(cost.type, cost.amount);
+            bool success = resourceManager.TrySpendResources(tech.Cost);
+            if (!success)
+            {
+                Debug.LogWarning($"Failed to spend resources for {tech.TalentName}");
+                return false;
+            }
         }
 
         // Отмечаем как исследованную
@@ -77,11 +90,19 @@ public class TalentManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Возвращает разблокированные технологии.
+    /// </summary>
+    /// <returns></returns>
     public List<TalentData> GetUnlockedTechnologies()
     {
         return allTechnologies.Where(t => t.IsUnlocked).ToList();
     }
 
+    /// <summary>
+    /// Возвращает доступные технологии.
+    /// </summary>
+    /// <returns></returns>
     public List<TalentData> GetAvailableTechnologies()
     {
         return allTechnologies.Where(t => !t.IsUnlocked && CanUnlock(t)).ToList();

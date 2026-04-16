@@ -4,8 +4,7 @@ using UnityEngine.EventSystems;
 public class BuildingSystem : MonoBehaviour
 {
     [Header("Настройки")]
-    [SerializeField] private LayerMask buildableLayer;
-    [SerializeField] private LayerMask obstacleLayer;
+    [SerializeField] private LayerMask buildingCollisionMask; // маска для столкновений с другими зданиями
     [SerializeField] private GameObject buildingPreviewPrefab;
     [SerializeField] private Material validMaterial;
     [SerializeField] private Material invalidMaterial;
@@ -21,11 +20,6 @@ public class BuildingSystem : MonoBehaviour
     private SpriteRenderer _previewRenderer;
     private Camera _mainCamera;
 
-    [Header("Настройки проверки")]
-    [SerializeField] private bool useChunkSystem = true;
-    [SerializeField] private float checkPrecision = 0.5f;
-    [SerializeField] private float minBuildablePercentage = 0.7f;
-
     private void Start()
     {
         _mainCamera = Camera.main;
@@ -37,9 +31,7 @@ public class BuildingSystem : MonoBehaviour
     private void Update()
     {
         if (!_isPlacing) return;
-
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-            return;
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
 
         UpdatePreviewPosition();
         UpdatePreviewVisuals();
@@ -124,24 +116,31 @@ public class BuildingSystem : MonoBehaviour
             _previewRenderer.material = canBuild ? validMaterial : invalidMaterial;
     }
 
+    // ======================== НОВЫЕ МЕТОДЫ ПРОВЕРКИ ========================
+
     private bool CanPlaceBuilding()
     {
         if (_currentPreview == null || _selectedBuildingData == null)
             return false;
 
         Vector2 pos = _currentPreview.transform.position;
-        Vector2 size = new Vector2(_selectedBuildingData.Width, _selectedBuildingData.Height);
+        int width = _selectedBuildingData.Width;
+        int height = _selectedBuildingData.Height;
 
+        // 1. Проверка ресурсов
         if (!resourceManager.HasResources(_selectedBuildingData.ConstructionCost))
             return false;
 
+        // 2. Проверка правил размещения (например, рядом с водой)
         if (!CheckPlacementRules(pos))
             return false;
 
-        if (!CheckSpaceClear(pos, size))
+        // 3. Проверка блоков через Map (фундамент и свободное пространство)
+        if (!CheckBuildableOnMap(pos, width, height))
             return false;
 
-        if (!CheckBuildableSurface(pos, size))
+        // 4. Проверка столкновения с другими зданиями
+        if (!CheckNoBuildingCollision(pos, width, height))
             return false;
 
         return true;
@@ -156,85 +155,60 @@ public class BuildingSystem : MonoBehaviour
         return true;
     }
 
-    private bool CheckSpaceClear(Vector2 position, Vector2 size)
+    /// <summary>
+    /// Проверка через Map: все клетки здания должны быть Air, под нижней гранью – твёрдый блок.
+    /// </summary>
+    private bool CheckBuildableOnMap(Vector2 position, int width, int height)
     {
-        Collider2D[] overlaps = Physics2D.OverlapBoxAll(position, size, 0, obstacleLayer);
-        foreach (var col in overlaps)
+        // Определяем целочисленные координаты левого нижнего угла (в клетках)
+        int startX = Mathf.RoundToInt(position.x - width / 2f);
+        int startY = Mathf.RoundToInt(position.y - height / 2f);
+        int endX = startX + width - 1;
+        int endY = startY + height - 1;
+
+        // Проходим по всем клеткам, которые занимает здание
+        for (int x = startX; x <= endX; x++)
         {
-            if (col.isTrigger || col.gameObject == _currentPreview)
+            for (int y = startY; y <= endY; y++)
+            {
+                BlockType block = Map.Instance.GetBlockInfo(x, y).tileData.type;
+                if (block != BlockType.Air)
+                    return false;
+            }
+        }
+
+        // Проверяем, что под каждой клеткой нижнего ряда есть твёрдый строительный блок
+        int groundY = startY - 1;
+        for (int x = startX; x <= endX; x++)
+        {
+            BlockType below = Map.Instance.GetBlockInfo(x, groundY).tileData.type;
+            if (!IsBuildableBlockType(below))
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Проверка пересечения с другими зданиями через физику.
+    /// </summary>
+    private bool CheckNoBuildingCollision(Vector2 position, int width, int height)
+    {
+        Collider2D[] hits = Physics2D.OverlapBoxAll(position, new Vector2(width, height), 0, buildingCollisionMask);
+        foreach (var hit in hits)
+        {
+            if (hit.isTrigger || hit.gameObject == _currentPreview)
                 continue;
-
-            Block block = col.GetComponent<Block>();
-            if (block != null && IsResourceBlock(block))
-                return false;
-
-            if (!col.isTrigger)
-                return false;
+            // Если это другое здание или любой объект с коллайдером не-триггером – запрещаем
+            return false;
         }
         return true;
     }
 
-    private bool IsResourceBlock(Block block)
-    {
-        if (block == null) return false;
-        string name = block.tileData.type.ToString().ToLower();
-        return name.Contains("mineral") || name.Contains("ice") || name.Contains("root") || name.Contains("gold");
-    }
-
-    private bool CheckBuildableSurface(Vector2 position, Vector2 size)
-    {
-        if (useChunkSystem && worldManager != null)
-            return CheckBuildableSurfaceUsingChunks(position, size);
-        else
-            return CheckBuildableSurfaceUsingRaycast(position, size);
-    }
-
-    private bool CheckBuildableSurfaceUsingChunks(Vector2 position, Vector2 size)
-    {
-        int valid = 0, total = 0;
-        float step = checkPrecision;
-
-        for (float x = -size.x / 2 + step / 2; x <= size.x / 2; x += step)
-        {
-            for (float y = -size.y / 2 + step / 2; y <= size.y / 2; y += step)
-            {
-                Vector2 point = position + new Vector2(x, y);
-                total++;
-                BlockType type = Map.Instance.GetBlockInfo(Mathf.RoundToInt(point.x), Mathf.RoundToInt(point.y)).tileData.type;
-                if (IsBuildableBlockType(type))
-                    valid++;
-            }
-        }
-        return total > 0 && (float)valid / total >= minBuildablePercentage;
-    }
-
     private bool IsBuildableBlockType(BlockType type)
     {
-        if (type == BlockType.Air) return false;
-        string name = type.ToString().ToLower();
-        return name.Contains("rock") || name.Contains("dirt") || name.Contains("sand") || name.Contains("grass");
-    }
-
-    private bool CheckBuildableSurfaceUsingRaycast(Vector2 position, Vector2 size)
-    {
-        Vector2[] points = new Vector2[]
-        {
-            position + new Vector2(-size.x/2 + 0.1f, -size.y/2 + 0.1f),
-            position + new Vector2(size.x/2 - 0.1f, -size.y/2 + 0.1f),
-            position + new Vector2(0, -size.y/2 + 0.1f)
-        };
-        int valid = 0;
-        foreach (var p in points)
-        {
-            RaycastHit2D hit = Physics2D.Raycast(p, Vector2.down, 2f, buildableLayer);
-            if (hit.collider != null)
-            {
-                Block block = hit.collider.GetComponent<Block>();
-                if (block != null && IsBuildableBlockType(block.tileData.type))
-                    valid++;
-            }
-        }
-        return valid >= 2;
+        // Разрешаем строить на камне, земле, песке, траве (и любых других твёрдых блоках, кроме ресурсов и воздуха)
+        return type == BlockType.Rock;
     }
 
     private void PlaceBuilding()

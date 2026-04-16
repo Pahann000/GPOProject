@@ -161,6 +161,10 @@ public class WorldManager : MonoBehaviour
 
         // Шаг 3: каньоны
         ApplyErosion();
+
+        FixFloatingResources();
+
+
     }
 
     private BlockType GetResourceTypeWithWarp(int x, int y)
@@ -330,48 +334,108 @@ public class WorldManager : MonoBehaviour
     // Методы размещения зданий (без изменений)
     public Building PlaceBuilding(BaseBuildingData data, Vector2 position)
     {
-        Debug.Log($"WorldManager: Попытка разместить {data.DisplayName} на {position}");
-        if (!CanPlaceBuilding(data, position))
+        if (!CanPlaceBuildingSimple(data, position))
         {
-            Debug.Log("WorldManager: Нельзя разместить здание");
-            return null;
-        }
-        if (!ResourceManager.Instance.TrySpendResources(data.ConstructionCost))
-        {
-            Debug.Log("WorldManager: Не удалось списать ресурсы");
+            Debug.Log("WorldManager: не удалось разместить здание – коллизия с другими зданиями");
             return null;
         }
 
         GameObject buildingObj = Instantiate(data.Prefab, position, Quaternion.identity);
         Building building = buildingObj.GetComponent<Building>();
+        if (building == null)
+        {
+            Debug.LogError("WorldManager: префаб здания не содержит компонент Building");
+            Destroy(buildingObj);
+            return null;
+        }
+
         building.Initialize(data);
 
-        BoxCollider2D collider = buildingObj.AddComponent<BoxCollider2D>();
+        // Настраиваем коллайдер (если его нет)
+        BoxCollider2D collider = buildingObj.GetComponent<BoxCollider2D>();
+        if (collider == null)
+            collider = buildingObj.AddComponent<BoxCollider2D>();
         collider.size = new Vector2(data.Width, data.Height);
         collider.offset = new Vector2(data.Width / 2f, data.Height / 2f);
 
         _activeBuildings.Add(building);
-        Debug.Log($"WorldManager: Здание {data.DisplayName} успешно размещено");
+        Debug.Log($"WorldManager: здание {data.DisplayName} размещено");
         return building;
     }
 
-    public bool CanPlaceBuilding(BaseBuildingData data, Vector2 position)
+    /// <summary>
+    /// Минимальная проверка – только пересечение с другими зданиями.
+    /// Вся логика блоков и поверхности уже проверена в BuildingSystem.
+    /// </summary>
+    private bool CanPlaceBuildingSimple(BaseBuildingData data, Vector2 position)
     {
-        Collider2D[] collisions = Physics2D.OverlapBoxAll(
-            position,
-            new Vector2(data.Width, data.Height),
-            0,
-            _buildingObstacleMask);
-        if (collisions.Length > 0) return false;
-
-        if (data.PlacementRules != null)
+        Collider2D[] collisions = Physics2D.OverlapBoxAll(position, new Vector2(data.Width, data.Height), 0);
+        foreach (var col in collisions)
         {
-            foreach (PlacementRule rule in data.PlacementRules)
-            {
-                if (!rule.IsSatisfied(position))
-                    return false;
-            }
+            // Игнорируем триггеры (например, превью)
+            if (col.isTrigger) continue;
+            // Если есть коллайдер, который не является триггером – скорее всего это другое здание
+            return false;
         }
         return true;
+    }
+
+    private void ApplyGravity()
+    {
+        int w = worldMap.GetLength(0);
+        int h = worldMap.GetLength(1);
+        bool changed;
+        do
+        {
+            changed = false;
+            for (int x = 0; x < w; x++)
+            {
+                for (int y = 0; y < h; y++)
+                {
+                    if (worldMap[x, y] != BlockType.Air)
+                    {
+                        // Проверяем блок снизу
+                        if (y == 0 || worldMap[x, y - 1] == BlockType.Air)
+                        {
+                            // Нет опоры – удаляем
+                            worldMap[x, y] = BlockType.Air;
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        } while (changed);
+    }
+
+    private void FixFloatingResources()
+    {
+        int w = worldMap.GetLength(0);
+        int h = worldMap.GetLength(1);
+        for (int x = 0; x < w; x++)
+        {
+            for (int y = 0; y < h; y++)
+            {
+                BlockType type = worldMap[x, y];
+                if (type == BlockType.Minerals || type == BlockType.Root || type == BlockType.Ice)
+                {
+                    // Проверяем, есть ли опора снизу
+                    bool hasSupport = false;
+                    for (int dy = -1; dy <= 1; dy++) // проверяем три блока под текущим
+                    {
+                        int ny = y - 1;
+                        if (ny >= 0 && worldMap[x, ny] != BlockType.Air)
+                        {
+                            hasSupport = true;
+                            break;
+                        }
+                    }
+                    if (!hasSupport)
+                    {
+                        // Заменить на камень или воздух – решать вам
+                        worldMap[x, y] = BlockType.Rock; // или Air
+                    }
+                }
+            }
+        }
     }
 }

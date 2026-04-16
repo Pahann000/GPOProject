@@ -1051,12 +1051,12 @@ MonoBehaviour:
   IceSize: 0.304
   MinIceHeight: 0
   tunnelSettings:
-    numberOfStartingPoints: 30
-    maxStepsPerTunnel: 200
+    numberOfStartingPoints: 10
+    maxStepsPerTunnel: 150
     tunnelRadius: 2
-    branchProbability: 0.831
-    maxBranchDepth: 2
-    minY: 0
+    branchProbability: 0.547
+    maxBranchDepth: 3
+    minY: 30
     maxY: 1000
   mineralWarpSettings:
     frequency: 0.06
@@ -1077,11 +1077,11 @@ MonoBehaviour:
     warpFrequency: 0.02
     seedOffset: 2000
   erosionSettings:
-    numberOfCanyons: 30
+    numberOfCanyons: 10
     maxDepth: 10
-    canyonRadius: 15
-    turnProbability: 0.241
-    iterations: 15
+    canyonRadius: 10
+    turnProbability: 0.52
+    iterations: 7
 --- !u!4 &288573034
 Transform:
   m_ObjectHideFlags: 0
@@ -1695,7 +1695,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1200983165}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9991978
+  m_Size: 0.99960613
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1918,10 +1918,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a28c8d6ee3f47a44904c97ccbedf5bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildableLayer:
-    serializedVersion: 2
-    m_Bits: 0
-  obstacleLayer:
+  buildingCollisionMask:
     serializedVersion: 2
     m_Bits: 0
   buildingPreviewPrefab: {fileID: 3106463480208296258, guid: f3c691a0adff6a54f8b4676a8f38552c, type: 3}
@@ -1930,9 +1927,6 @@ MonoBehaviour:
   resourceManager: {fileID: 2069000741}
   uiManager: {fileID: 2119601156}
   worldManager: {fileID: 288573033}
-  useChunkSystem: 1
-  checkPrecision: 0.5
-  minBuildablePercentage: 0.7
 --- !u!1 &665863973
 GameObject:
   m_ObjectHideFlags: 0
@@ -4526,7 +4520,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.007962282}
+  m_AnchoredPosition: {x: 0, y: 0.00002885615}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1557638179

@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -24,7 +24,7 @@ public class BuildingButtonUI : MonoBehaviour
     private BuildingPanelUI _parentPanel;
 
     /// <summary>
-    /// Инициализирует кнопку с данными здания
+    /// РРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚ РєРЅРѕРїРєСѓ СЃ РґР°РЅРЅС‹РјРё Р·РґР°РЅРёСЏ
     /// </summary>
     public void Initialize(BuildingData data, BuildingPanelUI parentPanel)
     {
@@ -33,40 +33,40 @@ public class BuildingButtonUI : MonoBehaviour
 
         if (button == null) button = GetComponent<Button>();
 
-        // Устанавливаем визуальные элементы
+        // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІРёР·СѓР°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹
         if (iconImage != null && data.Icon != null) iconImage.sprite = data.Icon;
 
         if (nameText != null) nameText.text = data.DisplayName;
 
         SetupTooltipAndCost(data);
         
-        // Клик -> обращаемся к Ядру
+        // РљР»РёРє -> РѕР±СЂР°С‰Р°РµРјСЃСЏ Рє РЇРґСЂСѓ
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(OnButtonClicked);
 
         var hoverHandler = gameObject.AddComponent<BuildingButtonHover>();
         hoverHandler.Initialize(button, tooltipObject, backgroundImage, hoverColor);
 
-        // Обновляем доступность
+        // РћР±РЅРѕРІР»СЏРµРј РґРѕСЃС‚СѓРїРЅРѕСЃС‚СЊ
         UpdateAvailability();
     }
 
     private void SetupTooltipAndCost(BuildingData data)
     {
         string costString = "";
-        if (data.ConstructionCost.Resources != null)
+        if (data.ConstructionCost != null)
         {
-            foreach (var res in data.ConstructionCost.Resources)
+            foreach (var res in data.ConstructionCost)
             {
                 costString += $"{res.Type}: {res.Amount}";
             }
         }
 
-        if (costText != null) costText.text = string.IsNullOrEmpty(costString) ? "Бесплатно" : costString;
+        if (costText != null) costText.text = string.IsNullOrEmpty(costString) ? "Р‘РµСЃРїР»Р°С‚РЅРѕ" : costString;
 
         if (tooltipText != null && tooltipObject != null)
         {
-            tooltipText.text = $"<b>{data.DisplayName}</b>\nРазмер: {data.Width}x{data.Height}";
+            tooltipText.text = $"<b>{data.DisplayName}</b>\nР Р°Р·РјРµСЂ: {data.Width}x{data.Height}";
             tooltipObject.SetActive(false);
         }
     }
@@ -84,24 +84,24 @@ public class BuildingButtonUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Обновляет доступность кнопки в зависимости от ресурсов
+    /// РћР±РЅРѕРІР»СЏРµС‚ РґРѕСЃС‚СѓРїРЅРѕСЃС‚СЊ РєРЅРѕРїРєРё РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ СЂРµСЃСѓСЂСЃРѕРІ
     /// </summary>
     public void UpdateAvailability()
     {
         if (_buildingData == null || GameKernel.Instance == null) return;
 
         var resourceSys = GameKernel.Instance.GetSystem<ResourceSystem>();
-        bool canAfford = resourceSys != null && resourceSys.HasResources(_buildingData.ConstructionCost);
+        bool canAfford = resourceSys != null && resourceSys.HasResources(_buildingData.Owner, _buildingData.ConstructionCost);
 
-        // Визуальная индикация доступности
+        // Р’РёР·СѓР°Р»СЊРЅР°СЏ РёРЅРґРёРєР°С†РёСЏ РґРѕСЃС‚СѓРїРЅРѕСЃС‚Рё
         if (iconImage != null) iconImage.color = canAfford ? affordableColor : unaffordableColor;
 
         if (button != null) button.interactable = canAfford;
 
-        // TODO: Можно добавить дополнительные эффекты для недоступных зданий
+        // TODO: РњРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ СЌС„С„РµРєС‚С‹ РґР»СЏ РЅРµРґРѕСЃС‚СѓРїРЅС‹С… Р·РґР°РЅРёР№
         //if (!canAfford)
         //{
-        //    // Например, добавить затемнение
+        //    // РќР°РїСЂРёРјРµСЂ, РґРѕР±Р°РІРёС‚СЊ Р·Р°С‚РµРјРЅРµРЅРёРµ
         //    if (backgroundImage != null)
         //        backgroundImage.color = new Color(0.3f, 0.3f, 0.3f, 0.7f);
         //}

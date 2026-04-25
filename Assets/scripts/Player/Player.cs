@@ -16,11 +16,10 @@ public class Player : NetworkBehaviour, IChunkObserver
         }
     }
 
-    // TODO: Необходимо доделать инвентарь игрока.
     /// <summary>
-    /// временная реализация инвентаря игрока.
+    /// Локальное хранилище ресурсов для работы UI.
     /// </summary>
-    public ObservableDictionary<string, int> Resources { get; } = new ObservableDictionary<string, int>();
+    public ObservableDictionary<ResourceType, int> Resources { get; } = new ObservableDictionary<ResourceType, int>();
 
     /// <summary>
     /// Положение игрока по X.
@@ -70,6 +69,7 @@ public class Player : NetworkBehaviour, IChunkObserver
         if (isServer)
         {
             GameKernel.Instance.GetSystem<UnitSystem>().RegisterPlayer(this);
+            GameKernel.Instance.GetSystem<ResourceSystem>().RegisterPlayer(this);
         }
     }
 

@@ -25,11 +25,7 @@ public class ResourceBundle
         Resources = new Dictionary<ResourceType, int>();
         StorageLimits = new List<ResourcePair>();
 
-        foreach (var r in resources)
-        {
-            AddResources(r);
-            StorageLimits.Add(new ResourcePair(r.Type, 1000));
-        }
+        AddResources(resources);
     }
 
     public ResourceBundle()
@@ -49,6 +45,7 @@ public class ResourceBundle
             else 
             { 
                 Resources.Add(r.Type, r.Amount);
+                StorageLimits.Add(new ResourcePair(r.Type, 1000));
             }
         }
     }

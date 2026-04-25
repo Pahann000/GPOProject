@@ -23,13 +23,8 @@ public class ObservableDictionary<TKey, TValue> : Dictionary<TKey, TValue>
         if (!this.ContainsKey(key))
         {
             base.Add(key, value);
+            ItemChanged?.Invoke(key);
         }
-        else
-        {
-            return;
-        }
-
-        ItemChanged?.Invoke(key);
     }
 
     /// <summary>

@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 using System.Collections.Generic;
 
 public class ResourcePanelUI : MonoBehaviour
@@ -31,7 +29,7 @@ public class ResourcePanelUI : MonoBehaviour
         }
 
         InitializeResourceDisplays();
-        UpdateAllDisplays();
+        //UpdateAllDisplays();
     }
 
     private void OnDestroy()
@@ -76,20 +74,20 @@ public class ResourcePanelUI : MonoBehaviour
         }
     }
 
-    private void UpdateAllDisplays()
-    {
-        if (_resourceSystem == null) return;
+    //private void UpdateAllDisplays()
+    //{
+    //    if (_resourceSystem == null) return;
 
-        foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
-        {
-            int amount = _resourceSystem.GetResource(type);
-            int limit = _resourceSystem.GetStorageLimit(type);
-            if (resourceControllers.TryGetValue(type, out var controller))
-            {
-                controller.UpdateDisplay(amount, limit);
-            }
-        }
-    }
+    //    foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
+    //    {
+    //        int amount = _resourceSystem.GetResource(type);
+    //        int limit = _resourceSystem.GetStorageLimit(type);
+    //        if (resourceControllers.TryGetValue(type, out var controller))
+    //        {
+    //            controller.UpdateDisplay(amount, limit);
+    //        }
+    //    }
+    //}
 
     private Sprite GetIconForResourceType(ResourceType type)
     {

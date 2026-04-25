@@ -144,10 +144,10 @@ public class BuildingPanelUI : MonoBehaviour
             // Второй текст - стоимость (только если есть стоимость)
             if (texts.Length > 1)
             {
-                if (data.ConstructionCost.Resources != null && data.ConstructionCost.Resources.Count > 0)
+                if (data.ConstructionCost != null && data.ConstructionCost.Length > 0)
                 {
                     StringBuilder costText = new StringBuilder();
-                    foreach (var resource in data.ConstructionCost.Resources)
+                    foreach (var resource in data.ConstructionCost)
                     {
                         costText.AppendLine($"{resource.Type}: {resource.Amount}");
                     }
@@ -183,11 +183,11 @@ public class BuildingPanelUI : MonoBehaviour
         if (button == null || data == null || _resourceManager == null) return;
 
         // Проверяем, есть ли стоимость строительства
-        bool hasCost = data.ConstructionCost.Resources != null && data.ConstructionCost.Resources.Count > 0;
+        bool hasCost = data.ConstructionCost != null && data.ConstructionCost.Length > 0;
 
         if (hasCost)
         {
-            bool canAfford = _resourceManager.HasResources(data.ConstructionCost);
+            bool canAfford = _resourceManager.HasResources(data.Owner, data.ConstructionCost);
             button.interactable = canAfford;
 
             // Визуальная индикация

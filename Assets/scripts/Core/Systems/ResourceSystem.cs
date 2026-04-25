@@ -1,14 +1,13 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Mirror;
 
 /// <summary>
 /// Управляет экономикой игры: хранением, начислением и списанием ресурсов.
 /// Рассылает события (ResourceChangedEvent) при любом изменении баланса.
 /// </summary>
-public class ResourceSystem : NetworkBehaviour, IGameSystem
+public class ResourceSystem : IGameSystem
 {
-    public string SystemName => "Resource System";
+    public string SystemName => nameof(ResourceSystem);
     public bool IsActive { get; set; } = true;
 
     private GameKernel _kernel;
@@ -17,19 +16,6 @@ public class ResourceSystem : NetworkBehaviour, IGameSystem
 
     // TODO: В будущем можно вынести стартовые значения и лимиты в отдельный ScriptableObject (Config),
     // чтобы можно было настраивать без перекомпиляции кода.
-
-    private void Start()
-    {
-        if (GameKernel.Instance != null)
-        {
-            GameKernel.Instance.RegisterSystem(this);
-        }
-        else
-        {
-            Debug.LogError($"[{SystemName}] GameKernel не найден!");
-        }
-    }
-
     public void Initialize(GameKernel kernel)
     {
         _kernel = kernel;
@@ -53,7 +39,7 @@ public class ResourceSystem : NetworkBehaviour, IGameSystem
     /// <summary>
     /// Задает начальные значения и лимиты для всех существующих типов ресурсов.
     /// </summary>
-    private void InitializePlayer(Player player)
+    public void RegisterPlayer(Player player)
     {
         ResourceBundle StartResourceBundle = new ResourceBundle();
         _playersResources.Add(player, StartResourceBundle);
@@ -109,7 +95,7 @@ public class ResourceSystem : NetworkBehaviour, IGameSystem
     }
 
     /// <summary>
-    /// Начисляет ресурсы из бандла (например, доход от здания).
+    /// Начисляет ресурсы (например, доход от здания).
     /// </summary>
     public void AddResources(Player player, ResourcePair[] income)
     {
@@ -185,7 +171,15 @@ public class ResourceSystem : NetworkBehaviour, IGameSystem
         ResourceBundle bundle = _playersResources[player];
         var resources = _playersResources[player].Resources;
 
-        resources[outcome.Type] -= outcome.Amount;
+        int oldVal = resources[outcome.Type];
+
+        resources[outcome.Type] = Mathf.Max(oldVal - outcome.Amount, 0);
+        int delta = resources[outcome.Type] - oldVal;
+
+        if (delta != 0)
+        {
+            _kernel.EventBus.Raise(new ResourceChangedEvent(player, outcome.Type, resources[outcome.Type], delta));
+        }
     }
 
     /// <summary>

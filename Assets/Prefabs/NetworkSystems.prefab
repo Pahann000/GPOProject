@@ -9,8 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7498854088323429397}
-  - component: {fileID: 8414671134182060761}
   - component: {fileID: 3212230733087038222}
+  - component: {fileID: -6212166580965338596}
+  - component: {fileID: 9013324120776404428}
   m_Layer: 0
   m_Name: NetworkSystems
   m_TagString: NetworkSystems
@@ -33,23 +34,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8414671134182060761
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3889290135136103836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d17679bec88e4f4ab936e46777ce0e9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0.09
-  unitPrefab: {fileID: 438654078453454141, guid: ff1672acd23bdf94aa0663f4bc4e1f9a, type: 3}
-  unitAtlas: {fileID: 11400000, guid: 1c182a2b8e932794a8c51263e7fa24e0, type: 2}
 --- !u!114 &3212230733087038222
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,3 +51,35 @@ MonoBehaviour:
   serverOnly: 0
   visibility: 0
   hasSpawned: 0
+--- !u!114 &-6212166580965338596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3889290135136103836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d17679bec88e4f4ab936e46777ce0e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  unitPrefab: {fileID: 438654078453454141, guid: ff1672acd23bdf94aa0663f4bc4e1f9a, type: 3}
+  unitAtlas: {fileID: 11400000, guid: 1c182a2b8e932794a8c51263e7fa24e0, type: 2}
+--- !u!114 &9013324120776404428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3889290135136103836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5dad62ce5cc86184b8f93a35861e1faf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0

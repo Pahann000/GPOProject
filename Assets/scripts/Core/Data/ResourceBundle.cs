@@ -1,39 +1,65 @@
-using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 [System.Serializable]
-public struct ResourceBundle
+public class ResourcePair
 {
-    [System.Serializable]
-    public struct ResourcePair
-    {
-        public ResourceType Type;
-        public int Amount;
-    }
+    public ResourceType Type;
+    public int Amount;
 
-    public List<ResourcePair> Resources;
+    public ResourcePair(ResourceType type, int amount)
+    {
+        this.Type = type;
+        this.Amount = amount;
+    }
+}
+
+[System.Serializable]
+public class ResourceBundle
+{
+    public Dictionary<ResourceType, int> Resources;
+    public List<ResourcePair> StorageLimits;
+
 
     public ResourceBundle(params ResourcePair[] resources)
     {
-        Resources = new List<ResourcePair>();
+        Resources = new Dictionary<ResourceType, int>();
+        StorageLimits = new List<ResourcePair>();
+
         foreach (var r in resources)
         {
-            Resources.Add(r);
+            AddResources(r);
+            StorageLimits.Add(new ResourcePair(r.Type, 1000));
+        }
+    }
+
+    public ResourceBundle()
+    {
+        Resources = new Dictionary<ResourceType, int>();
+        StorageLimits = new List<ResourcePair>();
+    }
+
+    public void AddResources(params ResourcePair[] resources)
+    {
+        foreach (ResourcePair r in resources)
+        {
+            if (Resources.ContainsKey(r.Type))
+            {
+                Resources[r.Type] += r.Amount;
+            }
+            else 
+            { 
+                Resources.Add(r.Type, r.Amount);
+            }
         }
     }
 
     public static ResourceBundle Create(params (ResourceType type, int amount)[] resources)
     {
         var bundle = new ResourceBundle();
-        bundle.Resources = new List<ResourcePair>();
 
         foreach (var (type, amount) in resources)
         {
-            bundle.Resources.Add(new ResourcePair
-            {
-                Type = type,
-                Amount = amount
-            });
+            bundle.AddResources(new ResourcePair(type, amount));
         }
 
         return bundle;

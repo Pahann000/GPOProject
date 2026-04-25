@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 public class GreenHouse : ProductionBuilding
 {
@@ -6,28 +6,15 @@ public class GreenHouse : ProductionBuilding
     {
         base.Start();
 
-        // Инициализация ресурсов (если нужно переопределить значения)
-        inputResources = new ResourceBundle(
-            new ResourceBundle.ResourcePair
-            {
-                Type = ResourceType.Rock,
-                Amount = 1
-            }
-        );
-
-        outputResources = new ResourceBundle(
-            new ResourceBundle.ResourcePair
-            {
-                Type = ResourceType.Minerals,
-                Amount = 3
-            }
-        );
+        // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЂРµСЃСѓСЂСЃРѕРІ (РµСЃР»Рё РЅСѓР¶РЅРѕ РїРµСЂРµРѕРїСЂРµРґРµР»РёС‚СЊ Р·РЅР°С‡РµРЅРёСЏ)
+        inputResources = new ResourcePair[] { new ResourcePair(ResourceType.Rock, 1) };
+        outputResources = new ResourcePair[] { new ResourcePair(ResourceType.Minerals, 3) };
     }
 
-    // Дополнительная специфичная логика для теплицы
+    // Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ СЃРїРµС†РёС„РёС‡РЅР°СЏ Р»РѕРіРёРєР° РґР»СЏ С‚РµРїР»РёС†С‹
     protected override void TryProduceResources()
     {
-        // Проверка дня/ночи или других условий
+        // РџСЂРѕРІРµСЂРєР° РґРЅСЏ/РЅРѕС‡Рё РёР»Рё РґСЂСѓРіРёС… СѓСЃР»РѕРІРёР№
         if (IsDayTime())
         {
             base.TryProduceResources();
@@ -36,7 +23,7 @@ public class GreenHouse : ProductionBuilding
 
     private bool IsDayTime()
     {
-        // Ваша логика определения времени суток
+        // Р’Р°С€Р° Р»РѕРіРёРєР° РѕРїСЂРµРґРµР»РµРЅРёСЏ РІСЂРµРјРµРЅРё СЃСѓС‚РѕРє
         return true;
     }
 }

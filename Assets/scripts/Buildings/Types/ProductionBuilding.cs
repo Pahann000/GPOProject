@@ -1,12 +1,11 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 
 public class ProductionBuilding : Building
 {
     [Header("Production Settings")]
-    [SerializeField] public ResourceBundle inputResources;
-    [SerializeField] public ResourceBundle outputResources;
+    [SerializeField] public ResourcePair[] inputResources;
+    [SerializeField] public ResourcePair[] outputResources;
     [SerializeField] private float productionInterval = 5f;
 
     [Header("Visuals")]
@@ -29,9 +28,9 @@ public class ProductionBuilding : Building
 
     protected virtual void TryProduceResources()
     {
-        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(inputResources))
+        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(_data.Owner, inputResources))
         {
-            GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(outputResources);
+            GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(_data.Owner, outputResources);
             PlayProductionEffects();
             lastProductionTime = Time.time;
         }
@@ -56,23 +55,15 @@ public class ProductionBuilding : Building
     protected virtual void UpgradeProduction(float efficiencyMultiplier)
     {
         productionInterval *= efficiencyMultiplier;
-        outputResources = MultiplyResourceBundle(outputResources, efficiencyMultiplier);
+        MultiplyResourceBundle(efficiencyMultiplier);
     }
 
-    protected virtual ResourceBundle MultiplyResourceBundle(ResourceBundle bundle, float multiplier)
+    protected virtual void MultiplyResourceBundle(float multiplier)
     {
-        var newBundle = new ResourceBundle();
-        newBundle.Resources = new List<ResourceBundle.ResourcePair>();
-
-        foreach (var res in bundle.Resources)
+        for (int i = 0; i < outputResources.Length; i++) 
         {
-            newBundle.Resources.Add(new ResourceBundle.ResourcePair
-            {
-                Type = res.Type,
-                Amount = Mathf.RoundToInt(res.Amount * multiplier)
-            });
+            outputResources[i].Amount *= Mathf.RoundToInt(multiplier);
         }
-        return newBundle;
     }
 
     public override void Initialize(BuildingData data)

@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -44,11 +44,11 @@ public class ResourcePanelUI : MonoBehaviour
 
     private void InitializeResourceDisplays()
     {
-        // Î÷èñòèòå êîíòåéíåð, åñëè íóæíî
+        // ÐžÑ‡Ð¸ÑÑ‚Ð¸Ñ‚Ðµ ÐºÐ¾Ð½Ñ‚ÐµÐ¹Ð½ÐµÑ€, ÐµÑÐ»Ð¸ Ð½ÑƒÐ¶Ð½Ð¾
         foreach (Transform child in resourcesContainer)
             Destroy(child.gameObject);
 
-        // Ñîçäàéòå îòîáðàæåíèå äëÿ êàæäîãî òèïà ðåñóðñà
+        // Ð¡Ð¾Ð·Ð´Ð°Ð¹Ñ‚Ðµ Ð¾Ñ‚Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸Ðµ Ð´Ð»Ñ ÐºÐ°Ð¶Ð´Ð¾Ð³Ð¾ Ñ‚Ð¸Ð¿Ð° Ñ€ÐµÑÑƒÑ€ÑÐ°
         foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
         {
             GameObject resourceGO = Instantiate(resourceDisplayPrefab, resourcesContainer);
@@ -65,11 +65,11 @@ public class ResourcePanelUI : MonoBehaviour
 
     private void OnResourceChangedBus(ResourceChangedEvent evt)
     {
-        Debug.Log($"[ResourcePanelUI] Ïîëó÷åíî ñîáûòèå îá èçìåíåíèè {evt.Type} íà {evt.Delta}");
+        Debug.Log($"[ResourcePanelUI] ÐŸÐ¾Ð»ÑƒÑ‡ÐµÐ½Ð¾ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ðµ Ð¾Ð± Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ð¸ {evt.Type} Ð½Ð° {evt.Delta}");
 
         if (resourceControllers.TryGetValue(evt.Type, out var controller))
         {
-            int limit = _resourceSystem != null ? _resourceSystem.GetStorageLimit(evt.Type) : 1000;
+            int limit = _resourceSystem != null ? _resourceSystem.GetStorageLimit(evt.Player, evt.Type) : 1000;
             controller.UpdateDisplay(evt.NewAmount, limit);
 
             // controller.PlayChangeAnimation(evt.Delta > 0);

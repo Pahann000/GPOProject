@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.EventSystems;
 
 /// <summary>
 /// Управляет процессом размещения зданий на карте.
@@ -43,23 +42,23 @@ public class BuilderSystem : IGameSystem
         if (_mainCamera == null) return;
 
         // Блокируем строительство, если мышка находится над кнопкой интерфейса
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
+        //if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
 
         UpdatePreviewPosition();
         UpdatePreviewVisuals();
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            if (CanPlaceBuilding())
-            {
-                PlaceBuilding();
-            }
-        }
+        //if (Input.GetMouseButtonDown(0))
+        //{
+        //    if (CanPlaceBuilding())
+        //    {
+        //        PlaceBuilding();
+        //    }
+        //}
 
-        if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
-        {
-            CancelBuilding();
-        }
+        //if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
+        //{
+        //    CancelBuilding();
+        //}
     }
 
     public void FixedTick(float fixedDeltaTime) { }
@@ -79,7 +78,7 @@ public class BuilderSystem : IGameSystem
 
         CancelBuilding(); // Сбрасываем предыдущую стройку
 
-        if (!_resourceSystem.HasResources(buildingData.ConstructionCost))
+        if (!_resourceSystem.HasResources(buildingData.Owner, buildingData.ConstructionCost))
         {
             // TODO: Вызвать событие "UINotificationEvent", чтобы показать всплывашку "Нет ресурсов".
             return;
@@ -158,7 +157,7 @@ public class BuilderSystem : IGameSystem
         Vector2 checkSize = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
 
         // 1. Проверка ресурсов
-        if (!_resourceSystem.HasResources(_selectedBuilding.ConstructionCost)) return false;
+        //if (!_resourceSystem.HasResources(_selectedBuilding.ConstructionCost)) return false;
 
         // 2. Проверка препятствий (пересечение с другими зданиями)
         Collider2D[] overlaps = Physics2D.OverlapBoxAll(checkPos, checkSize, 0, _obstacleLayer);
@@ -183,11 +182,11 @@ public class BuilderSystem : IGameSystem
     /// <summary>
     /// Окончательное размещение здания: списание ресурсов и создание объекта на сцене.
     /// </summary>
-    private void PlaceBuilding()
+    private void PlaceBuilding(Player player)
     {
         Vector2 position = _currentPreview.transform.position;
 
-        if (_resourceSystem.TrySpendResources(_selectedBuilding.ConstructionCost))
+        if (_resourceSystem.TrySpendResources(player ,_selectedBuilding.ConstructionCost))
         {
             GameObject buildingObj = Object.Instantiate(_selectedBuilding.Prefab, position, Quaternion.identity);
 

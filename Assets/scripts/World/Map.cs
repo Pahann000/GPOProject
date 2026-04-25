@@ -81,7 +81,7 @@ public class Map : MonoBehaviour
     public void PlaceBlock(int x, int y, BlockType type)
     {
         Vector2Int pos = new Vector2Int(x, y);
-        _tileData[pos] = new Block(new BlockData(type), this, x, y);
+        _tileData[pos] = new Block(new BlockData(type), x, y);
         
         Vector2Int chunkPos = GetChunkPosition(x, y);
         if (_chunks.ContainsKey(chunkPos))
@@ -117,7 +117,7 @@ public class Map : MonoBehaviour
         // Проверка границ
         if (x > Width || x < 0 || y > Height || y < 0)
         {
-            return new Block(new BlockData(BlockType.Air), this, x, y);
+            return new Block(new BlockData(BlockType.Air), x, y);
         }
 
         Vector2Int pos = new Vector2Int(x, y);
@@ -138,7 +138,7 @@ public class Map : MonoBehaviour
             }
         }
 
-        Block block = new Block(new BlockData(type), this, x, y);
+        Block block = new Block(new BlockData(type), x, y);
 
         return block;
     }

@@ -1,26 +1,38 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Mirror;
 
 /// <summary>
 /// Управляет экономикой игры: хранением, начислением и списанием ресурсов.
 /// Рассылает события (ResourceChangedEvent) при любом изменении баланса.
 /// </summary>
-public class ResourceSystem : IGameSystem
+public class ResourceSystem : NetworkBehaviour, IGameSystem
 {
     public string SystemName => "Resource System";
     public bool IsActive { get; set; } = true;
 
     private GameKernel _kernel;
 
+    private Dictionary<Player, ResourceBundle> _playersResources = new Dictionary<Player, ResourceBundle>();
+
     // TODO: В будущем можно вынести стартовые значения и лимиты в отдельный ScriptableObject (Config),
     // чтобы можно было настраивать без перекомпиляции кода.
-    private Dictionary<ResourceType, int> _resources = new Dictionary<ResourceType, int>();
-    private Dictionary<ResourceType, int> _storageLimits = new Dictionary<ResourceType, int>();
+
+    private void Start()
+    {
+        if (GameKernel.Instance != null)
+        {
+            GameKernel.Instance.RegisterSystem(this);
+        }
+        else
+        {
+            Debug.LogError($"[{SystemName}] GameKernel не найден!");
+        }
+    }
 
     public void Initialize(GameKernel kernel)
     {
         _kernel = kernel;
-        InitializeResources();
         Debug.Log($"[{SystemName}] Инициализирована.");
     }
 
@@ -34,59 +46,63 @@ public class ResourceSystem : IGameSystem
 
     public void Shutdown()
     {
-        _resources.Clear();
-        _storageLimits.Clear();
+        //_resources.Clear();
+        //_storageLimits.Clear();
     }
 
     /// <summary>
     /// Задает начальные значения и лимиты для всех существующих типов ресурсов.
     /// </summary>
-    private void InitializeResources()
+    private void InitializePlayer(Player player)
     {
-        foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
-        {
-            _resources[type] = 0;
-            _storageLimits[type] = 1000;
-        }
-
-        // Выдача стартового капитала
-        AddResource(ResourceType.Minerals, 500);
-        AddResource(ResourceType.Ice, 200);
+        ResourceBundle StartResourceBundle = new ResourceBundle();
+        _playersResources.Add(player, StartResourceBundle);
     }
 
     /// <summary>
     /// Проверяет, достаточно ли ресурсов в хранилище для оплаты указанной цены.
     /// </summary>
-    public bool HasResources(ResourceBundle cost)
+    public bool HasResources(Player player, ResourcePair[] cost)
     {
-        if (cost.Resources == null || cost.Resources.Count == 0) return true;
-
-        foreach (var resPair in cost.Resources)
+        foreach (var resource in cost)
         {
-            if (!_resources.ContainsKey(resPair.Type)) return false;
-            if (_resources[resPair.Type] < resPair.Amount) return false;
+            if (!HasResource(player, resource))
+            {
+                return false;
+            }
         }
 
         return true;
+    }
+
+    public bool HasResource(Player player, ResourcePair cost)
+    {
+        ResourceBundle bundle = _playersResources[player];
+        var resources = bundle.Resources;
+
+        if (!resources.ContainsKey(cost.Type))
+        {
+            return false;
+        }
+
+        return resources[cost.Type] >= cost.Amount;
     }
 
     /// <summary>
     /// Пытается списать ресурсы. Если их недостаточно, операция отменяется.
     /// </summary>
     /// <returns>True, если ресурсы успешно списаны.</returns>
-    public bool TrySpendResources(ResourceBundle cost)
+    public bool TrySpendResources(Player player, ResourcePair[] outcome)
     {
-        int resourceCount = (cost.Resources != null) ? cost.Resources.Count : 0;
-        
-        if (!HasResources(cost)) 
+        if (!HasResources(player, outcome)) 
         {
             Debug.LogWarning($"[{SystemName}] Попытка списать ресурсы провалена: недостаточно средств.");
             return false; 
         }
 
-        foreach (var resPair in cost.Resources)
+        foreach (var resPair in outcome)
         {
-            SpendResourceInternal(resPair.Type, resPair.Amount);
+            SpendResourceInternal(player, resPair);
         }
 
         return true;
@@ -95,71 +111,114 @@ public class ResourceSystem : IGameSystem
     /// <summary>
     /// Начисляет ресурсы из бандла (например, доход от здания).
     /// </summary>
-    public void AddResources(ResourceBundle income)
+    public void AddResources(Player player, ResourcePair[] income)
     {
-        if (income.Resources == null) return;
-
-        foreach (var resPair in income.Resources)
+        foreach (var resPair in income)
         {
-            AddResource(resPair.Type, resPair.Amount);
+            AddResource(player, resPair);
         }
     }
 
     /// <summary>
     /// Начисляет один конкретный ресурс с учетом лимита хранилища.
     /// </summary>
-    public void AddResource(ResourceType type, int amount)
+    public void AddResource(Player player, ResourcePair income)
     {
-        if (!_resources.ContainsKey(type)) _resources[type] = 0;
+        ResourceBundle bundle = _playersResources[player];
+        var resources = bundle.Resources;
+        var storageLimits = bundle.StorageLimits;
 
-        int oldVal = _resources[type];
-        int limit = _storageLimits.ContainsKey(type) ? _storageLimits[type] : 1000;
+        if (!resources.ContainsKey(income.Type))
+        {
+            bundle.AddResources(new ResourcePair(income.Type, 0));
+        }
 
-        _resources[type] = Mathf.Min(oldVal + amount, limit);
-        int delta = _resources[type] - oldVal;
+        int oldVal = resources[income.Type];
+        int limit = 0;
+
+        foreach (var resource in storageLimits)
+        {
+            if (resource.Type == income.Type)
+            {
+                limit = resource.Amount;
+                break;
+            }
+        }
+
+        resources[income.Type] = Mathf.Min(oldVal + income.Amount, limit);
+        int delta = resources[income.Type] - oldVal;
 
         // Рассылаем уведомление только если значение реально изменилось (не уперлось в лимит)
         if (delta != 0)
         {
-            _kernel.EventBus.Raise(new ResourceChangedEvent(type, _resources[type], delta));
+            _kernel.EventBus.Raise(new ResourceChangedEvent(player, income.Type, resources[income.Type], delta));
         }
     }
 
-    public int GetResource(ResourceType type) => _resources.ContainsKey(type) ? _resources[type] : 0;
-    public int GetStorageLimit(ResourceType type) => _storageLimits.ContainsKey(type) ? _storageLimits[type] : 0;
+    public int GetResource(Player player, ResourceType type)
+    {
+        if (_playersResources[player].Resources.ContainsKey(type))
+        {
+            return _playersResources[player].Resources[type];
+        }
+        return 0;
+    }
+
+    public int GetStorageLimit(Player player, ResourceType type)
+    {
+        foreach (ResourcePair resourcePair in _playersResources[player].StorageLimits)
+        {
+            if (resourcePair.Type == type)
+            {
+                return resourcePair.Amount;
+            }
+        }
+
+        return 0;
+    }
 
     /// <summary>
     /// Внутренний метод списания. Выполняется без проверок (проверки должны быть сделаны до вызова).
     /// </summary>
-    private void SpendResourceInternal(ResourceType type, int amount)
+    private void SpendResourceInternal(Player player, ResourcePair outcome)
     {
-        _resources[type] -= amount;
-        _kernel.EventBus.Raise(new ResourceChangedEvent(type, _resources[type], -amount));
+        ResourceBundle bundle = _playersResources[player];
+        var resources = _playersResources[player].Resources;
+
+        resources[outcome.Type] -= outcome.Amount;
     }
 
     /// <summary>
     /// Увеличивает максимальную вместимость хранилища для ресурса.
     /// </summary>
-    public void IncreaseStorage(ResourceType type, int amount)
+    public void IncreaseStorage(Player player, ResourcePair resourcePair)
     {
-        if (!_storageLimits.ContainsKey(type)) _storageLimits[type] = 0;
-        _storageLimits[type] += amount;
+        var storageLimits = _playersResources[player].StorageLimits;
+
+        for(int i = 0; i < storageLimits.Count; i++) 
+        {
+            if (storageLimits[i].Type == resourcePair.Type)
+            {
+                storageLimits[i].Amount += resourcePair.Amount;
+                return;
+            }
+        }
     }
 
     /// <summary>
     /// Уменьшает максимальную вместимость хранилища. 
     /// Если текущее количество ресурсов превышает новый лимит, излишки сгорают.
     /// </summary>
-    public void DecreaseStorage(ResourceType type, int amount)
+    public void DecreaseStorage(Player player, ResourcePair resourcePair)
     {
-        if (_storageLimits.ContainsKey(type))
-        {
-            _storageLimits[type] = Mathf.Max(0, _storageLimits[type] - amount);
+        var storageLimits = _playersResources[player].StorageLimits;
 
-            if (_resources.ContainsKey(type) && _resources[type] > _storageLimits[type])
+        for (int i = 0; i < storageLimits.Count; i++)
+        {
+            if (storageLimits[i].Type == resourcePair.Type)
             {
-                int diff = _resources[type] - _storageLimits[type];
-                SpendResourceInternal(type, diff);
+                storageLimits[i].Amount -= resourcePair.Amount;
+                return;
             }
         }
     }

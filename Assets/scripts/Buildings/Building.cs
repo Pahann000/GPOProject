@@ -1,7 +1,8 @@
-using UnityEngine;
-using System.Collections;
+﻿using UnityEngine;
+using Mirror;
+using System.Collections.Generic;
 
-public class Building : MonoBehaviour
+public class Building : NetworkBehaviour
 {
     [SerializeField] protected BuildingData _data;
 
@@ -25,7 +26,7 @@ public class Building : MonoBehaviour
         _resourceManager = GameKernel.Instance.GetSystem<ResourceSystem>();
 
         // ��������� ������������ ���� ���� �������� �������
-        if (_data.OutputResources.Resources != null && _data.OutputResources.Resources.Count > 0)
+        if (_data.OutputResources != null && _data.OutputResources.Length > 0)
         {
             StartProduction();
         }
@@ -79,18 +80,18 @@ public class Building : MonoBehaviour
     private bool HasInputResources()
     {
         // ���� ������� �������� ���, ������ ������������ �� ������� ��������
-        if (_data.InputResources.Resources == null || _data.InputResources.Resources.Count == 0)
+        if (_data.InputResources == null || _data.InputResources.Length == 0)
             return true;
 
-        return _resourceManager.HasResources(_data.InputResources);
+        return _resourceManager.HasResources(_data.Owner, _data.InputResources);
     }
 
     private void ProduceResources()
     {
         // ��������� ������� �������, ���� ��� ����
-        if (_data.InputResources.Resources != null && _data.InputResources.Resources.Count > 0)
+        if (_data.InputResources != null && _data.InputResources.Length > 0)
         {
-            if (!_resourceManager.TrySpendResources(_data.InputResources))
+            if (!_resourceManager.TrySpendResources(_data.Owner, _data.InputResources))
             {
                 Debug.Log($"{_data.DisplayName}: ������������ ������� ��������");
                 return;
@@ -98,9 +99,9 @@ public class Building : MonoBehaviour
         }
 
         // ��������� �������� �������, ���� ��� ����
-        if (_data.OutputResources.Resources != null && _data.OutputResources.Resources.Count > 0)
+        if (_data.OutputResources != null && _data.OutputResources.Length > 0)
         {
-            _resourceManager.AddResources(_data.OutputResources);
+            _resourceManager.AddResources(_data.Owner, _data.OutputResources);
             Debug.Log($"{_data.DisplayName} �������� �������");
         }
     }
@@ -128,21 +129,18 @@ public class Building : MonoBehaviour
     private void ReturnResourcesOnDestroy()
     {
         if (_resourceManager != null &&
-            _data.ConstructionCost.Resources != null &&
-            _data.ConstructionCost.Resources.Count > 0)
+            _data.ConstructionCost != null &&
+            _data.ConstructionCost.Length > 0)
         {
             // ���������� 50% ���������
-            ResourceBundle returnCost = new ResourceBundle();
-            foreach (var resource in _data.ConstructionCost.Resources)
+           ResourcePair[] returnCost = new ResourcePair[_data.ConstructionCost.Length];
+            for (int i = 0; i < _data.ConstructionCost.Length; i++) 
             {
-                returnCost.Resources.Add(new ResourceBundle.ResourcePair
-                {
-                    Type = resource.Type,
-                    Amount = Mathf.RoundToInt(resource.Amount * 0.5f)
-                });
+                ResourcePair resource = _data.ConstructionCost[i];
+                returnCost[i] = new ResourcePair(resource.Type, resource.Amount / 2);
             }
 
-            _resourceManager.AddResources(returnCost);
+            _resourceManager.AddResources(_data.Owner, returnCost);
         }
     }
 

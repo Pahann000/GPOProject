@@ -4,7 +4,6 @@
 [System.Serializable]
 public class Block : IDamagable
 {
-    private readonly Map _map;
     private readonly int x;
     private readonly int y;
 
@@ -35,9 +34,8 @@ public class Block : IDamagable
     /// <param name="map"> Родительский объект карты, на которой находится блок. </param>
     /// <param name="x"> Положение блока по X </param>
     /// <param name="y"> Положение блока по Y </param>
-    public Block(BlockData tileData, Map map, int x, int y)
+    public Block(BlockData tileData, int x, int y)
     {
-        this._map = map;
         this.x = x;
         this.y = y;
         this.tileData = tileData;
@@ -56,7 +54,7 @@ public class Block : IDamagable
     {
         if (GameKernel.Instance != null)
         {
-            GameKernel.Instance.GetSystem<ResourceSystem>().AddResource(ResourceType.Rock, 1);
+            GameKernel.Instance.GetSystem<ResourceSystem>().AddResource(player , new ResourcePair(ResourceType.Rock, 1));
         }
     }
 

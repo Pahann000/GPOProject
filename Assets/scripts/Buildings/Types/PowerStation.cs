@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using System.Collections;
 
 [CreateAssetMenu(fileName = "PowerPlantData", menuName = "Buildings/PowerPlant Data")]
@@ -11,15 +11,12 @@ public class PowerPlant : ProductionBuilding
     {
         base.Start();
 
-        // Используем новый метод Create
-        inputResources = ResourceBundle.Create(
-            (ResourceType.Minerals, 2),
-            (ResourceType.Ice, 1)
-        );
+        inputResources = new ResourcePair[] { 
+            new ResourcePair(ResourceType.Minerals, 2), 
+            new ResourcePair(ResourceType.Ice, 1) 
+        };
 
-        outputResources = ResourceBundle.Create(
-            (ResourceType.Minerals, 5)
-        );
+        outputResources = new ResourcePair[] { new ResourcePair(ResourceType.Minerals, 5) };
     }
 
     protected override IEnumerator ProductionAnimation()

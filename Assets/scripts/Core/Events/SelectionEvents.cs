@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-public struct BuildingSelectedEvent : IGameEvent
+﻿public struct BuildingSelectedEvent : IGameEvent
 {
     public Building SelectedBuilding;
 

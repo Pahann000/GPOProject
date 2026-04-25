@@ -174,8 +174,6 @@ public class GameKernel : NetworkBehaviour
     {
         Debug.Log("[Kernel] Регистрация систем...");
 
-        RegisterSystem(new ResourceSystem());
-
         RegisterSystem(new UISystem());
         
         RegisterSystem(new BuilderSystem());

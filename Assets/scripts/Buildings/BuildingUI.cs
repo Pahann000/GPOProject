@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -39,7 +39,7 @@ public class BuildingUI : MonoBehaviour
                 continue;
             }
 
-            if (data.ConstructionCost.Resources == null || data.ConstructionCost.Resources.Count == 0)
+            if (data.ConstructionCost == null || data.ConstructionCost.Length == 0)
             {
                 Debug.LogError($"Building {data.DisplayName} has no construction cost!");
                 continue;
@@ -59,7 +59,7 @@ public class BuildingUI : MonoBehaviour
             sb.AppendLine(data.DisplayName);
             sb.AppendLine("Cost:");
 
-            foreach (var res in data.ConstructionCost.Resources)
+            foreach (var res in data.ConstructionCost)
             {
                 sb.AppendLine($"{res.Type}: {res.Amount}");
             }

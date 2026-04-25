@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using System.Collections;
 
 [CreateAssetMenu(fileName = "GreenhouseData", menuName = "Buildings/Greenhouse Data")]
@@ -12,14 +12,8 @@ public class Greenhouse : ProductionBuilding
     {
         base.Start();
 
-        // Используем новый метод Create
-        inputResources = ResourceBundle.Create(
-            (ResourceType.Ice, 1)
-        );
-
-        outputResources = ResourceBundle.Create(
-            (ResourceType.Energy, 3)
-        );
+        inputResources = new ResourcePair[] {new ResourcePair(ResourceType.Ice, 1) };
+        outputResources = new ResourcePair[] { new ResourcePair(ResourceType.Energy, 3) };
     }
 
     protected override IEnumerator ProductionAnimation()

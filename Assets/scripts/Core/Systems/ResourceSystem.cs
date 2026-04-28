@@ -112,7 +112,6 @@ public class ResourceSystem : IGameSystem
     {
         ResourceBundle bundle = _playersResources[player];
         var resources = bundle.Resources;
-        var storageLimits = bundle.StorageLimits;
 
         if (!resources.ContainsKey(income.Type))
         {
@@ -120,16 +119,7 @@ public class ResourceSystem : IGameSystem
         }
 
         int oldVal = resources[income.Type];
-        int limit = 0;
-
-        foreach (var resource in storageLimits)
-        {
-            if (resource.Type == income.Type)
-            {
-                limit = resource.Amount;
-                break;
-            }
-        }
+        int limit = GetStorageLimit(player, income.Type);
 
         resources[income.Type] = Mathf.Min(oldVal + income.Amount, limit);
         int delta = resources[income.Type] - oldVal;
@@ -137,7 +127,7 @@ public class ResourceSystem : IGameSystem
         // Рассылаем уведомление только если значение реально изменилось (не уперлось в лимит)
         if (delta != 0)
         {
-            _kernel.EventBus.Raise(new ResourceChangedEvent(player, income.Type, resources[income.Type], delta));
+            _kernel.EventBus.Raise(new ResourceChangedEvent(player, income.Type, resources[income.Type], delta, limit));
         }
     }
 
@@ -175,10 +165,11 @@ public class ResourceSystem : IGameSystem
 
         resources[outcome.Type] = Mathf.Max(oldVal - outcome.Amount, 0);
         int delta = resources[outcome.Type] - oldVal;
+        int limit = GetStorageLimit(player, outcome.Type);
 
         if (delta != 0)
         {
-            _kernel.EventBus.Raise(new ResourceChangedEvent(player, outcome.Type, resources[outcome.Type], delta));
+            _kernel.EventBus.Raise(new ResourceChangedEvent(player, outcome.Type, resources[outcome.Type], delta, limit));
         }
     }
 

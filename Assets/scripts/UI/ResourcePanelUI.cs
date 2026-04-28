@@ -13,18 +13,13 @@ public class ResourcePanelUI : MonoBehaviour
     [SerializeField] private Sprite IceIcon;
     [SerializeField] private Sprite foodIcon;
     [SerializeField] private Sprite energyIcon;
-    
 
     private Dictionary<ResourceType, ResourceDisplayController> resourceControllers = new Dictionary<ResourceType, ResourceDisplayController>();
-
-    private ResourceSystem _resourceSystem;
 
     private void Start()
     {
         if (GameKernel.Instance != null)
         {
-            _resourceSystem = GameKernel.Instance.GetSystem<ResourceSystem>();
-
             GameKernel.Instance.EventBus.Subscribe<ResourceChangedEvent>(OnResourceChangedBus);
         }
 
@@ -67,8 +62,7 @@ public class ResourcePanelUI : MonoBehaviour
 
         if (resourceControllers.TryGetValue(evt.Type, out var controller))
         {
-            int limit = _resourceSystem != null ? _resourceSystem.GetStorageLimit(evt.Player, evt.Type) : 1000;
-            controller.UpdateDisplay(evt.NewAmount, limit);
+            controller.UpdateDisplay(evt.NewAmount, evt.Limit);
 
             // controller.PlayChangeAnimation(evt.Delta > 0);
         }

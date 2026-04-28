@@ -34,26 +34,18 @@ public class ResourceChangedClientNotifier : NetworkBehaviour, IGameSystem
     {
 
         NetworkConnectionToClient connection = evt.Player.gameObject.GetComponent<NetworkIdentity>().connectionToClient;
-        TargetNotifyPlyerResourceChanged(connection, evt.Player, evt.Type, evt.NewAmount);
+        TargetNotifyPlyerResourceChanged(connection, evt);
 
         Debug.Log($"сервер отправил {evt.Type} {evt.NewAmount}");
     }
 
     [TargetRpc]
-    public void TargetNotifyPlyerResourceChanged(NetworkConnectionToClient target, Player player, ResourceType type, int newValue)
+    public void TargetNotifyPlyerResourceChanged(NetworkConnectionToClient target, ResourceChangedEvent evt)
     {
-        if (!player.Resources.ContainsKey(type))
-        {
-            player.Resources.Add(type, newValue);
-        }
-        else
-        {
-            player.Resources[type] = newValue;
-        }
+        _kernel.EventBus.Raise(evt);
 
-        Debug.Log($"игрок получил {type} {newValue}");
+        Debug.Log($"игрок получил {evt.Type} {evt.NewAmount}");
     }
-
 
     public void Shutdown(){ }
 

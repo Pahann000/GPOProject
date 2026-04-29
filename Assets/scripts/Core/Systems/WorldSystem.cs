@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// Фасад для управления генерацией мира. 
@@ -46,6 +47,9 @@ public class WorldSystem : IGameSystem
         WorldChunks.Initialize(WorldMap);
 
         Debug.Log($"[{SystemName}] Мир создан.");
+
+        _kernel.EventBus.Subscribe<CaptureWorldDataEvent>(OnCaptureWorldData);
+        _kernel.EventBus.Subscribe<RestoreWorldDataEvent>(OnRestoreWorldData);
     }
 
     public void Tick(float deltaTime)
@@ -56,7 +60,11 @@ public class WorldSystem : IGameSystem
 
     public void FixedTick(float deltaTime) { }
 
-    public void Shutdown() { }
+    public void Shutdown() 
+    {
+        _kernel.EventBus.Unsubscribe<CaptureWorldDataEvent>(OnCaptureWorldData);
+        _kernel.EventBus.Unsubscribe<RestoreWorldDataEvent>(OnRestoreWorldData);
+    }
 
     /// <summary>
     /// Получает тип блока (земля, воздух, камень) по мировым координатам.
@@ -132,5 +140,30 @@ public class WorldSystem : IGameSystem
 
         // Обычные блоки (камень, земля) считаются твердой почвой
         return true;
+    }
+
+    /// <summary>
+    /// Захватывает данные карты.
+    /// </summary>
+    /// <param name="evt"></param>
+    private void OnCaptureWorldData(CaptureWorldDataEvent evt)
+    {
+        evt.Result = new SaveData
+        {
+            seedString = WorldMap.SeedString,
+            worldWidth = WorldMap.Width,
+            worldHeight = WorldMap.Height,
+            chunkSize = WorldMap.ChunkSize,
+            changedBlocks = WorldMap.GetChangedBlocks()
+        };
+    }
+
+    /// <summary>
+    /// Восстанавливает данные из сохранения. Будет позже.
+    /// </summary>
+    /// <param name="evt"></param>
+    private void OnRestoreWorldData(RestoreWorldDataEvent evt)
+    {
+        // ฅ^•ﻌ•^ฅ
     }
 }

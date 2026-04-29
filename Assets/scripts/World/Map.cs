@@ -14,9 +14,15 @@ public class Map : MonoBehaviour
     /// </summary>
     private Dictionary<Texture2D, BlockType> _noises = new Dictionary<Texture2D, BlockType>();
 
+    /// <summary>
+    /// Словарь для отслеживания измененных блоков.
+    /// </summary>
+    private Dictionary<Vector2Int, BlockType> _originalBlockTypes = new Dictionary<Vector2Int, BlockType>();
+
     public int ChunkSize => _config.ChunkSize;
     public int Width => _config.WorldWidth * _config.ChunkSize;
     public int Height => _config.WorldHeight * _config.ChunkSize;
+    public string SeedString => _config?.SeedString ?? "";
 
     public void Initialize(WorldConfig config)
     {
@@ -201,5 +207,53 @@ public class Map : MonoBehaviour
         _chunks.Clear();
         _tileData.Clear();
         _noises.Clear();
+    }
+
+    /// <summary>
+    /// Установить строку сида (для загрузки сохранения)
+    /// </summary>
+    public void SetSeedString(string seed)
+    {
+        if (_config != null)
+        {
+            _config.SeedString = seed;
+        }
+    }
+
+    /// <summary>
+    /// Получить список измененных блоков.
+    /// </summary>
+    public List<BlockChangeData> GetChangedBlocks()
+    {
+        List<BlockChangeData> changes = new List<BlockChangeData>();
+
+        foreach (var pair in _originalBlockTypes)
+        {
+            Vector2Int pos = pair.Key;
+            Block current = GetBlockObj(pos.x, pos.y);
+
+            if (current != null && current.tileData.type != pair.Value)
+            {
+                changes.Add(new BlockChangeData { x = pos.x, y = pos.y, type = current.tileData.type });
+            }
+        }
+
+        return changes;
+    }
+
+    /// <summary>
+    /// Отслеживание изменения блока.
+    /// </summary>
+    public void TrackBlockChange(Vector2Int pos, BlockType newType)
+    {
+        if (!_originalBlockTypes.ContainsKey(pos))
+        {
+            Block original = GetBlockObj(pos.x, pos.y);
+            if (original != null)
+            {
+                _originalBlockTypes[pos] = original.tileData.type;
+            }
+        }
+        PlaceBlock(pos.x, pos.y, newType);
     }
 }

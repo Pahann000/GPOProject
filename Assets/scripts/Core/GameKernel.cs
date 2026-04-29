@@ -59,7 +59,7 @@ public class GameKernel : MonoBehaviour
         }
 
         // Раскомментироват чтобы выключить карту
-        //GetSystem<WorldSystem>().IsActive = false;
+        // GetSystem<WorldSystem>().IsActive = false;
     }
 
     private void Update()
@@ -154,5 +154,7 @@ public class GameKernel : MonoBehaviour
         RegisterSystem(new SelectionSystem());
         
         RegisterSystem(new UnitSystem());
+
+        RegisterSystem(new SavingSystem());
     }
 }

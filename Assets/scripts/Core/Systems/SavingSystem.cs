@@ -5,8 +5,9 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using UnityEditor.Overlays;
 using UnityEngine;
-using static UnityEngine.Rendering.STP;
 using UnityEngine.EventSystems;
+using static UnityEngine.Rendering.DebugUI;
+using static UnityEngine.Rendering.STP;
 
 /// <summary>
 /// Управляет сохранением игры при выходе.
@@ -17,11 +18,15 @@ public class SavingSystem : IGameSystem
     public bool IsActive { get; set; } = true;
 
     private GameKernel _kernel;
-    private string savePath;
+    private string _savePath;
+    private DataCollectorSystem _dataCollector;
+
+    public WorldSystem _worldSystem;
 
     public void Initialize(GameKernel kernel)
     {
         _kernel = kernel;
+        _dataCollector = kernel.GetSystem<DataCollectorSystem>();
 
         // Инициализируем папку сохранений
         string folderPath = Path.Combine(Application.persistentDataPath, "Saves");
@@ -33,15 +38,16 @@ public class SavingSystem : IGameSystem
                 Directory.CreateDirectory(folderPath);
             }
 
-            savePath = Path.Combine(folderPath, "ignoreName.json");
-            Debug.Log($"[SaveSystem] Путь сохранения: {savePath}");
+            _savePath = Path.Combine(folderPath, "ignoreName.json");
+            Debug.Log($"[SaveSystem] Путь сохранения: {_savePath}");
         }
         catch (Exception e)
         {
             Debug.LogError($"[SaveSystem] Ошибка доступа к {folderPath}: {e.Message}");
         }
 
-        Debug.Log($"[{SystemName}] Инициализирована. Путь: {savePath}");
+        Debug.Log($"[{SystemName}] Инициализирована. Путь: {_savePath}");
+
     }
 
     public void Tick(float deltaTime) { }
@@ -53,21 +59,31 @@ public class SavingSystem : IGameSystem
     }
 
     /// <summary>
-    /// Сохранить игру
+    /// Сохраяет игру.
     /// </summary>
     public void SaveGame()
     {
         try
         {
-            SaveData saveData = new SaveData();
+            if (_dataCollector == null)
+            {
+                Debug.LogError("[SavingSystem] DataCollector не найден!");
+                return;
+            }
 
-            // Собираем данные с систем
-            saveData = CaptureWorldData();
+            // Получаем данные через DataCollector
+            var worldData = _dataCollector.GetData<SaveData>();
 
-            string json = JsonUtility.ToJson(saveData, true);
-            File.WriteAllText(savePath, json);
+            if (worldData == null)
+            {
+                Debug.LogError("[SavingSystem] Не удалось получить данные мира!");
+                return;
+            }
 
-            Debug.Log($"[{SystemName}] Игра сохранена в {savePath}");
+            string json = JsonUtility.ToJson(worldData, true);
+            File.WriteAllText(_savePath, json);
+
+            Debug.Log($"[{SystemName}] Игра сохранена: seed={worldData.seedString}, changedBlocks={worldData.changedBlocks.Count}");
         }
         catch (Exception e)
         {
@@ -76,29 +92,27 @@ public class SavingSystem : IGameSystem
     }
 
     /// <summary>
-    /// Загрузить игру
+    /// Загружает игру.
+    /// Пока не знаю куда впихнуть да и не готово оно
     /// </summary>
     public void LoadGame(string saveName)
     {
-        // ฅ^•ﻌ•^ฅ
-    }
+        if (!File.Exists(_savePath))
+        {
+            Debug.Log($"[{SystemName}] Файл сохранения не найден");
+            return;
+        }
 
-    /// <summary>
-    /// Внутренний метод, собрирающий данные о мире.
-    /// </summary>
-    private SaveData CaptureWorldData()
-    {
-        var captureEvent = new CaptureWorldDataEvent();
-        _kernel.EventBus.Raise(captureEvent);
-        return captureEvent.Result ?? new SaveData();
-    }
+        string json = File.ReadAllText(_savePath);
+        var gameSaveData = JsonUtility.FromJson<SaveData>(json);
 
-    /// <summary>
-    /// Внутренний метод, восстановливающий данные о мире.
-    /// </summary>
-    private void RestoreWorldData(SaveData data)
-    {
-        if (data == null) return;
-        _kernel.EventBus.Raise(new RestoreWorldDataEvent(data));
+        if (gameSaveData == null) return;
+
+        if (_dataCollector != null)
+        {
+            _dataCollector.RestoreData(gameSaveData);
+        }
+
+        Debug.Log($"[{SystemName}] Игра загружена");
     }
 }

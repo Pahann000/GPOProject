@@ -6,7 +6,7 @@ using UnityEngine;
 /// Скрывает в себе работу с объектами Map, MapChunk и ChunkManager.
 /// Предоставляет удобный API для получения информации о блоках на карте.
 /// </summary>
-public class WorldSystem : IGameSystem
+public class WorldSystem : IGameSystem, IDataProvider<SaveData>
 {
     public string SystemName => "World System";
 
@@ -48,8 +48,6 @@ public class WorldSystem : IGameSystem
 
         Debug.Log($"[{SystemName}] Мир создан.");
 
-        _kernel.EventBus.Subscribe<CaptureWorldDataEvent>(OnCaptureWorldData);
-        _kernel.EventBus.Subscribe<RestoreWorldDataEvent>(OnRestoreWorldData);
     }
 
     public void Tick(float deltaTime)
@@ -60,11 +58,7 @@ public class WorldSystem : IGameSystem
 
     public void FixedTick(float deltaTime) { }
 
-    public void Shutdown() 
-    {
-        _kernel.EventBus.Unsubscribe<CaptureWorldDataEvent>(OnCaptureWorldData);
-        _kernel.EventBus.Unsubscribe<RestoreWorldDataEvent>(OnRestoreWorldData);
-    }
+    public void Shutdown() {}
 
     /// <summary>
     /// Получает тип блока (земля, воздух, камень) по мировым координатам.
@@ -143,27 +137,32 @@ public class WorldSystem : IGameSystem
     }
 
     /// <summary>
-    /// Захватывает данные карты.
+    /// Получает данные мира.
     /// </summary>
-    /// <param name="evt"></param>
-    private void OnCaptureWorldData(CaptureWorldDataEvent evt)
+    /// <returns></returns>
+    public SaveData GetSaveData()
     {
-        evt.Result = new SaveData
+        return new SaveData
         {
             seedString = WorldMap.SeedString,
             worldWidth = WorldMap.Width,
             worldHeight = WorldMap.Height,
             chunkSize = WorldMap.ChunkSize,
-            changedBlocks = WorldMap.GetChangedBlocks()
+            changedBlocks = WorldMap.GetChangedBlocks(),
+            // resources = ...
         };
     }
 
     /// <summary>
-    /// Восстанавливает данные из сохранения. Будет позже.
+    /// Загрузка
     /// </summary>
-    /// <param name="evt"></param>
-    private void OnRestoreWorldData(RestoreWorldDataEvent evt)
+    /// <param name="data"></param>
+    public void RestoreFromSaveData(SaveData data)
     {
-        // ฅ^•ﻌ•^ฅ
+        //if (data == null || WorldMap == null) return;
+        //WorldMap.SetSeedString(data.seedString);
+        //WorldMap.RegenerateWorld();
+        //foreach (var change in data.changedBlocks)
+        //    WorldMap.SetBlock(new Vector2Int(change.x, change.y), change.type);
     }
 }

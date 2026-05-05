@@ -15,10 +15,11 @@ public class SaveData
     public int chunkSize;
 
     // Измененные блоки 
+    // Пока не тестировалось потому что блоки не ломаются не ставятся почему то (так и было) /ᐠ - ˕ -マ Ⳋ
     public List<BlockChangeData> changedBlocks = new List<BlockChangeData>();
 
     // Данные ресурсов wip
-    public Dictionary<string, int> resources = new Dictionary<string, int>();  
+    // public Dictionary<string, int> resources = new Dictionary<string, int>();  
 }
 
 /// <summary>

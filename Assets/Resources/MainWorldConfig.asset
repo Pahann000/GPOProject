@@ -16,7 +16,7 @@ MonoBehaviour:
   WorldWidth: 100
   HighAddition: 50
   ChunkSize: 16
-  SeedString: 
+  SeedString: -737,861
   BlockAtlas: {fileID: 11400000, guid: 9035713f356193c4a91f63e279b97d6d, type: 2}
   AtlasMaterial: {fileID: 2100000, guid: e2722fc755d33e64cb7173d0ac419d2c, type: 2}
   CaveSize: 0.25

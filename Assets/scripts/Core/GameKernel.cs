@@ -60,6 +60,9 @@ public class GameKernel : MonoBehaviour
 
         // Раскомментироват чтобы выключить карту
         // GetSystem<WorldSystem>().IsActive = false;
+
+        // 2.ПОСЛЕ инициализации всех систем — регистрируем провайдеров в DataCollector
+        RegisterDataProviders();
     }
 
     private void Update()
@@ -137,6 +140,29 @@ public class GameKernel : MonoBehaviour
     }
 
     /// <summary>
+    /// Регистрирует провайдеров данных в DataCollector.
+    /// Вызывается ПОСЛЕ Initialize всех систем.
+    /// </summary>
+    private void RegisterDataProviders()
+    {
+        var dataCollector = GetSystem<DataCollectorSystem>();
+        if (dataCollector == null)
+        {
+            Debug.LogError("[Kernel] DataCollector не найден!");
+            return;
+        }
+
+        // Регистрируем WorldSystem как провайдера SaveData
+        var worldSystem = GetSystem<WorldSystem>();
+        if (worldSystem != null)
+        {
+            dataCollector.RegisterProvider<SaveData>(worldSystem);
+        }
+
+        Debug.Log("[Kernel] Все провайдеры данных зарегистрированы");
+    }
+
+    /// <summary>
     /// Метод-сборщик. Здесь определяется порядок запуска всех модулей игры.
     /// </summary>
     private void RegisterSystems()
@@ -154,6 +180,8 @@ public class GameKernel : MonoBehaviour
         RegisterSystem(new SelectionSystem());
         
         RegisterSystem(new UnitSystem());
+
+        RegisterSystem(new DataCollectorSystem());
 
         RegisterSystem(new SavingSystem());
     }

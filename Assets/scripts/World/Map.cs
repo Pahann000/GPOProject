@@ -35,9 +35,22 @@ public class Map : MonoBehaviour
 
     private void GenerateNoises()
     {
-        float seed = string.IsNullOrEmpty(_config.SeedString)
-            ? Random.Range(-10000f, 10000f)
-            : _config.SeedString.GetHashCode();
+        // Так было, на всякий случай
+        //float seed = string.IsNullOrEmpty(_config.SeedString)
+        //    ? Random.Range(-10000f, 10000f)
+        //    : _config.SeedString.GetHashCode();
+
+        // Сохраняем сид в конфиг
+        // Пока из конфига ничего не достаем, чтобы каждый раз генерилось новое
+        float seed = Random.Range(-10000f, 10000f);
+        _config.SeedString = seed.ToString();
+        Debug.Log($"[Map] Сгенерирован новый сид: {_config.SeedString}");
+        
+        //else
+        //{
+        //    seed = _config.SeedString.GetHashCode();
+        //    Debug.Log($"[Map] Использован существующий сид: {_config.SeedString}");
+        //}
 
         Texture2D caveNoise = GenerateNoiseTexture(_config.CaveFreq, _config.CaveSize, seed);
         Texture2D goldNoise = GenerateNoiseTexture(_config.GoldFrequency, _config.GoldSize, seed + 100);
@@ -215,9 +228,8 @@ public class Map : MonoBehaviour
     public void SetSeedString(string seed)
     {
         if (_config != null)
-        {
             _config.SeedString = seed;
-        }
+        Debug.Log($"[Map] Сид установлен: {SeedString}");
     }
 
     /// <summary>

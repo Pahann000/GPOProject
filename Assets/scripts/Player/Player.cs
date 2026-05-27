@@ -28,6 +28,12 @@ public class Player : MonoBehaviour, IChunkObserver
     /// </summary>
     public ObservableDictionary<string, int> Resources { get; } = new ObservableDictionary<string, int>();
 
+    [SerializeField] private FactionType _faction = FactionType.Human;
+    public FactionType Faction => _faction;
+
+    
+    public void SetFaction(FactionType newFaction) => _faction = newFaction;
+
     /// <summary>
     /// Положение игрока по X.
     /// </summary>

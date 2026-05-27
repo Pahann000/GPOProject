@@ -76,6 +76,14 @@ public class BuilderSystem : IGameSystem
     public void StartPlacement(BuildingData buildingData)
     {
         if (buildingData == null) return;
+        // Проверка фракции
+        if (buildingData.RequiredFaction != player.Faction)
+        {
+            Debug.Log("You cannot build this faction's buildings!");
+            return;
+        }
+
+        if (buildingData == null) return;
 
         CancelBuilding(); // Сбрасываем предыдущую стройку
 
@@ -165,6 +173,14 @@ public class BuilderSystem : IGameSystem
         foreach (var col in overlaps)
         {
             if (!col.isTrigger && col.gameObject != _currentPreview) return false;
+        }
+
+        // Дополнительная проверка для марсиан: возможно, нужна вода рядом
+        if (player.Faction == FactionType.Martian && _selectedBuilding.RequiresWater)
+        {
+            var world = _kernel.GetSystem<WorldSystem>();
+            if (!world.IsNearWater(_currentPreview.transform.position))
+                return false;
         }
 
         // 3. Проверка взаимодействия с миром (опора под зданием)

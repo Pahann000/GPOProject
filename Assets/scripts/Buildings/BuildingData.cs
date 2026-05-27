@@ -6,12 +6,14 @@ public class BuildingData : ScriptableObject
 {
     public string DisplayName;
     public Sprite Icon;
+    public FactionType RequiredFaction = FactionType.Human; //по умолчанию
     public GameObject Prefab;
     public ResourceBundle ConstructionCost;
     public List<PlacementRule> PlacementRules;
     public int MaxHealth;
     public int Width = 1;
     public int Height = 1;
+    public Player player;
 
     [Header("Production Settings")]
     public ResourceBundle InputResources;

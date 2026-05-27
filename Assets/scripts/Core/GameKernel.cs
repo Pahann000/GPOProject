@@ -24,7 +24,18 @@ public class GameKernel : MonoBehaviour
     // Внутренние хранилища систем
     private readonly List<IGameSystem> _systems = new List<IGameSystem>();
     private readonly Dictionary<Type, IGameSystem> _systemMap = new Dictionary<Type, IGameSystem>();
+    private Dictionary<FactionType, FactionManager> _factionManagers = new Dictionary<FactionType, FactionManager>();
 
+    public void RegisterFactionManager(FactionType type, FactionManager manager)
+    {
+        _factionManagers[type] = manager;
+    }
+
+    public FactionManager GetFactionManager(FactionType type)
+    {
+        _factionManagers.TryGetValue(type, out var manager);
+        return manager;
+    }
     private void Awake()
     {
         // Паттерн Singleton для Ядра
@@ -141,6 +152,7 @@ public class GameKernel : MonoBehaviour
     /// </summary>
     private void RegisterSystems()
     {
+
         Debug.Log("[Kernel] Регистрация систем...");
 
         RegisterSystem(new ResourceSystem());
@@ -154,5 +166,14 @@ public class GameKernel : MonoBehaviour
         RegisterSystem(new SelectionSystem());
         
         RegisterSystem(new UnitSystem());
+
+        var humanFaction = new FactionManager();
+        humanFaction.Initialize(this, FactionType.Human);
+        RegisterSystem(humanFaction);
+
+        var martianFaction = new FactionManager();
+        martianFaction.Initialize(this, FactionType.Martian);
+        RegisterSystem(martianFaction);
+
     }
 }

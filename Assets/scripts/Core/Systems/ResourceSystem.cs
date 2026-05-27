@@ -14,13 +14,34 @@ public class ResourceSystem : IGameSystem
 
     // TODO: В будущем можно вынести стартовые значения и лимиты в отдельный ScriptableObject (Config),
     // чтобы можно было настраивать без перекомпиляции кода.
-    private Dictionary<ResourceType, int> _resources = new Dictionary<ResourceType, int>();
-    private Dictionary<ResourceType, int> _storageLimits = new Dictionary<ResourceType, int>();
+    private Dictionary<FactionType, Dictionary<ResourceType, int>> _resources;
+    private Dictionary<FactionType, Dictionary<ResourceType, int>> _storageLimits;
 
     public void Initialize(GameKernel kernel)
     {
         _kernel = kernel;
-        InitializeResources();
+        resources = new Dictionary<FactionType, Dictionary<ResourceType, int>>();
+        _storageLimits = new Dictionary<FactionType, Dictionary<ResourceType, int>>();
+
+        // Инициализируем для обеих фракций
+        foreach (FactionType faction in System.Enum.GetValues(typeof(FactionType)))
+        {
+            _resources[faction] = new Dictionary<ResourceType, int>();
+            _storageLimits[faction] = new Dictionary<ResourceType, int>();
+
+            foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
+            {
+                _resources[faction][type] = 0;
+                _storageLimits[faction][type] = 1000;
+            }
+        }
+
+        // Стартовые ресурсы для людей (например)
+        AddResource(FactionType.Human, ResourceType.Minerals, 500);
+        AddResource(FactionType.Human, ResourceType.Ice, 200);
+        // Для марсиан стартовые корни (Root)
+        AddResource(FactionType.Martian, ResourceType.Root, 300);
+
         Debug.Log($"[{SystemName}] Инициализирована.");
     }
 
@@ -57,7 +78,7 @@ public class ResourceSystem : IGameSystem
     /// <summary>
     /// Проверяет, достаточно ли ресурсов в хранилище для оплаты указанной цены.
     /// </summary>
-    public bool HasResources(ResourceBundle cost)
+    public bool HasResources(FactionType faction, ResourceBundle cost)
     {
         if (cost.Resources == null || cost.Resources.Count == 0) return true;
 
@@ -74,7 +95,7 @@ public class ResourceSystem : IGameSystem
     /// Пытается списать ресурсы. Если их недостаточно, операция отменяется.
     /// </summary>
     /// <returns>True, если ресурсы успешно списаны.</returns>
-    public bool TrySpendResources(ResourceBundle cost)
+    public bool TrySpendResources(FactionType faction, ResourceBundle cost)
     {
         int resourceCount = (cost.Resources != null) ? cost.Resources.Count : 0;
         
@@ -95,37 +116,36 @@ public class ResourceSystem : IGameSystem
     /// <summary>
     /// Начисляет ресурсы из бандла (например, доход от здания).
     /// </summary>
-    public void AddResources(ResourceBundle income)
+    public void AddResources(FactionType faction, ResourceBundle income)
     {
         if (income.Resources == null) return;
 
         foreach (var resPair in income.Resources)
         {
-            AddResource(resPair.Type, resPair.Amount);
+            AddResource(resPair.Faction, resPair.Type, resPair.Amount);
         }
     }
 
     /// <summary>
     /// Начисляет один конкретный ресурс с учетом лимита хранилища.
     /// </summary>
-    public void AddResource(ResourceType type, int amount)
+    public void AddResource(FactionType faction, ResourceType type, int amount)
     {
-        if (!_resources.ContainsKey(type)) _resources[type] = 0;
-
-        int oldVal = _resources[type];
-        int limit = _storageLimits.ContainsKey(type) ? _storageLimits[type] : 1000;
-
-        _resources[type] = Mathf.Min(oldVal + amount, limit);
-        int delta = _resources[type] - oldVal;
-
-        // Рассылаем уведомление только если значение реально изменилось (не уперлось в лимит)
+        if (!_resources.ContainsKey(faction)) return;
+        int oldVal = _resources[faction][type];
+        int limit = _storageLimits[faction][type];
+        int newVal = Mathf.Min(oldVal + amount, limit);
+        _resources[faction][type] = newVal;
+        int delta = newVal - oldVal;
         if (delta != 0)
-        {
-            _kernel.EventBus.Raise(new ResourceChangedEvent(type, _resources[type], delta));
-        }
+            _kernel.EventBus.Raise(new ResourceChangedEvent(type, newVal, delta, faction));
     }
 
-    public int GetResource(ResourceType type) => _resources.ContainsKey(type) ? _resources[type] : 0;
+    public int GetResource(FactionType faction, ResourceType type)
+    {
+        return _resources.ContainsKey(faction) ? _resources[faction][type] : 0;
+    }
+
     public int GetStorageLimit(ResourceType type) => _storageLimits.ContainsKey(type) ? _storageLimits[type] : 0;
 
     /// <summary>
@@ -140,7 +160,7 @@ public class ResourceSystem : IGameSystem
     /// <summary>
     /// Увеличивает максимальную вместимость хранилища для ресурса.
     /// </summary>
-    public void IncreaseStorage(ResourceType type, int amount)
+    public void IncreaseStorage(FactionType faction, ResourceType type, int amount)
     {
         if (!_storageLimits.ContainsKey(type)) _storageLimits[type] = 0;
         _storageLimits[type] += amount;
@@ -150,7 +170,7 @@ public class ResourceSystem : IGameSystem
     /// Уменьшает максимальную вместимость хранилища. 
     /// Если текущее количество ресурсов превышает новый лимит, излишки сгорают.
     /// </summary>
-    public void DecreaseStorage(ResourceType type, int amount)
+    public void DecreaseStorage(FactionType faction, ResourceType type, int amount)
     {
         if (_storageLimits.ContainsKey(type))
         {

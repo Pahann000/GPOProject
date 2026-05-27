@@ -18,6 +18,11 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
     public Player Owner;
 
     /// <summary>
+    /// Свойство для получения фракции через владельца.
+    /// </summary>
+    public FactionType Faction => Owner != null ? Owner.Faction : FactionType.Human;
+
+    /// <summary>
     /// Положение юнита по X.
     /// </summary>
     public int X => (int)transform.position.x;
@@ -193,6 +198,13 @@ public class Unit : MonoBehaviour, IDamagable, IChunkObserver
     /// <param name="unitType"> Тип юнита, нанёсшего урон. </param>
     public void TakeDamage(int amount, Player Damager, UnitTypeName unitType)
     {
+        // Если атакующий и цель одной фракции — не наносим урон
+        if (Damager != null && Damager.Faction == this.Faction)
+        {
+            Debug.Log("Cannot attack friendly unit!");
+            return;
+        }
+
         if (unitType == UnitTypeName.Soldier)
         {
             CurrentHealth -= amount * 2;

@@ -176,6 +176,8 @@ public class GameKernel : NetworkBehaviour
         RegisterSystem(new ResourceSystem());
 
         RegisterSystem(new UISystem());
+
+        RegisterSystem(new WorldSystem());
         
         RegisterSystem(new BuilderSystem());
         

@@ -14,18 +14,19 @@ public class Map : MonoBehaviour
     /// Словарь с шумами для каждого типа блоков.
     /// </summary>
     private Dictionary<Texture2D, BlockType> _noises = new Dictionary<Texture2D, BlockType>();
+    private EventBus _eventBus;
 
     public int ChunkSize => _config.ChunkSize;
     public int Width => _config.WorldWidth * _config.ChunkSize;
     public int Height => _config.WorldHeight * _config.ChunkSize;
 
-    public void Initialize(WorldConfig config, float seed)
+    public void Initialize(WorldConfig config, float seed, EventBus eventBus)
     {
         _config = config;
+        _eventBus = eventBus;
         _seed = seed;
 
         GenerateNoises();
-
         Debug.Log("[Map] Карта инициализирована и шумы сгенерированы");
     }
 
@@ -169,6 +170,8 @@ public class Map : MonoBehaviour
         {
             chunk = CreateChunk(chunkPos);
             _chunks.Add(chunkPos, chunk);
+
+            _eventBus?.Raise(new ChunkGeneratedEvent(x, y, ChunkSize));
         }
 
         chunk.needsUpdate = true;

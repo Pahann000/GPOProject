@@ -95,8 +95,8 @@ MonoBehaviour:
   toggleButton: {fileID: 7056093390890308574}
   toggleButtonText: {fileID: 253468749768256468}
   availableBuildings:
-  - {fileID: 11400000, guid: 153bd3c6b69a56e4eb5d8304e6e894c2, type: 2}
-  - {fileID: 11400000, guid: 8236f03ccb5d068458ba3dd5271c2f4c, type: 2}
+  - {fileID: 11400000, guid: b4837ba11f46b4a4e99e1299dce401c8, type: 2}
+  - {fileID: 11400000, guid: b4837ba11f46b4a4e99e1299dce401c8, type: 2}
   - {fileID: 11400000, guid: eafe8f0da9f20794ab584d434478ca0f, type: 2}
 --- !u!1 &233474029023852733
 GameObject:

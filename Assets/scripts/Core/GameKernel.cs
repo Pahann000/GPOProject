@@ -184,5 +184,7 @@ public class GameKernel : NetworkBehaviour
         RegisterSystem(new SelectionSystem());
         
         RegisterSystem(new UnitSystem());
+
+        RegisterSystem(new IncidentSystem());
     }
 }

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6675898836378585610}
   - component: {fileID: 7533445604509107607}
   - component: {fileID: 8637871723475053626}
+  - component: {fileID: 8805203736448507792}
   m_Layer: 0
   m_Name: House
   m_TagString: Untagged
@@ -126,7 +127,7 @@ BoxCollider2D:
   m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
+    pivot: {x: 0.5, y: 0}
     oldSize: {x: 2.04, y: 2.89}
     newSize: {x: 2.04, y: 2.89}
     adaptiveTilingThreshold: 0.5
@@ -147,7 +148,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010b91a68e947ef4bb2cb66ad80b241b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   _data: {fileID: 11400000, guid: 8236f03ccb5d068458ba3dd5271c2f4c, type: 2}
   State: 2
   selectionEffect: {fileID: 0}
   constructionEffect: {fileID: 0}
+--- !u!114 &8805203736448507792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6320938056590036663}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneId: 0
+  _assetId: 1636891527
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0

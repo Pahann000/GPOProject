@@ -91,6 +91,20 @@ public class BuildingButtonUI : MonoBehaviour
         if (_buildingData == null || GameKernel.Instance == null) return;
 
         var resourceSys = GameKernel.Instance.GetSystem<ResourceSystem>();
+        if (resourceSys == null) return;
+
+        Player localPlayer = null;
+        if (Mirror.NetworkClient.localPlayer != null)
+        {
+            localPlayer = Mirror.NetworkClient.localPlayer.GetComponent<Player>();
+        }
+
+        if (localPlayer == null)
+        {
+            if (button != null) button.interactable = false;
+            return;
+        }
+
         bool canAfford = resourceSys != null && resourceSys.HasResources(_buildingData.Owner, _buildingData.ConstructionCost);
 
         // Визуальная индикация доступности

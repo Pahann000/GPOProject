@@ -176,15 +176,15 @@ public class GameKernel : NetworkBehaviour
         RegisterSystem(new ResourceSystem());
 
         RegisterSystem(new UISystem());
+        
+        //RegisterSystem(new BuilderSystem());
 
-        RegisterSystem(new WorldSystem());
-        
-        RegisterSystem(new BuilderSystem());
-        
         RegisterSystem(new SelectionSystem());
         
         RegisterSystem(new UnitSystem());
 
         RegisterSystem(new IncidentSystem());
+
+        RegisterSystem(new MinimapSystem());
     }
 }

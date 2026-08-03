@@ -70,7 +70,9 @@ public class WorldSystem : NetworkBehaviour, IGameSystem
         Map map = MapGameObject.AddComponent<Map>();
         WorldConfig config = Resources.Load<WorldConfig>("MainWorldConfig");
 
-        map.Initialize(config, _seed);
+        EventBus eventBus = _kernel != null ? _kernel.EventBus : GameKernel.Instance.EventBus;
+
+        map.Initialize(config, _seed, eventBus);
         return map;
     }
 

@@ -74,6 +74,16 @@ public class ResourceSystem : IGameSystem
         return resources[cost.Type] >= cost.Amount;
     }
 
+    public bool HasResources(Player player, ResourceBundle bundle)
+    {
+        if (bundle == null || bundle.Resources == null || bundle.Resources.Count == 0) return true;
+        foreach (var kvp in bundle.Resources)
+        {
+            if (!HasResource(player, new ResourcePair(kvp.Key, kvp.Value))) return false;
+        }
+        return true;
+    }
+
     /// <summary>
     /// Пытается списать ресурсы. Если их недостаточно, операция отменяется.
     /// </summary>
@@ -91,6 +101,18 @@ public class ResourceSystem : IGameSystem
             SpendResourceInternal(player, resPair);
         }
 
+        return true;
+    }
+
+    public bool TrySpendResources(Player player, ResourceBundle bundle)
+    {
+        if (!HasResources(player, bundle)) return false;
+        if (bundle == null || bundle.Resources == null) return true;
+
+        foreach (var kvp in bundle.Resources)
+        {
+            SpendResourceInternal(player, new ResourcePair(kvp.Key, kvp.Value));
+        }
         return true;
     }
 
@@ -128,6 +150,15 @@ public class ResourceSystem : IGameSystem
         if (delta != 0)
         {
             _kernel.EventBus.Raise(new ResourceChangedEvent(player, income.Type, resources[income.Type], delta, limit));
+        }
+    }
+
+    public void AddResources(Player player, ResourceBundle bundle)
+    {
+        if (bundle == null || bundle.Resources == null) return;
+        foreach (var kvp in bundle.Resources)
+        {
+            AddResource(player, new ResourcePair(kvp.Key, kvp.Value));
         }
     }
 

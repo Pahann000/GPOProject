@@ -1,8 +1,9 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
+using System.Text;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using System.Text;
 
 
 public class SelectionPanelUI : MonoBehaviour
@@ -132,11 +133,11 @@ public class SelectionPanelUI : MonoBehaviour
         }
 
         // Информация о производстве (для производственных зданий)
-        ProductionBuilding productionBuilding = selectedBuilding as ProductionBuilding;
-        if (productionBuilding != null && productionInfoPanel != null)
+        ProduceBuilding produceBuilding = selectedBuilding as ProduceBuilding;
+        if (produceBuilding != null && productionInfoPanel != null)
         {
             productionInfoPanel.SetActive(true);
-            UpdateProductionInfo(productionBuilding);
+            UpdateProductionInfo(produceBuilding);
         }
         else if (productionInfoPanel != null)
         {
@@ -147,33 +148,34 @@ public class SelectionPanelUI : MonoBehaviour
         UpdateButtonsAvailability();
     }
 
-    private void UpdateProductionInfo(ProductionBuilding production)
+    private void UpdateProductionInfo(ProduceBuilding production)
     {
+        if (production == null || production.ProduceData == null) return;
+
+        // Передаем напрямую ResourceBundle без конвертаций
         if (inputResourcesText != null)
-            inputResourcesText.text = FormatResources(production.inputResources, "Вход:");
+        {
+            inputResourcesText.text = FormatResources(production.ProduceData.InputResources, "Вход:");
+        }
 
         if (outputResourcesText != null)
-            outputResourcesText.text = FormatResources(production.outputResources, "Выход:");
-
-        // Прогресс производства (примерная реализация)
-        if (productionProgress != null)
         {
-            // Здесь нужно добавить логику расчета прогресса
-            // productionProgress.value = CalculateProductionProgress(production);
+            outputResourcesText.text = FormatResources(production.ProduceData.OutputResources, "Выход:");
         }
     }
 
-    private string FormatResources(ResourcePair[] resources, string prefix)
+    private string FormatResources(ResourceBundle bundle, string prefix)
     {
-        if (resources == null || resources.Length == 0)
+        if (bundle == null || bundle.Resources == null || bundle.Resources.Count == 0)
             return $"{prefix} Нет";
 
         StringBuilder sb = new StringBuilder();
         sb.AppendLine(prefix);
 
-        foreach (var resource in resources)
+        // Перебираем пары "Тип ресурса -> Количество" прямо из словаря ResourceBundle
+        foreach (var resource in bundle.Resources)
         {
-            sb.AppendLine($"  {resource.Type}: {resource.Amount}");
+            sb.AppendLine($"  {resource.Key}: {resource.Value}");
         }
 
         return sb.ToString();
@@ -220,28 +222,37 @@ public class SelectionPanelUI : MonoBehaviour
 
     private void UpgradeBuilding()
     {
-        if (selectedBuilding == null) return;
+        if (selectedBuilding == null || selectedBuilding.Data == null) return;
 
-        // Здесь реализуйте логику улучшения здания
-        Debug.Log($"Улучшаем здание: {selectedBuilding.Data.DisplayName}");
+        Player owner = selectedBuilding.Data.Owner != null
+            ? selectedBuilding.Data.Owner
+            : (Mirror.NetworkClient.localPlayer != null ? Mirror.NetworkClient.localPlayer.GetComponent<Player>() : null);
 
-        // Пример: проверка ресурсов и улучшение
+        if (owner == null) return;
+
         ResourcePair[] upgradeCost = CalculateUpgradeCost(selectedBuilding);
-        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(selectedBuilding.Data.Owner, upgradeCost))
+
+        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(owner, upgradeCost))
         {
-            // Применить улучшения к зданию
+            Debug.Log($"Улучшаем здание: {selectedBuilding.Data.DisplayName}");
             // selectedBuilding.Upgrade();
         }
     }
 
     private void RepairBuilding()
     {
-        if (selectedBuilding == null) return;
+        if (selectedBuilding == null || selectedBuilding.Data == null) return;
+
+        Player owner = selectedBuilding.Data.Owner != null
+            ? selectedBuilding.Data.Owner
+            : (Mirror.NetworkClient.localPlayer != null ? Mirror.NetworkClient.localPlayer.GetComponent<Player>() : null);
+
+        if (owner == null) return;
 
         int repairCost = CalculateRepairCost(selectedBuilding);
         ResourcePair[] costBundle = new ResourcePair[] { new ResourcePair(ResourceType.Minerals, repairCost) };
 
-        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(selectedBuilding.Data.Owner, costBundle))
+        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(owner, costBundle))
         {
             selectedBuilding.CurrentHealth = selectedBuilding.Data.MaxHealth;
             Debug.Log($"Здание {selectedBuilding.Data.DisplayName} отремонтировано");
@@ -250,13 +261,21 @@ public class SelectionPanelUI : MonoBehaviour
 
     private void DemolishBuilding()
     {
-        if (selectedBuilding == null) return;
+        if (selectedBuilding == null || selectedBuilding.Data == null) return;
 
-        // Возвращаем часть ресурсов при сносе
+        // Безопасно определяем владельца здания (или локального игрока)
+        Player owner = selectedBuilding.Data.Owner != null
+            ? selectedBuilding.Data.Owner
+            : (Mirror.NetworkClient.localPlayer != null ? Mirror.NetworkClient.localPlayer.GetComponent<Player>() : null);
+
+        // Расчитываем 50% возврат ресурсов
         ResourcePair[] refund = CalculateRefund(selectedBuilding.Data.ConstructionCost);
-        GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(selectedBuilding.Data.Owner, refund);
 
-        // Уничтожаем здание
+        if (owner != null && refund.Length > 0)
+        {
+            GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(owner, refund);
+        }
+
         Destroy(selectedBuilding.gameObject);
         Deselect();
 
@@ -265,7 +284,7 @@ public class SelectionPanelUI : MonoBehaviour
 
     private ResourcePair[] CalculateUpgradeCost(Building building)
     {
-        // Пример: стоимость улучшения = 50% от исходной стоимости
+        if (building == null || building.Data == null) return new ResourcePair[0];
         return MultiplyResourceBundle(building.Data.ConstructionCost, 0.5f);
     }
 
@@ -275,14 +294,14 @@ public class SelectionPanelUI : MonoBehaviour
         return missingHealth * 2; // Примерная формула: 2 единицы ресурса за 1 HP
     }
 
-    private ResourcePair[] CalculateRefund(ResourcePair[] originalCost)
+    private ResourcePair[] CalculateRefund(ResourceBundle originalCost)
     {
-        // Возвращаем 50% от исходной стоимости
         return MultiplyResourceBundle(originalCost, 0.5f);
     }
 
     private int CalculateRefundValue(ResourcePair[] refund)
     {
+        if (refund == null) return 0;
         int total = 0;
         foreach (var resource in refund)
         {
@@ -291,35 +310,32 @@ public class SelectionPanelUI : MonoBehaviour
         return total;
     }
 
-    private ResourcePair[] MultiplyResourceBundle(ResourcePair[] resources, float multiplier)
+    private ResourcePair[] MultiplyResourceBundle(ResourceBundle bundle, float multiplier)
     {
-        var result = new ResourcePair[resources.Length];
+        if (bundle == null || bundle.Resources == null) return new ResourcePair[0];
 
-        for (int i = 0; i < resources.Length; i++)
+        List<ResourcePair> result = new List<ResourcePair>();
+        foreach (var kvp in bundle.Resources)
         {
-            result[i] = new ResourcePair(
-                resources[i].Type,
-                Mathf.RoundToInt(resources[i].Amount * multiplier)
-            );
+            result.Add(new ResourcePair(kvp.Key, Mathf.RoundToInt(kvp.Value * multiplier)));
         }
-
-        return result;
+        return result.ToArray();
     }
 
-    private IEnumerator TestPanel()
-    {
-        yield return new WaitForSeconds(1f);
+    //private IEnumerator TestPanel()
+    //{
+    //    yield return new WaitForSeconds(1f);
 
-        // Создайте тестовое здание для проверки
-        Debug.Log("Testing Selection Panel...");
+    //    // Создайте тестовое здание для проверки
+    //    Debug.Log("Testing Selection Panel...");
 
-        // Здесь можно временно заполнить панель тестовыми данными
-        if (nameText != null) nameText.text = "Тестовая шахта";
-        if (healthText != null) healthText.text = "Здоровье: 75/100";
-        if (stateText != null) stateText.text = "Состояние: Работает";
-        if (healthBar != null) healthBar.value = 0.75f;
+    //    // Здесь можно временно заполнить панель тестовыми данными
+    //    if (nameText != null) nameText.text = "Тестовая шахта";
+    //    if (healthText != null) healthText.text = "Здоровье: 75/100";
+    //    if (stateText != null) stateText.text = "Состояние: Работает";
+    //    if (healthBar != null) healthBar.value = 0.75f;
 
-        if (panel != null)
-            panel.SetActive(true);
-    }
+    //    if (panel != null)
+    //        panel.SetActive(true);
+    //}
 }

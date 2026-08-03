@@ -1,146 +1,126 @@
-﻿using UnityEngine;
-using Mirror;
+﻿using Mirror;
+using System;
 using System.Collections.Generic;
+using System.Resources;
+using UnityEngine;
 
-public class Building : NetworkBehaviour
+public class Building : NetworkBehaviour, IDamagable
 {
-    [SerializeField] protected BuildingData _data;
+    [SerializeField] protected BaseBuildingData _data;
+    public BaseBuildingData Data => _data;
 
-    [Header("���������")]
+    [Header("Состояние")]
     public BuildingState State = BuildingState.Operational;
     public int CurrentHealth { get; set; }
 
-    [Header("���������� �������")]
+    [Header("Визуальные эффекты")]
     [SerializeField] private GameObject selectionEffect;
     [SerializeField] private GameObject constructionEffect;
 
-    private ResourceSystem _resourceManager;
-    private float _productionTimer = 0f;
-    private bool _isProducing = false;
+    // События для оповещения других систем
+    public event Action<Building> OnBuilt;
+    public event Action<Building> OnDestroyed;
 
-    public BuildingData Data => _data;
+    // Координаты для интерфейса IDamagable
+    public int X => Mathf.RoundToInt(transform.position.x);
+    public int Y => Mathf.RoundToInt(transform.position.y);
+
+    protected ResourceSystem _resourceSystem;
+
+    protected virtual void Awake()
+    {
+        // При старте получаем систему ресурсов через Ядро
+        if (GameKernel.Instance != null)
+        {
+            _resourceSystem = GameKernel.Instance.GetSystem<ResourceSystem>();
+        }
+    }
+
+    public void NotifyBuilt()
+    {
+        OnBuilt?.Invoke(this);
+    }
 
     protected virtual void Start()
     {
-        CurrentHealth = _data.MaxHealth;
-        _resourceManager = GameKernel.Instance.GetSystem<ResourceSystem>();
-
-        // ��������� ������������ ���� ���� �������� �������
-        if (_data.OutputResources != null && _data.OutputResources.Length > 0)
+        if (_resourceSystem == null && GameKernel.Instance != null)
         {
-            StartProduction();
+            _resourceSystem = GameKernel.Instance.GetSystem<ResourceSystem>();
         }
 
-        // ������ �������������
+        if (_data != null)
+        {
+            CurrentHealth = _data.MaxHealth;
+        }
+
+        // Воспроизводим эффект строительства
         if (constructionEffect != null)
         {
             GameObject effect = Instantiate(constructionEffect, transform.position, Quaternion.identity);
             Destroy(effect, 3f);
         }
+
+        OnBuilt?.Invoke(this);
     }
 
-    public virtual void Initialize(BuildingData data)
+    /// <summary>
+    /// Инициализация здания данными (вызывает при создании)
+    /// </summary>
+    public virtual void Initialize(BaseBuildingData data)
     {
         _data = data;
         CurrentHealth = data.MaxHealth;
         State = BuildingState.Operational;
 
-        // ��������� ������ ����������
+        // Настраиваем коллайдер
         BoxCollider2D collider = GetComponent<BoxCollider2D>();
-        if (collider != null && data != null)
+        if (collider == null)
         {
-            collider.size = new Vector2(data.Width, data.Height);
-        }
-    }
-
-    public virtual void Update()
-    {
-        if (_isProducing && _resourceManager != null)
-        {
-            _productionTimer += Time.deltaTime;
-
-            // ���������, ���� �� ������� ������� ��� ������������
-            if (HasInputResources())
-            {
-                if (_productionTimer >= 5f) // �������� ������������ 5 ������
-                {
-                    ProduceResources();
-                    _productionTimer = 0f;
-                }
-            }
-        }
-    }
-
-    private void StartProduction()
-    {
-        _isProducing = true;
-        Debug.Log($"{_data.DisplayName} ����� ������������");
-    }
-
-    private bool HasInputResources()
-    {
-        // ���� ������� �������� ���, ������ ������������ �� ������� ��������
-        if (_data.InputResources == null || _data.InputResources.Length == 0)
-            return true;
-
-        return _resourceManager.HasResources(_data.Owner, _data.InputResources);
-    }
-
-    private void ProduceResources()
-    {
-        // ��������� ������� �������, ���� ��� ����
-        if (_data.InputResources != null && _data.InputResources.Length > 0)
-        {
-            if (!_resourceManager.TrySpendResources(_data.Owner, _data.InputResources))
-            {
-                Debug.Log($"{_data.DisplayName}: ������������ ������� ��������");
-                return;
-            }
+            collider = gameObject.AddComponent<BoxCollider2D>();
         }
 
-        // ��������� �������� �������, ���� ��� ����
-        if (_data.OutputResources != null && _data.OutputResources.Length > 0)
-        {
-            _resourceManager.AddResources(_data.Owner, _data.OutputResources);
-            Debug.Log($"{_data.DisplayName} �������� �������");
-        }
+        collider.size = new Vector2(data.Width, data.Height);
     }
 
-    public virtual void TakeDamage(int damage)
-    {
-        CurrentHealth = Mathf.Max(0, CurrentHealth - damage);
+    public virtual void Update() { }
 
+    /// <summary>
+    /// Нанесение урона зданию
+    /// </summary>
+    public virtual void TakeDamage(int amount, Player Damager, UnitTypeName unitType)
+    {
+        if (State != BuildingState.Operational) return;
+
+        CurrentHealth -= amount;
         if (CurrentHealth <= 0)
         {
             DestroyBuilding();
         }
     }
 
+    /// <summary>
+    /// Разрушение здания
+    /// </summary>
     protected virtual void DestroyBuilding()
     {
         State = BuildingState.Destroyed;
-
-        // ���������� ����� �������� ��� ����������
+        OnDestroyed?.Invoke(this);
         ReturnResourcesOnDestroy();
-
         Destroy(gameObject);
     }
 
     private void ReturnResourcesOnDestroy()
     {
-        if (_resourceManager != null &&
-            _data.ConstructionCost != null &&
-            _data.ConstructionCost.Length > 0)
+        if (_resourceSystem != null && _data?.ConstructionCost != null && _data.Owner != null)
         {
-            // ���������� 50% ���������
-           ResourcePair[] returnCost = new ResourcePair[_data.ConstructionCost.Length];
-            for (int i = 0; i < _data.ConstructionCost.Length; i++) 
-            {
-                ResourcePair resource = _data.ConstructionCost[i];
-                returnCost[i] = new ResourcePair(resource.Type, resource.Amount / 2);
-            }
+            if (_data.ConstructionCost.Resources == null) return;
 
-            _resourceManager.AddResources(_data.Owner, returnCost);
+            List<ResourcePair> returnCost = new List<ResourcePair>();
+            foreach (var kvp in _data.ConstructionCost.Resources)
+            {
+                returnCost.Add(new ResourcePair(kvp.Key, Mathf.RoundToInt(kvp.Value * 0.5f)));
+            }
+            _resourceSystem.AddResources(_data.Owner, returnCost.ToArray());
         }
     }
 
@@ -157,16 +137,6 @@ public class Building : NetworkBehaviour
         if (selectionEffect != null)
         {
             selectionEffect.SetActive(false);
-        }
-    }
-
-    // ������������ ���� ������ � ���������
-    private void OnDrawGizmosSelected()
-    {
-        if (_data != null)
-        {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireCube(transform.position, new Vector3(_data.Width, _data.Height, 0.1f));
         }
     }
 }

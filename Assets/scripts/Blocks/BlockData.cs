@@ -21,8 +21,10 @@ public class BlockData
     {
         return type switch
         {
-            BlockType.Stone => 50,
-            BlockType.Gold => 100,
+            BlockType.Rock => 50,
+            BlockType.Minerals => 100,
+            BlockType.Ice => 20,
+            BlockType.Root => 35,
             _ => 0
         };
     }

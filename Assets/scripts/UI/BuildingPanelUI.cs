@@ -14,13 +14,13 @@ public class BuildingPanelUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI toggleButtonText;
 
     [Header("Доступные здания")]
-    [SerializeField] private List<BuildingData> availableBuildings = new List<BuildingData>();
+    [SerializeField] private List<BaseBuildingData> availableBuildings = new List<BaseBuildingData>();
 
     private BuilderSystem _builderSystem;
     private ResourceSystem _resourceManager;
     private bool _isPanelOpen = false;
 
-    private Dictionary<BuildingData, Button> _buildingButtons = new Dictionary<BuildingData, Button>();
+    private Dictionary<BaseBuildingData, Button> _buildingButtons = new Dictionary<BaseBuildingData, Button>();
 
     void Start()
     {
@@ -52,7 +52,7 @@ public class BuildingPanelUI : MonoBehaviour
             Destroy(child.gameObject);
         
         // Создаем новые кнопки
-        foreach (BuildingData buildingData in availableBuildings)
+        foreach (BaseBuildingData buildingData in availableBuildings)
         {
             if (buildingData == null) continue;
             
@@ -60,7 +60,7 @@ public class BuildingPanelUI : MonoBehaviour
         }
     }
     
-    void CreateButtonForBuilding(BuildingData buildingData)
+    void CreateButtonForBuilding(BaseBuildingData buildingData)
     {
         // Создаем кнопку
         GameObject buttonGO = Instantiate(buildingButtonPrefab, buttonsContainer);
@@ -113,7 +113,7 @@ public class BuildingPanelUI : MonoBehaviour
             Destroy(child.gameObject);
 
         // Создаем кнопки для каждого здания
-        foreach (BuildingData buildingData in availableBuildings)
+        foreach (BaseBuildingData buildingData in availableBuildings)
         {
             if (buildingData == null) continue;
 
@@ -121,7 +121,7 @@ public class BuildingPanelUI : MonoBehaviour
         }
     }
 
-    private void CreateBuildingButton(BuildingData data)
+    private void CreateBuildingButton(BaseBuildingData data)
     {
         GameObject buttonGO = Instantiate(buildingButtonPrefab, buttonsContainer);
         Button button = buttonGO.GetComponent<Button>();
@@ -144,12 +144,12 @@ public class BuildingPanelUI : MonoBehaviour
             // Второй текст - стоимость (только если есть стоимость)
             if (texts.Length > 1)
             {
-                if (data.ConstructionCost != null && data.ConstructionCost.Length > 0)
+                if (data.ConstructionCost != null && data.ConstructionCost.Resources != null && data.ConstructionCost.Resources.Count > 0)
                 {
                     StringBuilder costText = new StringBuilder();
-                    foreach (var resource in data.ConstructionCost)
+                    foreach (var resource in data.ConstructionCost.Resources)
                     {
-                        costText.AppendLine($"{resource.Type}: {resource.Amount}");
+                        costText.AppendLine($"{resource.Key}: {resource.Value}");
                     }
                     texts[1].text = costText.ToString();
                 }
@@ -178,12 +178,12 @@ public class BuildingPanelUI : MonoBehaviour
         UpdateButtonAvailability(data, button);
     }
 
-    private void UpdateButtonAvailability(BuildingData data, Button button)
+    private void UpdateButtonAvailability(BaseBuildingData data, Button button)
     {
         if (button == null || data == null || _resourceManager == null) return;
 
         // Проверяем, есть ли стоимость строительства
-        bool hasCost = data.ConstructionCost != null && data.ConstructionCost.Length > 0;
+        bool hasCost = data.ConstructionCost != null && data.ConstructionCost.Resources.Count > 0;
 
         if (hasCost)
         {
@@ -228,7 +228,7 @@ public class BuildingPanelUI : MonoBehaviour
     }
 
     // Публичные методы
-    public void AddBuilding(BuildingData buildingData)
+    public void AddBuilding(BaseBuildingData buildingData)
     {
         if (!availableBuildings.Contains(buildingData))
         {
@@ -237,7 +237,7 @@ public class BuildingPanelUI : MonoBehaviour
         }
     }
 
-    public void RemoveBuilding(BuildingData buildingData)
+    public void RemoveBuilding(BaseBuildingData buildingData)
     {
         if (availableBuildings.Contains(buildingData))
         {

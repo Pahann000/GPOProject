@@ -20,13 +20,13 @@ public class BuildingButtonUI : MonoBehaviour
     [SerializeField] private GameObject tooltipObject;
     [SerializeField] private TextMeshProUGUI tooltipText;
 
-    private BuildingData _buildingData;
+    private BaseBuildingData _buildingData;
     private BuildingPanelUI _parentPanel;
 
     /// <summary>
     /// Инициализирует кнопку с данными здания
     /// </summary>
-    public void Initialize(BuildingData data, BuildingPanelUI parentPanel)
+    public void Initialize(BaseBuildingData data, BuildingPanelUI parentPanel)
     {
         _buildingData = data;
         _parentPanel = parentPanel;
@@ -51,14 +51,14 @@ public class BuildingButtonUI : MonoBehaviour
         UpdateAvailability();
     }
 
-    private void SetupTooltipAndCost(BuildingData data)
+    private void SetupTooltipAndCost(BaseBuildingData data)
     {
         string costString = "";
-        if (data.ConstructionCost != null)
+        if (data.ConstructionCost != null && data.ConstructionCost.Resources != null)
         {
-            foreach (var res in data.ConstructionCost)
+            foreach (var res in data.ConstructionCost.Resources)
             {
-                costString += $"{res.Type}: {res.Amount}";
+                costString += $"{res.Key}: {res.Value}\n";
             }
         }
 
@@ -105,7 +105,7 @@ public class BuildingButtonUI : MonoBehaviour
             return;
         }
 
-        bool canAfford = resourceSys != null && resourceSys.HasResources(_buildingData.Owner, _buildingData.ConstructionCost);
+        bool canAfford = resourceSys.HasResources(localPlayer, _buildingData.ConstructionCost);
 
         // Визуальная индикация доступности
         if (iconImage != null) iconImage.color = canAfford ? affordableColor : unaffordableColor;
@@ -113,11 +113,7 @@ public class BuildingButtonUI : MonoBehaviour
         if (button != null) button.interactable = canAfford;
 
         // TODO: Можно добавить дополнительные эффекты для недоступных зданий
-        //if (!canAfford)
-        //{
-        //    // Например, добавить затемнение
-        //    if (backgroundImage != null)
-        //        backgroundImage.color = new Color(0.3f, 0.3f, 0.3f, 0.7f);
-        //}
+        if (iconImage != null) iconImage.color = canAfford ? affordableColor : unaffordableColor;
+        if (button != null) button.interactable = canAfford;
     }
 }

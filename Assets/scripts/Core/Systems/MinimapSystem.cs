@@ -17,10 +17,8 @@ public class MinimapSystem : IGameSystem
     // Цвета для разных типов блоков на миникарте
     private Dictionary<BlockType, Color> _colorMap = new Dictionary<BlockType, Color>()
     {
-        { BlockType.Air, new Color(0.1f, 0.1f, 0.1f, 1f) }, // Темно-серый фон для раскопанного воздуха
-        { BlockType.Stone, new Color(0.5f, 0.5f, 0.5f, 1f) },
-        { BlockType.Dirt, new Color(0.4f, 0.2f, 0f, 1f) },
-        { BlockType.Gold, Color.yellow },
+        { BlockType.Air, new Color(0.1f, 0.1f, 0.1f, 1f) },
+        { BlockType.Rock, new Color(0.5f, 0.5f, 0.5f, 1f) },
         { BlockType.Minerals, Color.cyan },
         { BlockType.Ice, new Color(0.3f, 0.8f, 1f, 1f) },
         { BlockType.Root, Color.green }

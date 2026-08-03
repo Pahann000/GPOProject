@@ -1,4 +1,6 @@
-﻿/// <summary>
+﻿using UnityEngine;
+
+/// <summary>
 /// Класс, хранящий информацию о облоке.
 /// </summary>
 [System.Serializable]
@@ -34,6 +36,8 @@ public class Block : IDamagable
     /// <param name="map"> Родительский объект карты, на которой находится блок. </param>
     /// <param name="x"> Положение блока по X </param>
     /// <param name="y"> Положение блока по Y </param>
+    public Block(BlockData tileData, Map map, int x, int y) : this(tileData, x, y) { }
+
     public Block(BlockData tileData, int x, int y)
     {
         this.x = x;
@@ -46,25 +50,26 @@ public class Block : IDamagable
     {
         if (GameKernel.Instance != null)
         {
-            GameKernel.Instance.GetSystem<WorldSystem>().RequestPlaceBlock(x, y, BlockType.Air);
+            GameKernel.Instance.GetSystem<WorldSystem>()?.RequestPlaceBlock(x, y, BlockType.Air);
         }
     }
 
     private void DropResources(Player player)
     {
-        if (GameKernel.Instance != null)
+        if (player == null || GameKernel.Instance == null) return;
+
+        // Конвертируем тип блока в тип ресурса
+        ResourceType resType = tileData.type switch
         {
-            GameKernel.Instance.GetSystem<ResourceSystem>().AddResource(player , new ResourcePair(ResourceType.Rock, 1));
-        }
+            BlockType.Minerals => ResourceType.Minerals,
+            BlockType.Ice => ResourceType.Ice,
+            BlockType.Root => ResourceType.Root,
+            _ => ResourceType.Rock
+        };
+
+        GameKernel.Instance.GetSystem<ResourceSystem>()?.AddResource(player, new ResourcePair(resType, 1));
     }
 
-    /// <summary>
-    /// Наносит урон блоку.
-    /// После достижения определённого количества здоровья ломается и передаёт ресурсы игроку в инвентарь.
-    /// </summary>
-    /// <param name="amount"> Количество урона </param>
-    /// <param name="Damager"> Игрок, нанёсший урон. </param>
-    /// <param name="unitType"> Тип юнита, нанёсшего урон. </param>
     public void TakeDamage(int amount, Player Damager, UnitTypeName unitType)
     {
         if (unitType == UnitTypeName.Miner)

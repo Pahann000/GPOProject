@@ -206,8 +206,8 @@ public class WorldSystem : NetworkBehaviour, IGameSystem
 
         string blockName = blockType.ToString().ToLower();
 
-        // На ресурсах (золото, руда, лед) строить нельзя — их нужно сначала добыть
-        if (blockName.Contains("gold") || blockName.Contains("mineral") ||
+        // На ресурсах (руда, лед) строить нельзя — их нужно сначала добыть
+        if (blockName.Contains("mineral") ||
             blockName.Contains("ice") || blockName.Contains("root"))
         {
             return false;

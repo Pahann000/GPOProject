@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8668323b0381f74b8c0026bd3df4a89, type: 3}
+  m_Name: ResearchLabData
+  m_EditorClassIdentifier: 
+  DisplayName: "\u041B\u0430\u0431\u043E\u0440\u0430\u0442\u043E\u0440\u0438\u044F"
+  Icon: {fileID: -5189775858192598490, guid: f4c3aa2507e25a747866682074398b76, type: 3}
+  Prefab: {fileID: 4555110687520847692, guid: b61e806f0909c8c48a29862d485c4378, type: 3}
+  MaxHealth: 100
+  Width: 2
+  Height: 2
+  ConstructionCost:
+    StorageLimits:
+    - Type: 0
+      Amount: 200
+    - Type: 1
+      Amount: 50
+  PlacementRules: []
+  ExtendType: 0
+  BonusValue: 0
+  StoredResource: 0
+  AvailableProjects: []

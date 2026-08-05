@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73730e6f2ecd0ee488914d22bea28615, type: 3}
+  m_Name: TurretData
+  m_EditorClassIdentifier: 
+  DisplayName: "\u0422\u0443\u0440\u0435\u043B\u044C"
+  Icon: {fileID: 8588159847323269275, guid: 2f38f281ff2f6e045ad06452d205f5c4, type: 3}
+  Prefab: {fileID: 4555110687520847692, guid: 3866903df8115134cbfea74ba8aaea7f, type: 3}
+  MaxHealth: 80
+  Width: 1
+  Height: 2
+  ConstructionCost:
+    StorageLimits:
+    - Type: 0
+      Amount: 100
+  PlacementRules: []
+  Range: 5
+  Damage: 10
+  Cooldown: 1
+  TargetMask:
+    serializedVersion: 2
+    m_Bits: 0
+  IsOneTimeTrap: 0
+  ProjectilePrefab: {fileID: 0}
+  ShootEffect: {fileID: 0}
+  ShootSound: {fileID: 0}

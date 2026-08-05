@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 507f8c2acfafc9b4e95a8de15101de2d, type: 3}
+  m_Name: GreenhouseData
+  m_EditorClassIdentifier: 
+  DisplayName: "\u0422\u0435\u043F\u043B\u0438\u0446\u0430"
+  Icon: {fileID: -8044281618938180540, guid: abee4932dbe581b4ca4c44ef97ad3ac9, type: 3}
+  Prefab: {fileID: 4555110687520847692, guid: 2a654eee09809394ba883e8d2ce3a6bf, type: 3}
+  MaxHealth: 100
+  Width: 2
+  Height: 2
+  ConstructionCost:
+    StorageLimits:
+    - Type: 1
+      Amount: 20
+    - Type: 0
+      Amount: 30
+  PlacementRules: []
+  InputResources:
+    StorageLimits:
+    - Type: 1
+      Amount: 1
+  OutputResources:
+    StorageLimits:
+    - Type: 5
+      Amount: 3
+  ProductionInterval: 5
+  SpawnsUnits: 0
+  UnitPrefab: {fileID: 0}
+  UnitsPerCycle: 1
+  SpawnPoint: {fileID: 0}

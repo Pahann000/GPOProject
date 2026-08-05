@@ -28,9 +28,6 @@ public class BuildingPanelUI : MonoBehaviour
         _resourceManager = GameKernel.Instance.GetSystem<ResourceSystem>();
 
         GameKernel.Instance.EventBus.Subscribe<ResourceChangedEvent>(OnResourceChangedBus);
-
-        if (toggleButton != null)
-            toggleButton.onClick.AddListener(TogglePanel);
         
         InitializeButtons();
         

@@ -350,6 +350,15 @@ MonoBehaviour:
   spawnPrefabs:
   - {fileID: 3889290135136103836, guid: 1cabf8b4e07d252459e30b1925bb1369, type: 3}
   - {fileID: 438654078453454141, guid: ff1672acd23bdf94aa0663f4bc4e1f9a, type: 3}
+  - {fileID: 4555110687520847692, guid: 2a654eee09809394ba883e8d2ce3a6bf, type: 3}
+  - {fileID: 4555110687520847692, guid: 30f1b0a0a7c7eaf49a6a45e774d89abe, type: 3}
+  - {fileID: 4555110687520847692, guid: c22b149df5e435349acc0934dd499ad3, type: 3}
+  - {fileID: 4555110687520847692, guid: 8d8fbc8690444644aa428a5221490e8c, type: 3}
+  - {fileID: 4555110687520847692, guid: 89f854db8089c094f9739d70b0488f07, type: 3}
+  - {fileID: 4555110687520847692, guid: ed6f9f6aa1598c74ea79d6c9454b8997, type: 3}
+  - {fileID: 4555110687520847692, guid: b61e806f0909c8c48a29862d485c4378, type: 3}
+  - {fileID: 4555110687520847692, guid: 54e971b2030fc524b88e0bec96b75361, type: 3}
+  - {fileID: 4555110687520847692, guid: 3866903df8115134cbfea74ba8aaea7f, type: 3}
   exceptionsDisconnect: 1
   snapshotSettings:
     bufferTimeMultiplier: 2

@@ -7,19 +7,14 @@ public class ResourcePanelUI : MonoBehaviour
     [SerializeField] private GameObject resourceDisplayPrefab;
     [SerializeField] private Transform resourcesContainer;
 
-    [Header("Resource Icons")]
-    [SerializeField] private Sprite metalIcon;
-    [SerializeField] private Sprite mineralsIcon;
-    [SerializeField] private Sprite IceIcon;
-    [SerializeField] private Sprite foodIcon;
-    [SerializeField] private Sprite energyIcon;
-
     private Dictionary<ResourceType, ResourceDisplayController> resourceControllers = new Dictionary<ResourceType, ResourceDisplayController>();
+    private ResourceSystem _resourceSystem;
 
     private void Start()
     {
         if (GameKernel.Instance != null)
         {
+            _resourceSystem = GameKernel.Instance.GetSystem<ResourceSystem>();
             GameKernel.Instance.EventBus.Subscribe<ResourceChangedEvent>(OnResourceChangedBus);
         }
 
@@ -37,11 +32,12 @@ public class ResourcePanelUI : MonoBehaviour
 
     private void InitializeResourceDisplays()
     {
-        // Очистите контейнер, если нужно
+        if (resourcesContainer == null) resourcesContainer = transform;
+        if (resourceDisplayPrefab == null) return;
+
         foreach (Transform child in resourcesContainer)
             Destroy(child.gameObject);
 
-        // Создайте отображение для каждого типа ресурса
         foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
         {
             GameObject resourceGO = Instantiate(resourceDisplayPrefab, resourcesContainer);
@@ -49,6 +45,7 @@ public class ResourcePanelUI : MonoBehaviour
 
             if (controller != null)
             {
+                // Берём сгенерированные C#-спрайты
                 Sprite icon = GetIconForResourceType(type);
                 controller.Initialize(type, icon);
                 resourceControllers[type] = controller;
@@ -58,13 +55,9 @@ public class ResourcePanelUI : MonoBehaviour
 
     private void OnResourceChangedBus(ResourceChangedEvent evt)
     {
-        Debug.Log($"[ResourcePanelUI] Получено событие об изменении {evt.Type} на {evt.Delta}");
-
         if (resourceControllers.TryGetValue(evt.Type, out var controller))
         {
             controller.UpdateDisplay(evt.NewAmount, evt.Limit);
-
-            // controller.PlayChangeAnimation(evt.Delta > 0);
         }
     }
 
@@ -87,11 +80,11 @@ public class ResourcePanelUI : MonoBehaviour
     {
         switch (type)
         {
-            case ResourceType.Rock: return metalIcon;
-            case ResourceType.Minerals: return mineralsIcon;
-            case ResourceType.Ice: return IceIcon;
-            case ResourceType.Root: return foodIcon;
-            case ResourceType.Energy: return energyIcon;
+            case ResourceType.Ice: return UISpriteGenerator.IceIcon;
+            case ResourceType.Rock: return UISpriteGenerator.RockIcon;
+            case ResourceType.Minerals: return UISpriteGenerator.MineralIcon;
+            case ResourceType.Root:
+            case ResourceType.Energy: return UISpriteGenerator.EnergyIcon;
             default: return null;
         }
     }

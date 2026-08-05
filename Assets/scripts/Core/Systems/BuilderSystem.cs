@@ -142,38 +142,48 @@ public class BuilderSystem : IGameSystem
     }
 
     /// <summary>
-    /// Комплексная проверка: Ресурсы -> Правила -> Карта (Фундамент и Воздух) -> Физические коллизии.
+    /// ВРЕМЕННЫЙ ТЕСТОВЫЙ РЕЖИМ: Игнорирует проверки почвы, воздуха и коллизий.
+    /// Разрешает строить абсолютно в любом месте!
     /// </summary>
     private bool CanPlaceBuilding()
     {
-        if (_currentPreview == null || _selectedBuilding == null) return false;
-
-        Vector2 pos = _currentPreview.transform.position;
-        int width = _selectedBuilding.Width;
-        int height = _selectedBuilding.Height;
-
-        // 1. Проверка ресурсов
-        Player localPlayer = Mirror.NetworkClient.localPlayer != null
-            ? Mirror.NetworkClient.localPlayer.GetComponent<Player>()
-            : null;
-
-        if (localPlayer != null && _resourceSystem != null)
-        {
-            if (!_resourceSystem.HasResources(localPlayer, _selectedBuilding.ConstructionCost))
-                return false;
-        }
-
-        // 2. Проверка правил размещения (Placement Rules)
-        if (!CheckPlacementRules(pos)) return false;
-
-        // 3. Проверка сетки блоков карты (Воздух внутри и Скала в фундаменте)
-        if (!CheckBuildableOnMap(pos, width, height)) return false;
-
-        // 4. Проверка пересечения с другими физическими зданиями
-        if (!CheckNoBuildingCollision(pos, width, height)) return false;
-
-        return true;
+        // Если есть префаб и выбранное здание — всегда разрешаем постройку
+        return _currentPreview != null && _selectedBuilding != null;
     }
+
+    ///// <summary>
+    ///// Комплексная проверка: Ресурсы -> Правила -> Карта (Фундамент и Воздух) -> Физические коллизии.
+    ///// </summary>
+    //private bool CanPlaceBuilding()
+    //{
+    //    if (_currentPreview == null || _selectedBuilding == null) return false;
+
+    //    Vector2 pos = _currentPreview.transform.position;
+    //    int width = _selectedBuilding.Width;
+    //    int height = _selectedBuilding.Height;
+
+    //    // 1. Проверка ресурсов
+    //    Player localPlayer = Mirror.NetworkClient.localPlayer != null
+    //        ? Mirror.NetworkClient.localPlayer.GetComponent<Player>()
+    //        : null;
+
+    //    if (localPlayer != null && _resourceSystem != null)
+    //    {
+    //        if (!_resourceSystem.HasResources(localPlayer, _selectedBuilding.ConstructionCost))
+    //            return false;
+    //    }
+
+    //    // 2. Проверка правил размещения (Placement Rules)
+    //    if (!CheckPlacementRules(pos)) return false;
+
+    //    // 3. Проверка сетки блоков карты (Воздух внутри и Скала в фундаменте)
+    //    if (!CheckBuildableOnMap(pos, width, height)) return false;
+
+    //    // 4. Проверка пересечения с другими физическими зданиями
+    //    if (!CheckNoBuildingCollision(pos, width, height)) return false;
+
+    //    return true;
+    //}
 
     private bool CheckPlacementRules(Vector2 position)
     {
@@ -234,47 +244,75 @@ public class BuilderSystem : IGameSystem
         return true;
     }
 
+    // ВРЕМЕННЫЙ ТЕСТОВЫЙ РЕЖИМ
     private void PlaceBuilding()
     {
-        if (!CanPlaceBuilding() || _selectedBuilding == null) return;
+        if (_selectedBuilding == null) return;
 
-        Vector2 pos = _currentPreview.transform.position;
+        Vector2 position = _currentPreview.transform.position;
 
+        // Находим локального игрока на этом ПК
         Player localPlayer = Mirror.NetworkClient.localPlayer != null
             ? Mirror.NetworkClient.localPlayer.GetComponent<Player>()
             : null;
 
-        if (localPlayer == null || _resourceSystem == null) return;
-
-        if (_resourceSystem.TrySpendResources(localPlayer, _selectedBuilding.ConstructionCost))
+        if (localPlayer == null)
         {
-            GameObject buildingObj = Object.Instantiate(_selectedBuilding.Prefab, pos, Quaternion.identity);
-            buildingObj.layer = LayerMask.NameToLayer("Building");
-
-            Building building = buildingObj.GetComponent<Building>();
-            if (building != null)
-            {
-                _selectedBuilding.Owner = localPlayer;
-                building.Initialize(_selectedBuilding);
-                building.NotifyBuilt();
-            }
-
-            BoxCollider2D collider = buildingObj.GetComponent<BoxCollider2D>();
-            if (collider == null)
-            {
-                collider = buildingObj.AddComponent<BoxCollider2D>();
-                collider.size = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
-            }
-
-            // Если запущен сервер — спавним по сети Mirror
-            if (Mirror.NetworkServer.active)
-            {
-                Mirror.NetworkServer.Spawn(buildingObj);
-            }
-
-            CancelBuilding();
+            Debug.LogError($"[{SystemName}] Ошибка: Локальный игрок не найден на клиенте!");
+            return;
         }
+
+        // Отправляем сетевую команду серверу (передаем имя ассета здания и позицию)
+        string buildingDataName = _selectedBuilding.name;
+        localPlayer.CmdRequestPlaceBuilding(buildingDataName, position);
+
+        Debug.Log($"[{SystemName}] Запрос на постройку {buildingDataName} отправлен на сервер.");
+
+        // Закрываем превью локально
+        CancelBuilding();
     }
+
+    //private void PlaceBuilding()
+    //{
+    //    if (!CanPlaceBuilding() || _selectedBuilding == null) return;
+
+    //    Vector2 pos = _currentPreview.transform.position;
+
+    //    Player localPlayer = Mirror.NetworkClient.localPlayer != null
+    //        ? Mirror.NetworkClient.localPlayer.GetComponent<Player>()
+    //        : null;
+
+    //    if (localPlayer == null || _resourceSystem == null) return;
+
+    //    if (_resourceSystem.TrySpendResources(localPlayer, _selectedBuilding.ConstructionCost))
+    //    {
+    //        GameObject buildingObj = Object.Instantiate(_selectedBuilding.Prefab, pos, Quaternion.identity);
+    //        buildingObj.layer = LayerMask.NameToLayer("Building");
+
+    //        Building building = buildingObj.GetComponent<Building>();
+    //        if (building != null)
+    //        {
+    //            _selectedBuilding.Owner = localPlayer;
+    //            building.Initialize(_selectedBuilding);
+    //            building.NotifyBuilt();
+    //        }
+
+    //        BoxCollider2D collider = buildingObj.GetComponent<BoxCollider2D>();
+    //        if (collider == null)
+    //        {
+    //            collider = buildingObj.AddComponent<BoxCollider2D>();
+    //            collider.size = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
+    //        }
+
+    //        // Если запущен сервер — спавним по сети Mirror
+    //        if (Mirror.NetworkServer.active)
+    //        {
+    //            Mirror.NetworkServer.Spawn(buildingObj);
+    //        }
+
+    //        CancelBuilding();
+    //    }
+    //}
 
     public bool IsPlacingBuilding() => _isPlacing;
 }

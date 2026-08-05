@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Система миникарты. Генерирует и обновляет Texture2D на основе событий карты.
+/// </summary>
 public class MinimapSystem : IGameSystem
 {
     public string SystemName => "Minimap System";
@@ -28,32 +31,19 @@ public class MinimapSystem : IGameSystem
     {
         _kernel = kernel;
 
-        var world = _kernel.GetSystem<WorldSystem>();
-        if (world == null || world.WorldMap == null) return;
-
-        int width = world.WorldMap.Width;
-        int height = world.WorldMap.Height;
-
-        // Создаем текстуру размером с мир
-        MapTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
-        MapTexture.filterMode = FilterMode.Point; // Делаем пиксели четкими, без размытия
-
-        // Изначально заливаем всё черным цветом (Неизведанная территория)
-        Color[] fillPixels = new Color[width * height];
-        for (int i = 0; i < fillPixels.Length; i++) fillPixels[i] = Color.black;
-        MapTexture.SetPixels(fillPixels);
-        MapTexture.Apply();
-
         // Подписываемся на события генерации
         _kernel.EventBus.Subscribe<ChunkGeneratedEvent>(OnChunkGenerated);
         _kernel.EventBus.Subscribe<BlockChangedEvent>(OnBlockChanged);
-
-        Debug.Log($"[{SystemName}] Миникарта инициализирована ({width}x{height}).");
     }
 
     public void Tick(float deltaTime)
     {
         if (!IsActive) return;
+
+        if (MapTexture == null)
+        {
+            TryCreateTexture();
+        }
 
         // Применяем изменения пикселей батчем 1 раз за кадр (Оптимизация)
         if (_needsApply)
@@ -67,16 +57,52 @@ public class MinimapSystem : IGameSystem
 
     public void Shutdown()
     {
-        _kernel.EventBus.Unsubscribe<ChunkGeneratedEvent>(OnChunkGenerated);
-        _kernel.EventBus.Unsubscribe<BlockChangedEvent>(OnBlockChanged);
+        if (_kernel != null)
+        {
+            _kernel.EventBus.Unsubscribe<ChunkGeneratedEvent>(OnChunkGenerated);
+            _kernel.EventBus.Unsubscribe<BlockChangedEvent>(OnBlockChanged);
+        }
+
         if (MapTexture != null) Object.Destroy(MapTexture);
+    }
+
+    /// <summary>
+    /// Создает текстуру миникарты, как только WorldMap становится доступен.
+    /// </summary>
+    private bool TryCreateTexture()
+    {
+        var world = _kernel.GetSystem<WorldSystem>();
+        if (world == null || world.WorldMap == null) return false;
+
+        int width = world.WorldMap.Width;
+        int height = world.WorldMap.Height;
+
+        if (width <= 0 || height <= 0) return false;
+
+        MapTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        MapTexture.filterMode = FilterMode.Point; // Четкие пиксели без размытия
+
+        // Изначально заливаем черным (Неизведанная территория)
+        Color[] fillPixels = new Color[width * height];
+        for (int i = 0; i < fillPixels.Length; i++) fillPixels[i] = Color.black;
+        MapTexture.SetPixels(fillPixels);
+        MapTexture.Apply();
+
+        Debug.Log($"[{SystemName}] Текстура миникарты успешно создана ({width}x{height}).");
+        return true;
     }
 
     // --- Обработка событий ---
 
     private void OnChunkGenerated(ChunkGeneratedEvent evt)
     {
+        if (MapTexture == null)
+        {
+            if (!TryCreateTexture()) return;
+        }
+
         var world = _kernel.GetSystem<WorldSystem>();
+        if (world == null) return;
 
         int startX = evt.ChunkX * evt.ChunkSize;
         int startY = evt.ChunkY * evt.ChunkSize;
@@ -101,6 +127,8 @@ public class MinimapSystem : IGameSystem
 
     private void OnBlockChanged(BlockChangedEvent evt)
     {
+        if (MapTexture == null) return;
+
         Color pixelColor = _colorMap.ContainsKey(evt.NewType) ? _colorMap[evt.NewType] : Color.magenta;
         MapTexture.SetPixel(evt.X, evt.Y, pixelColor);
         _needsApply = true;

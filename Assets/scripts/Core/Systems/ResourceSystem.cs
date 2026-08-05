@@ -37,12 +37,30 @@ public class ResourceSystem : IGameSystem
     }
 
     /// <summary>
-    /// Задает начальные значения и лимиты для всех существующих типов ресурсов.
+    /// Регистрирует нового игрока в экономической системе, задает базовые лимиты складов
+    /// и начисляет стартовый капитал ресурсов.
     /// </summary>
     public void RegisterPlayer(Player player)
     {
-        ResourceBundle StartResourceBundle = new ResourceBundle();
-        _playersResources.Add(player, StartResourceBundle);
+        if (player == null || _playersResources.ContainsKey(player)) return;
+
+        ResourceBundle startBundle = new ResourceBundle();
+        _playersResources.Add(player, startBundle);
+
+        // 1. Устанавливаем базовые лимиты складов (1000 ед. для каждого ресурса)
+        foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
+        {
+            startBundle.StorageLimits.Add(new ResourcePair(type, 1000));
+        }
+
+        // 2. Начисляем стартовый капитал
+        AddResource(player, new ResourcePair(ResourceType.Rock, 300));     // Камень для стройки
+        AddResource(player, new ResourcePair(ResourceType.Minerals, 150)); // Минералы для турелей/заводов
+        AddResource(player, new ResourcePair(ResourceType.Ice, 100));      // Лёд для теплиц/генераторов
+        AddResource(player, new ResourcePair(ResourceType.Energy, 50));    // Энергия
+        AddResource(player, new ResourcePair(ResourceType.Root, 20));      // Еда/Корень
+
+        Debug.Log($"[{SystemName}] Игрок {player.netId} зарегистрирован. Выданы стартовые ресурсы.");
     }
 
     /// <summary>

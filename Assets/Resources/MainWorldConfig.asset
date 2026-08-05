@@ -12,15 +12,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17485e5b94b8f0c4382e47851cf8247f, type: 3}
   m_Name: MainWorldConfig
   m_EditorClassIdentifier: 
-  WorldHeight: 5
-  WorldWidth: 5
-  HighAddition: 5
+  WorldHeight: 100
+  WorldWidth: 100
   ChunkSize: 16
-  BlockAtlas: {fileID: 0}
-  AtlasMaterial: {fileID: 0}
+  SeedString: 
+  BlockAtlas: {fileID: 11400000, guid: 9035713f356193c4a91f63e279b97d6d, type: 2}
+  AtlasMaterial: {fileID: 2100000, guid: 33f90f5f537ab8c4db981c8c401ae8e1, type: 2}
   CaveSize: 0.25
   CaveFreq: 0.05
-  TerrainFreq: 0.04
-  HighMultiplier: 25
-  GoldFrequency: 0.08
-  GoldSize: 0.8
+  TunnelSettings:
+    numberOfStartingPoints: 10
+    maxStepsPerTunnel: 100
+    tunnelRadius: 2
+    branchProbability: 0.1
+    maxBranchDepth: 3
+    minY: 10
+    maxY: 90
+  MineralWarpSettings:
+    frequency: 0.05
+    threshold: 0.6
+    warpAmplitude: 5
+    warpFrequency: 0.02
+    seedOffset: 0
+  RootWarpSettings:
+    frequency: 0.04
+    threshold: 0.5
+    warpAmplitude: 5
+    warpFrequency: 0.02
+    seedOffset: 1000
+  IceWarpSettings:
+    frequency: 0.03
+    threshold: 0.7
+    warpAmplitude: 5
+    warpFrequency: 0.02
+    seedOffset: 2000
+  CanyonErosionSettings:
+    numberOfCanyons: 15
+    maxDepth: 30
+    canyonRadius: 2
+    turnProbability: 0.3
+    iterations: 10

@@ -132,7 +132,7 @@ public static class Pathfinding
         Block blockUnder = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockInfo(x, y - 1);
         Block blockUnderUnder = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockInfo(x, y - 2);
 
-        return block != null && block.tileData.type == BlockType.Air && 
-            (blockUnder.tileData.type != BlockType.Air || blockUnderUnder.tileData.type != BlockType.Air);
+        return block != null && block.tileData.Type == BlockType.Air && 
+            (blockUnder.tileData.Type != BlockType.Air || blockUnderUnder.tileData.Type != BlockType.Air);
     }
 }

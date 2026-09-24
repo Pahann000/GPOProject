@@ -13,6 +13,7 @@ public class UISystem : IGameSystem
 
     public GameKernel _kernel;
     public GameObject _uiInstance;
+    public Player LocalPlayer;
 
     public UIManager Manager { get; private set; }
 
@@ -25,6 +26,11 @@ public class UISystem : IGameSystem
         SpawnUIPrefab();
 
         Debug.Log($"[{SystemName}] Динамически создана и инициализирована.");
+    }
+
+    public void InitialiseLocalPlyer(Player player)
+    {
+        LocalPlayer = player;
     }
 
     public void Tick(float deltaTime)
@@ -73,6 +79,7 @@ public class UISystem : IGameSystem
         if (Manager == null)
         {
             Debug.LogWarning($"[{SystemName}] На префабе 'MainUIPrefab' нет компонента UIManager!");
+            return;
         }
     }
 }

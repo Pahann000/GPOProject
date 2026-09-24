@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
+using Mirror;
 
 /// <summary>
 /// Управляет процессом размещения зданий на карте.
 /// Обрабатывает пользовательский ввод, проверяет возможность постройки и списывает ресурсы.
 /// </summary>
-public class BuilderSystem : IGameSystem
+public class BuilderSystem : NetworkBehaviour, IGameSystem
 {
     public string SystemName => "Builder System";
     public bool IsActive { get; set; } = true;
@@ -18,9 +19,22 @@ public class BuilderSystem : IGameSystem
     private GameObject _currentPreview;
     private SpriteRenderer _previewRenderer;
     private Camera _mainCamera;
+    [SerializeField] private BuildingAtlas _buildingAtlas;
 
     // TODO: Вынести настройки слоев и материалов в ScriptableObject, чтобы не "хардкодить" их имена в скрипте.
     private LayerMask _obstacleLayer;
+
+    private void Start()
+    {
+        if (GameKernel.Instance != null)
+        {
+            GameKernel.Instance.RegisterSystem(this);
+        }
+        else
+        {
+            Debug.LogError($"[{SystemName}] GameKernel не найден!");
+        }
+    }
 
     public void Initialize(GameKernel kernel)
     {
@@ -47,18 +61,19 @@ public class BuilderSystem : IGameSystem
         UpdatePreviewPosition();
         UpdatePreviewVisuals();
 
-        //if (Input.GetMouseButtonDown(0))
-        //{
-        //    if (CanPlaceBuilding())
-        //    {
-        //        PlaceBuilding();
-        //    }
-        //}
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (CanPlaceBuilding())
+            {
+                PlaceBuilding(_selectedBuilding.BuildingTypeName, _currentPreview.transform.position);
+                CancelBuilding();
+            }
+        }
 
-        //if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
-        //{
-        //    CancelBuilding();
-        //}
+        if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
+        {
+            CancelBuilding();
+        }
     }
 
     public void FixedTick(float fixedDeltaTime) { }
@@ -71,18 +86,13 @@ public class BuilderSystem : IGameSystem
     /// <summary>
     /// Активирует режим строительства выбранного здания. Вызывается из UI кнопок.
     /// </summary>
-    /// <param name="buildingData">Данные о здании (цена, префаб, иконка).</param>
+    /// <param name="buildingData">Данные о здании (цена, иконка).</param>
+    [Client]
     public void StartPlacement(BuildingData buildingData)
     {
         if (buildingData == null) return;
 
         CancelBuilding(); // Сбрасываем предыдущую стройку
-
-        if (!_resourceSystem.HasResources(buildingData.Owner, buildingData.ConstructionCost))
-        {
-            // TODO: Вызвать событие "UINotificationEvent", чтобы показать всплывашку "Нет ресурсов".
-            return;
-        }
 
         _selectedBuilding = buildingData;
         CreatePreview();
@@ -92,6 +102,7 @@ public class BuilderSystem : IGameSystem
     /// <summary>
     /// Отменяет текущий режим стройки и уничтожает голограмму-превью.
     /// </summary>
+    [Client]
     public void CancelBuilding()
     {
         if (_currentPreview != null)
@@ -106,6 +117,7 @@ public class BuilderSystem : IGameSystem
     /// <summary>
     /// Создает визуальную "голограмму" здания, которая следует за курсором.
     /// </summary>
+    [Client]
     private void CreatePreview()
     {
         _currentPreview = new GameObject("BuildingPreview");
@@ -147,7 +159,7 @@ public class BuilderSystem : IGameSystem
     }
 
     /// <summary>
-    /// Выполняет полную проверку: Ресурсы -> Препятствия -> Почва.
+    /// Выполняет полную проверку: Препятствия -> Почва.
     /// </summary>
     private bool CanPlaceBuilding()
     {
@@ -156,17 +168,14 @@ public class BuilderSystem : IGameSystem
         Vector2 checkPos = _currentPreview.transform.position;
         Vector2 checkSize = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
 
-        // 1. Проверка ресурсов
-        //if (!_resourceSystem.HasResources(_selectedBuilding.ConstructionCost)) return false;
-
-        // 2. Проверка препятствий (пересечение с другими зданиями)
+        // 1. Проверка препятствий (пересечение с другими зданиями)
         Collider2D[] overlaps = Physics2D.OverlapBoxAll(checkPos, checkSize, 0, _obstacleLayer);
         foreach (var col in overlaps)
         {
             if (!col.isTrigger && col.gameObject != _currentPreview) return false;
         }
 
-        // 3. Проверка взаимодействия с миром (опора под зданием)
+        // 2. Проверка взаимодействия с миром (опора под зданием)
         var world = _kernel.GetSystem<WorldSystem>();
         if (world != null)
         {
@@ -179,32 +188,42 @@ public class BuilderSystem : IGameSystem
         return true;
     }
 
+    private GameObject GetBuildingByName(BuildingTypeNames buildingTypeName)
+    {
+        switch(buildingTypeName){
+            case BuildingTypeNames.House:
+                return _buildingAtlas.House;
+        }
+        return null;
+    }
+
     /// <summary>
     /// Окончательное размещение здания: списание ресурсов и создание объекта на сцене.
     /// </summary>
-    private void PlaceBuilding(Player player)
+    [Command(requiresAuthority = false)]
+    private void PlaceBuilding(BuildingTypeNames buildingTypeName, Vector2 position)
     {
-        Vector2 position = _currentPreview.transform.position;
-
-        if (_resourceSystem.TrySpendResources(player ,_selectedBuilding.ConstructionCost))
+        if (true)//_resourceSystem.TrySpendResources(player ,_selectedBuilding.ConstructionCost)
         {
-            GameObject buildingObj = Object.Instantiate(_selectedBuilding.Prefab, position, Quaternion.identity);
+            GameObject prefab = GetBuildingByName(buildingTypeName);
+            GameObject buildingObj = Object.Instantiate(prefab, position, Quaternion.identity);
 
             // Жестко задаем слой, чтобы SelectionSystem мог его найти
             buildingObj.layer = LayerMask.NameToLayer("Building");
 
             Building building = buildingObj.GetComponent<Building>();
-            if (building != null) building.Initialize(_selectedBuilding);
 
             BoxCollider2D collider = buildingObj.GetComponent<BoxCollider2D>();
             if (collider == null)
             {
                 collider = buildingObj.AddComponent<BoxCollider2D>();
-                collider.size = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
+                collider.size = new Vector2(building.Data.Width, building.Data.Height);
             }
 
+            NetworkServer.Spawn(buildingObj);
+
             // TODO: Отправить событие "BuildingPlacedEvent" в EventBus для звуков и эффектов
-            CancelBuilding();
+            //CancelBuilding();
         }
     }
 

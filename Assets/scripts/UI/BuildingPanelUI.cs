@@ -17,7 +17,6 @@ public class BuildingPanelUI : MonoBehaviour
     [SerializeField] private List<BuildingData> availableBuildings = new List<BuildingData>();
 
     private BuilderSystem _builderSystem;
-    private ResourceSystem _resourceManager;
     private bool _isPanelOpen = false;
 
     private Dictionary<BuildingData, Button> _buildingButtons = new Dictionary<BuildingData, Button>();
@@ -25,7 +24,6 @@ public class BuildingPanelUI : MonoBehaviour
     void Start()
     {
         _builderSystem = GameKernel.Instance.GetSystem<BuilderSystem>();
-        _resourceManager = GameKernel.Instance.GetSystem<ResourceSystem>();
 
         GameKernel.Instance.EventBus.Subscribe<ResourceChangedEvent>(OnResourceChangedBus);
 
@@ -85,10 +83,6 @@ public class BuildingPanelUI : MonoBehaviour
     // Для обновления доступности кнопок при изменении ресурсов
     void Update()
     {
-        if (_isPanelOpen && _resourceManager != null)
-        {
-            UpdateButtonsAvailability();
-        }
     }
 
     void UpdateButtonsAvailability()
@@ -180,14 +174,15 @@ public class BuildingPanelUI : MonoBehaviour
 
     private void UpdateButtonAvailability(BuildingData data, Button button)
     {
-        if (button == null || data == null || _resourceManager == null) return;
+        if (button == null || data == null) return;
 
         // Проверяем, есть ли стоимость строительства
         bool hasCost = data.ConstructionCost != null && data.ConstructionCost.Length > 0;
 
         if (hasCost)
         {
-            bool canAfford = _resourceManager.HasResources(data.Owner, data.ConstructionCost);
+            Player player = GameKernel.Instance.GetSystem<UISystem>().LocalPlayer;
+            bool canAfford = player.Resources.HasResources(data.ConstructionCost);
             button.interactable = canAfford;
 
             // Визуальная индикация
@@ -222,9 +217,9 @@ public class BuildingPanelUI : MonoBehaviour
     private void OnDestroy()
     {
         if (GameKernel.Instance != null)
-    {
-        GameKernel.Instance.EventBus.Unsubscribe<ResourceChangedEvent>(OnResourceChangedBus);
-    }
+        {
+            GameKernel.Instance.EventBus.Unsubscribe<ResourceChangedEvent>(OnResourceChangedBus);
+        }
     }
 
     // Публичные методы

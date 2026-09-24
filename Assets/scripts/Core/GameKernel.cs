@@ -42,9 +42,6 @@ public class GameKernel : NetworkBehaviour
         DontDestroyOnLoad(gameObject);
 
         EventBus = new EventBus();
-
-        // Сборка всех модулей при запуске игры
-        RegisterSystems();
     }
 
     private void Start()
@@ -104,6 +101,9 @@ public class GameKernel : NetworkBehaviour
     {
         base.OnStartServer();
 
+        RegisterSystem(new ResourceSystem());
+        RegisterSystem(new UnitSystem());
+
         GameObject go = Instantiate(networkSystemsPrefab);
         NetworkServer.Spawn(go);
     }
@@ -111,6 +111,8 @@ public class GameKernel : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
+
+        //RegisterSystem(new SelectionSystem());
 
         Debug.Log("[Kernel] Клиент подключён");
     }
@@ -165,22 +167,5 @@ public class GameKernel : NetworkBehaviour
 
         Debug.LogError($"[Kernel] Запрошенная система не найдена: {type.Name}");
         return null;
-    }
-
-    /// <summary>
-    /// Метод-сборщик. Здесь определяется порядок запуска всех модулей игры.
-    /// </summary>
-    private void RegisterSystems()
-    {
-        Debug.Log("[Kernel] Регистрация систем...");
-        RegisterSystem(new ResourceSystem());
-
-        RegisterSystem(new UISystem());
-        
-        RegisterSystem(new BuilderSystem());
-        
-        RegisterSystem(new SelectionSystem());
-        
-        RegisterSystem(new UnitSystem());
     }
 }

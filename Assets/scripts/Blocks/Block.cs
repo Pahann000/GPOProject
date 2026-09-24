@@ -39,7 +39,7 @@ public class Block : IDamagable
         this.x = x;
         this.y = y;
         this.tileData = tileData;
-        CurrentHealth = tileData.health;
+        CurrentHealth = tileData.Health;
     }
 
     private void Destroy()
@@ -54,7 +54,7 @@ public class Block : IDamagable
     {
         if (GameKernel.Instance != null)
         {
-            GameKernel.Instance.GetSystem<ResourceSystem>().AddResource(player , new ResourcePair(ResourceType.Rock, 1));
+            GameKernel.Instance.GetSystem<ResourceSystem>().AddResource(player , new ResourcePair(tileData.DropResourceType, 1));
         }
     }
 

@@ -19,7 +19,7 @@ public class Player : NetworkBehaviour, IChunkObserver
     /// <summary>
     /// Локальное хранилище ресурсов для работы UI.
     /// </summary>
-    public ObservableDictionary<ResourceType, int> Resources { get; } = new ObservableDictionary<ResourceType, int>();
+    public ResourceBundle Resources { get; } = new();
 
     /// <summary>
     /// Положение игрока по X.
@@ -60,6 +60,10 @@ public class Player : NetworkBehaviour, IChunkObserver
     {
         base.OnStartClient();
 
+        UISystem uiSystem = new UISystem();
+        uiSystem.InitialiseLocalPlyer(this);
+        GameKernel.Instance.RegisterSystem(uiSystem);
+
         RegisterClient();
     }
 
@@ -93,7 +97,7 @@ public class Player : NetworkBehaviour, IChunkObserver
         IDamagable target = null;
         Block selectedBlock = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockObj(((int)position.x), ((int)position.y));
 
-        if (selectedBlock.tileData.type != BlockType.Air)
+        if (selectedBlock.tileData.Type != BlockType.Air)
         {
             target = selectedBlock;
         }

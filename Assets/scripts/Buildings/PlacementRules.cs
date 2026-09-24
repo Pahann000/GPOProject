@@ -1,32 +1,32 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 /// <summary>
-/// Абстрактный базовый класс для правил размещения зданий
+/// РђР±СЃС‚СЂР°РєС‚РЅС‹Р№ Р±Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ РґР»СЏ РїСЂР°РІРёР» СЂР°Р·РјРµС‰РµРЅРёСЏ Р·РґР°РЅРёР№
 /// </summary>
 public abstract class PlacementRule : ScriptableObject
 {
     /// <summary>
-    /// Проверяет, удовлетворяет ли позиция правилу размещения
+    /// РџСЂРѕРІРµСЂСЏРµС‚, СѓРґРѕРІР»РµС‚РІРѕСЂСЏРµС‚ Р»Рё РїРѕР·РёС†РёСЏ РїСЂР°РІРёР»Сѓ СЂР°Р·РјРµС‰РµРЅРёСЏ
     /// </summary>
-    /// <param name="position">Позиция для проверки</param>
-    /// <returns>True, если позиция удовлетворяет правилу</returns>
+    /// <param name="position">РџРѕР·РёС†РёСЏ РґР»СЏ РїСЂРѕРІРµСЂРєРё</param>
+    /// <returns>True, РµСЃР»Рё РїРѕР·РёС†РёСЏ СѓРґРѕРІР»РµС‚РІРѕСЂСЏРµС‚ РїСЂР°РІРёР»Сѓ</returns>
     public abstract bool IsSatisfied(Vector2 position);
 }
 
 /// <summary>
-/// Конкретная реализация правила размещения "Рядом с водой"
+/// РљРѕРЅРєСЂРµС‚РЅР°СЏ СЂРµР°Р»РёР·Р°С†РёСЏ РїСЂР°РІРёР»Р° СЂР°Р·РјРµС‰РµРЅРёСЏ "Р СЏРґРѕРј СЃ РІРѕРґРѕР№"
 /// </summary>
 [CreateAssetMenu(menuName = "Buildings/Rules/Near Water")]
 public class NearWaterRule : PlacementRule
 {
-    [Tooltip("Радиус поиска водных объектов")]
+    [Tooltip("Р Р°РґРёСѓСЃ РїРѕРёСЃРєР° РІРѕРґРЅС‹С… РѕР±СЉРµРєС‚РѕРІ")]
     [SerializeField] private float _searchRadius = 3f;
 
-    [Tooltip("Слой, на котором находятся водные объекты")]
+    [Tooltip("РЎР»РѕР№, РЅР° РєРѕС‚РѕСЂРѕРј РЅР°С…РѕРґСЏС‚СЃСЏ РІРѕРґРЅС‹Рµ РѕР±СЉРµРєС‚С‹")]
     [SerializeField] private LayerMask _waterLayer;
 
     /// <summary>
-    /// Проверяет, находится ли позиция рядом с водой
+    /// РџСЂРѕРІРµСЂСЏРµС‚, РЅР°С…РѕРґРёС‚СЃСЏ Р»Рё РїРѕР·РёС†РёСЏ СЂСЏРґРѕРј СЃ РІРѕРґРѕР№
     /// </summary>
     public override bool IsSatisfied(Vector2 position)
     {
@@ -37,26 +37,26 @@ public class NearWaterRule : PlacementRule
 [CreateAssetMenu(menuName = "Buildings/Rules/On Buildable Surface")]
 public class OnBuildableSurfaceRule : PlacementRule
 {
-    [Header("Настройки")]
-    //[Tooltip("Минимальное количество точек на поверхности")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё")]
+    //[Tooltip("РњРёРЅРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ С‚РѕС‡РµРє РЅР° РїРѕРІРµСЂС…РЅРѕСЃС‚Рё")]
     //[SerializeField] private int minSurfacePoints = 2;
-    [Tooltip("Расстояние проверки под точкой")]
+    [Tooltip("Р Р°СЃСЃС‚РѕСЏРЅРёРµ РїСЂРѕРІРµСЂРєРё РїРѕРґ С‚РѕС‡РєРѕР№")]
     [SerializeField] private float checkDistance = 2f;
-    [Tooltip("Слой строительной поверхности")]
+    [Tooltip("РЎР»РѕР№ СЃС‚СЂРѕРёС‚РµР»СЊРЅРѕР№ РїРѕРІРµСЂС…РЅРѕСЃС‚Рё")]
     [SerializeField] private LayerMask buildableLayer;
 
     public override bool IsSatisfied(Vector2 position)
     {
-        // Для простоты проверяем центральную точку
+        // Р”Р»СЏ РїСЂРѕСЃС‚РѕС‚С‹ РїСЂРѕРІРµСЂСЏРµРј С†РµРЅС‚СЂР°Р»СЊРЅСѓСЋ С‚РѕС‡РєСѓ
         RaycastHit2D hit = Physics2D.Raycast(position, Vector2.down, checkDistance, buildableLayer);
 
         if (hit.collider != null)
         {
             Block block = hit.collider.GetComponent<Block>();
-            if (block != null && block.tileData.type != BlockType.Air)
+            if (block != null && block.tileData.Type != BlockType.Air)
             {
-                // Проверяем, можно ли строить на этом блоке
-                // Если у BlockType есть свойство CanBuildOn, используем его
+                // РџСЂРѕРІРµСЂСЏРµРј, РјРѕР¶РЅРѕ Р»Рё СЃС‚СЂРѕРёС‚СЊ РЅР° СЌС‚РѕРј Р±Р»РѕРєРµ
+                // Р•СЃР»Рё Сѓ BlockType РµСЃС‚СЊ СЃРІРѕР№СЃС‚РІРѕ CanBuildOn, РёСЃРїРѕР»СЊР·СѓРµРј РµРіРѕ
                 return !IsResourceBlock(block);
             }
         }
@@ -66,8 +66,8 @@ public class OnBuildableSurfaceRule : PlacementRule
 
     private bool IsResourceBlock(Block block)
     {
-        // Определяем, является ли блок ресурсом
-        string blockName = block.tileData.type.ToString().ToLower();
+        // РћРїСЂРµРґРµР»СЏРµРј, СЏРІР»СЏРµС‚СЃСЏ Р»Рё Р±Р»РѕРє СЂРµСЃСѓСЂСЃРѕРј
+        string blockName = block.tileData.Type.ToString().ToLower();
         return blockName.Contains("gold") || blockName.Contains("mineral") ||
                blockName.Contains("ice") || blockName.Contains("root");
     }

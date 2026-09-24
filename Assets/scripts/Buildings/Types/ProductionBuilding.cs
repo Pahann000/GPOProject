@@ -28,9 +28,9 @@ public class ProductionBuilding : Building
 
     protected virtual void TryProduceResources()
     {
-        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(_data.Owner, inputResources))
+        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(Owner, inputResources))
         {
-            GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(_data.Owner, outputResources);
+            GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(Owner, outputResources);
             PlayProductionEffects();
             lastProductionTime = Time.time;
         }

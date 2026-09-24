@@ -1,5 +1,4 @@
-using UnityEngine;
-using UnityEngine.EventSystems;
+п»їusing UnityEngine;
 
 public class UIManager : MonoBehaviour
 {
@@ -14,7 +13,7 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
-        // Автоматический поиск компонентов если не назначены
+        // РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРёР№ РїРѕРёСЃРє РєРѕРјРїРѕРЅРµРЅС‚РѕРІ РµСЃР»Рё РЅРµ РЅР°Р·РЅР°С‡РµРЅС‹
         if (resourcePanel == null) resourcePanel = GetComponentInChildren<ResourcePanelUI>(true);
 
         if (buildingPanel == null) buildingPanel = GetComponentInChildren<BuildingPanelUI>(true);
@@ -23,7 +22,7 @@ public class UIManager : MonoBehaviour
 
         if (tooltip != null) tooltip = GetComponentInChildren<AdvancedTooltip>(true);
 
-        Debug.Log("[UIManager] Готов к работе.");
+        Debug.Log("[UIManager] Р“РѕС‚РѕРІ Рє СЂР°Р±РѕС‚Рµ.");
     }
 
     private void Update()
@@ -48,7 +47,7 @@ public class UIManager : MonoBehaviour
         Debug.Log($"[UI Notification] {message}");
     }
 
-    // Методы для Tooltip
+    // РњРµС‚РѕРґС‹ РґР»СЏ Tooltip
     public void ShowTooltip(string title, string description, string requirements)
     {
         if (tooltip != null)

@@ -50,28 +50,14 @@ public class ResourceSystem : IGameSystem
     /// </summary>
     public bool HasResources(Player player, ResourcePair[] cost)
     {
-        foreach (var resource in cost)
-        {
-            if (!HasResource(player, resource))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        ResourceBundle bundle = _playersResources[player];
+        return bundle.HasResources(cost);
     }
 
     public bool HasResource(Player player, ResourcePair cost)
     {
         ResourceBundle bundle = _playersResources[player];
-        var resources = bundle.Resources;
-
-        if (!resources.ContainsKey(cost.Type))
-        {
-            return false;
-        }
-
-        return resources[cost.Type] >= cost.Amount;
+        return bundle.HasResource(cost);
     }
 
     /// <summary>
@@ -133,24 +119,12 @@ public class ResourceSystem : IGameSystem
 
     public int GetResource(Player player, ResourceType type)
     {
-        if (_playersResources[player].Resources.ContainsKey(type))
-        {
-            return _playersResources[player].Resources[type];
-        }
-        return 0;
+        return _playersResources[player].GetResource(type);
     }
 
     public int GetStorageLimit(Player player, ResourceType type)
     {
-        foreach (ResourcePair resourcePair in _playersResources[player].StorageLimits)
-        {
-            if (resourcePair.Type == type)
-            {
-                return resourcePair.Amount;
-            }
-        }
-
-        return 0;
+        return _playersResources[player].GetStorageLimit(type);
     }
 
     /// <summary>
@@ -185,6 +159,7 @@ public class ResourceSystem : IGameSystem
             if (storageLimits[i].Type == resourcePair.Type)
             {
                 storageLimits[i].Amount += resourcePair.Amount;
+                _kernel.EventBus.Raise(new ResourceChangedEvent(player, resourcePair.Type, 0, 0 , storageLimits[i].Amount));
                 return;
             }
         }
@@ -203,6 +178,7 @@ public class ResourceSystem : IGameSystem
             if (storageLimits[i].Type == resourcePair.Type)
             {
                 storageLimits[i].Amount -= resourcePair.Amount;
+                _kernel.EventBus.Raise(new ResourceChangedEvent(player, resourcePair.Type, 0, 0, storageLimits[i].Amount));
                 return;
             }
         }

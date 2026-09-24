@@ -33,8 +33,6 @@ public class SelectionPanelUI : MonoBehaviour
 
     private void Start()
     {
-       
-
         // Назначаем обработчики кнопок
         if (upgradeButton != null) upgradeButton.onClick.AddListener(UpgradeBuilding);
 
@@ -226,41 +224,42 @@ public class SelectionPanelUI : MonoBehaviour
         Debug.Log($"Улучшаем здание: {selectedBuilding.Data.DisplayName}");
 
         // Пример: проверка ресурсов и улучшение
-        ResourcePair[] upgradeCost = CalculateUpgradeCost(selectedBuilding);
-        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(selectedBuilding.Data.Owner, upgradeCost))
-        {
-            // Применить улучшения к зданию
-            // selectedBuilding.Upgrade();
-        }
+        //ResourcePair[] upgradeCost = CalculateUpgradeCost(selectedBuilding);
+        //if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(selectedBuilding.Data.Owner, upgradeCost))
+        //{
+        //    // Применить улучшения к зданию
+        //    // selectedBuilding.Upgrade();
+        //}
     }
 
     private void RepairBuilding()
     {
         if (selectedBuilding == null) return;
 
-        int repairCost = CalculateRepairCost(selectedBuilding);
-        ResourcePair[] costBundle = new ResourcePair[] { new ResourcePair(ResourceType.Minerals, repairCost) };
+        Debug.Log($"Чиним здание: {selectedBuilding.Data.DisplayName}");
+        //int repairCost = CalculateRepairCost(selectedBuilding);
+        //ResourcePair[] costBundle = new ResourcePair[] { new ResourcePair(ResourceType.Minerals, repairCost) };
 
-        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(selectedBuilding.Data.Owner, costBundle))
-        {
-            selectedBuilding.CurrentHealth = selectedBuilding.Data.MaxHealth;
-            Debug.Log($"Здание {selectedBuilding.Data.DisplayName} отремонтировано");
-        }
+        //if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(selectedBuilding.Data.Owner, costBundle))
+        //{
+        //    selectedBuilding.CurrentHealth = selectedBuilding.Data.MaxHealth;
+        //    Debug.Log($"Здание {selectedBuilding.Data.DisplayName} отремонтировано");
+        //}
     }
 
     private void DemolishBuilding()
     {
-        if (selectedBuilding == null) return;
+        //if (selectedBuilding == null) return;
 
-        // Возвращаем часть ресурсов при сносе
-        ResourcePair[] refund = CalculateRefund(selectedBuilding.Data.ConstructionCost);
-        GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(selectedBuilding.Data.Owner, refund);
+        //// Возвращаем часть ресурсов при сносе
+        //ResourcePair[] refund = CalculateRefund(selectedBuilding.Data.ConstructionCost);
+        //GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(selectedBuilding.Owner, refund);
 
-        // Уничтожаем здание
-        Destroy(selectedBuilding.gameObject);
-        Deselect();
+        //// Уничтожаем здание
+        //Destroy(selectedBuilding.gameObject);
+        //Deselect();
 
-        Debug.Log($"Здание снесено. Возвращено ресурсов на: {CalculateRefundValue(refund)}");
+        //Debug.Log($"Здание снесено. Возвращено ресурсов на: {CalculateRefundValue(refund)}");
     }
 
     private ResourcePair[] CalculateUpgradeCost(Building building)

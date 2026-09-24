@@ -4,8 +4,9 @@
 [System.Serializable]
 public class BlockData
 {
-    public BlockType type;
-    public int health;
+    public BlockType Type;
+    public int Health;
+    public ResourceType DropResourceType;
 
     /// <summary>
     /// Конмтруктор класса <see cref="BlockData"/>
@@ -13,8 +14,9 @@ public class BlockData
     /// <param name="type"> тип блока. </param>
     public BlockData(BlockType type)
     {
-        this.type = type;
-        this.health = GetDefaultHealth(type);
+        this.Type = type;
+        this.Health = GetDefaultHealth(type);
+        this.DropResourceType = GetResourceType(type);
     }
 
     private int GetDefaultHealth(BlockType type)
@@ -25,5 +27,16 @@ public class BlockData
             BlockType.Gold => 100,
             _ => 0
         };
+    }
+
+    private ResourceType GetResourceType(BlockType type)
+    {
+        return type switch
+        {
+            BlockType.Stone => ResourceType.Rock,
+            BlockType.Gold => ResourceType.Minerals,
+            _ => 0
+        };
+
     }
 }

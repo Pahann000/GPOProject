@@ -33,7 +33,7 @@ public class StorageBuilding : Building
     protected override void DestroyBuilding()
     {
         ResourcePair resourcePair = new ResourcePair(StoredResource, StorageIncrease);
-        GameKernel.Instance.GetSystem<ResourceSystem>().DecreaseStorage(_data.Owner, resourcePair);
+        GameKernel.Instance.GetSystem<ResourceSystem>().DecreaseStorage(Owner, resourcePair);
         base.DestroyBuilding();
     }
 }

@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using Mirror;
-using System.Collections.Generic;
 
 public class Building : NetworkBehaviour
 {
@@ -8,7 +7,8 @@ public class Building : NetworkBehaviour
 
     [Header("���������")]
     public BuildingState State = BuildingState.Operational;
-    public int CurrentHealth { get; set; }
+    [SyncVar]
+    public int CurrentHealth;
 
     [Header("���������� �������")]
     [SerializeField] private GameObject selectionEffect;
@@ -19,6 +19,7 @@ public class Building : NetworkBehaviour
     private bool _isProducing = false;
 
     public BuildingData Data => _data;
+    public Player Owner;
 
     protected virtual void Start()
     {
@@ -83,7 +84,7 @@ public class Building : NetworkBehaviour
         if (_data.InputResources == null || _data.InputResources.Length == 0)
             return true;
 
-        return _resourceManager.HasResources(_data.Owner, _data.InputResources);
+        return _resourceManager.HasResources(Owner, _data.InputResources);
     }
 
     private void ProduceResources()
@@ -91,7 +92,7 @@ public class Building : NetworkBehaviour
         // ��������� ������� �������, ���� ��� ����
         if (_data.InputResources != null && _data.InputResources.Length > 0)
         {
-            if (!_resourceManager.TrySpendResources(_data.Owner, _data.InputResources))
+            if (!_resourceManager.TrySpendResources(Owner, _data.InputResources))
             {
                 Debug.Log($"{_data.DisplayName}: ������������ ������� ��������");
                 return;
@@ -101,7 +102,7 @@ public class Building : NetworkBehaviour
         // ��������� �������� �������, ���� ��� ����
         if (_data.OutputResources != null && _data.OutputResources.Length > 0)
         {
-            _resourceManager.AddResources(_data.Owner, _data.OutputResources);
+            _resourceManager.AddResources(Owner, _data.OutputResources);
             Debug.Log($"{_data.DisplayName} �������� �������");
         }
     }
@@ -140,7 +141,7 @@ public class Building : NetworkBehaviour
                 returnCost[i] = new ResourcePair(resource.Type, resource.Amount / 2);
             }
 
-            _resourceManager.AddResources(_data.Owner, returnCost);
+            _resourceManager.AddResources(Owner, returnCost);
         }
     }
 

@@ -90,8 +90,8 @@ public class BuildingButtonUI : MonoBehaviour
     {
         if (_buildingData == null || GameKernel.Instance == null) return;
 
-        var resourceSys = GameKernel.Instance.GetSystem<ResourceSystem>();
-        bool canAfford = resourceSys != null && resourceSys.HasResources(_buildingData.Owner, _buildingData.ConstructionCost);
+        var player = GameKernel.Instance.GetSystem<UISystem>().LocalPlayer;
+        bool canAfford = player != null && player.Resources.HasResources(_buildingData.ConstructionCost);
 
         // Визуальная индикация доступности
         if (iconImage != null) iconImage.color = canAfford ? affordableColor : unaffordableColor;

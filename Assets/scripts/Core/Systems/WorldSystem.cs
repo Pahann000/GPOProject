@@ -147,7 +147,7 @@ public class WorldSystem : NetworkBehaviour, IGameSystem
         if (WorldMap == null) return BlockType.Air;
 
         Block block = WorldMap.GetBlockInfo(x, y);
-        return block != null ? block.tileData.type : BlockType.Air;
+        return block != null ? block.tileData.Type : BlockType.Air;
     }
 
     /// <summary>

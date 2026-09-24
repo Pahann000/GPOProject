@@ -44,6 +44,9 @@ public class ResourceChangedClientNotifier : NetworkBehaviour, IGameSystem
     {
         _kernel.EventBus.Raise(evt);
 
+        ResourceBundle playerResources = evt.Player.Resources;
+        playerResources.AddResources(new ResourcePair(evt.Type, evt.Delta)); 
+
         Debug.Log($"игрок получил {evt.Type} {evt.NewAmount}");
     }
 

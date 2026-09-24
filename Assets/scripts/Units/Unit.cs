@@ -66,8 +66,11 @@ public class Unit : NetworkBehaviour, IDamagable, IChunkObserver
 
         if (GameKernel.Instance != null)
         {
-            var unitSys = GameKernel.Instance.GetSystem<UnitSystem>();
-            unitSys?.RegisterUnit(this);
+            if (isServer)
+            {
+                var unitSys = GameKernel.Instance.GetSystem<UnitSystem>();
+                unitSys?.RegisterUnit(this);
+            }
 
             var worldSys = GameKernel.Instance.GetSystem<WorldSystem>();
             if (worldSys != null && worldSys.WorldChunks != null)
@@ -94,12 +97,6 @@ public class Unit : NetworkBehaviour, IDamagable, IChunkObserver
 
     private void Update()
     {
-        if (GameKernel.Instance != null)
-        {
-            var unitSys = GameKernel.Instance.GetSystem<UnitSystem>();
-            if (unitSys != null && !unitSys.IsActive) return;
-        }
-
         // Тут могла бы быть логика, если бы она не была в корутинах
     }
 

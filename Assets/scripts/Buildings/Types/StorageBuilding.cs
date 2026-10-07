@@ -1,8 +1,10 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 /// <summary>
-/// Класс здания-хранилища, расширяющий базовый функционал здания.
-/// Предназначен для увеличения вместимости определённого типа ресурсов.
+/// Здание-хранилище: увеличивает вместимость указанного ресурса, пока существует,
+/// и возвращает лимит обратно при уничтожении.
+/// Раньше лимит только уменьшался (увеличение было в закомментированном методе
+/// с несуществующим API), поэтому хранилище работало «в минус».
 /// </summary>
 public class StorageBuilding : Building
 {
@@ -16,15 +18,17 @@ public class StorageBuilding : Building
     /// </summary>
     public int StorageIncrease;
 
-    /// <summary>
-    /// Завершает процесс строительства здания-хранилища.
-    /// После завершения строительства увеличивает доступное хранилище для указанного ресурса.
-    /// </summary>
-    //public override void CompleteConstruction()
-    //{
-    //    base.CompleteConstruction();
-    //    ResourceManager.Instance.IncreaseStorage(StoredResource, StorageIncrease);
-    //}
+    protected override void Start()
+    {
+        base.Start();
+
+        if (!isServer || Owner == null) return;
+
+        if (GameKernel.Instance != null && GameKernel.Instance.TryGetSystem(out ResourceSystem resourceSystem))
+        {
+            resourceSystem.IncreaseStorage(Owner, new ResourcePair(StoredResource, StorageIncrease));
+        }
+    }
 
     /// <summary>
     /// Уничтожает здание-хранилище.
@@ -32,8 +36,14 @@ public class StorageBuilding : Building
     /// </summary>
     protected override void DestroyBuilding()
     {
-        ResourcePair resourcePair = new ResourcePair(StoredResource, StorageIncrease);
-        GameKernel.Instance.GetSystem<ResourceSystem>().DecreaseStorage(Owner, resourcePair);
+        if (!isServer) return;
+
+        if (Owner != null && GameKernel.Instance != null &&
+            GameKernel.Instance.TryGetSystem(out ResourceSystem resourceSystem))
+        {
+            resourceSystem.DecreaseStorage(Owner, new ResourcePair(StoredResource, StorageIncrease));
+        }
+
         base.DestroyBuilding();
     }
 }

@@ -1,5 +1,8 @@
-﻿/// <summary>
-/// Класс, хранящий информацию о облоке.
+using Mirror;
+using UnityEngine;
+
+/// <summary>
+/// Класс, хранящий информацию о блоке.
 /// </summary>
 [System.Serializable]
 public class Block : IDamagable
@@ -31,7 +34,6 @@ public class Block : IDamagable
     /// Конструктор класса <see cref="Block"/>.
     /// </summary>
     /// <param name="tileData"> Информация о блоке. </param>
-    /// <param name="map"> Родительский объект карты, на которой находится блок. </param>
     /// <param name="x"> Положение блока по X </param>
     /// <param name="y"> Положение блока по Y </param>
     public Block(BlockData tileData, int x, int y)
@@ -44,17 +46,21 @@ public class Block : IDamagable
 
     private void Destroy()
     {
-        if (GameKernel.Instance != null)
+        var kernel = GameKernel.Instance;
+        if (kernel != null && kernel.TryGetSystem(out WorldSystem worldSystem))
         {
-            GameKernel.Instance.GetSystem<WorldSystem>().RequestPlaceBlock(x, y, BlockType.Air);
+            worldSystem.RequestPlaceBlock(x, y, BlockType.Air);
         }
     }
 
     private void DropResources(Player player)
     {
-        if (GameKernel.Instance != null)
+        if (player == null) return;
+
+        var kernel = GameKernel.Instance;
+        if (kernel != null && kernel.TryGetSystem(out ResourceSystem resourceSystem))
         {
-            GameKernel.Instance.GetSystem<ResourceSystem>().AddResource(player , new ResourcePair(tileData.DropResourceType, 1));
+            resourceSystem.AddResource(player, new ResourcePair(tileData.DropResourceType, 1));
         }
     }
 
@@ -62,24 +68,25 @@ public class Block : IDamagable
     /// Наносит урон блоку.
     /// После достижения определённого количества здоровья ломается и передаёт ресурсы игроку в инвентарь.
     /// </summary>
-    /// <param name="amount"> Количество урона </param>
+    /// <param name="amount"> Количество урона (итоговое, множители считает атакующий) </param>
     /// <param name="Damager"> Игрок, нанёсший урон. </param>
-    /// <param name="unitType"> Тип юнита, нанёсшего урон. </param>
-    public void TakeDamage(int amount, Player Damager, UnitTypeName unitType)
+    public void TakeDamage(int amount, Player Damager)
     {
-        if (unitType == UnitTypeName.Miner)
-        {
-            CurrentHealth -= amount * 2;
-        }
-        else
-        {
-            CurrentHealth -= amount / 2;
-        }
+        // Мир и экономика — серверные: на клиенте ResourceSystem отсутствует,
+        // и обращение к нему раньше падало с NullReferenceException.
+        if (!NetworkServer.active) return;
+        if (amount <= 0) return;
 
-        if (CurrentHealth <= 0)
-        {
-            DropResources(Damager);
-            Destroy();
-        }
+        // Защита от повторного дропа: без неё второй удар по уже разрушенному
+        // блоку снова выдавал ресурсы.
+        if (CurrentHealth <= 0) return;
+
+        CurrentHealth -= amount;
+
+        if (CurrentHealth > 0) return;
+
+        CurrentHealth = 0;
+        DropResources(Damager);
+        Destroy();
     }
 }

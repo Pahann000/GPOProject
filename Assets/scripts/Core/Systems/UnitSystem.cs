@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -35,37 +35,65 @@ public class UnitSystem : IGameSystem
 
     public void RegisterUnit(Unit unit)
     {
-        if (unit && unit.Owner)
-        {
-            List <Unit> allUnits = _allUnitsDict[unit.Owner];
-            if (!allUnits.Contains(unit)) allUnits.Add(unit);
-        }
+        if (unit == null || unit.Owner == null) return;
+
+        var allUnits = GetOrCreateUnitList(unit.Owner);
+        if (!allUnits.Contains(unit)) allUnits.Add(unit);
     }
 
     public void UnregisterUnit(Unit unit)
     {
-        if (unit && unit.Owner)
+        if (unit == null || unit.Owner == null) return;
+
+        if (_allUnitsDict.TryGetValue(unit.Owner, out var allUnits) && allUnits != null)
         {
-            List<Unit> allUnits = _allUnitsDict[unit.Owner];
-            if (allUnits.Contains(unit)) allUnits.Remove(unit);
+            allUnits.Remove(unit);
         }
     }
 
     public void RegisterPlayer(Player player)
     {
-        _allUnitsDict.Add(player, new List<Unit>());
+        if (player == null) return;
+
+        GetOrCreateUnitList(player);
     }
 
     public void UnregisterPlayer(Player player)
     {
-        
+        if (player == null) return;
+
+        _allUnitsDict.Remove(player);
+    }
+
+    /// <summary>
+    /// Возвращает список юнитов игрока, создавая его при необходимости.
+    /// Порядок «регистрация игрока → спавн юнита» не гарантирован,
+    /// поэтому прямой индексатор бросал KeyNotFoundException.
+    /// </summary>
+    private List<Unit> GetOrCreateUnitList(Player owner)
+    {
+        if (_allUnitsDict.TryGetValue(owner, out var allUnits) && allUnits != null)
+        {
+            return allUnits;
+        }
+
+        allUnits = new List<Unit>();
+        _allUnitsDict[owner] = allUnits;
+        return allUnits;
     }
 
     private void OnUnitCommandReceived(UnitCommandEvent evt)
     {
+        if (evt.Owner == null) return;
+
+        if (!_allUnitsDict.TryGetValue(evt.Owner, out var allUnits) || allUnits == null)
+        {
+            Debug.LogWarning($"[{SystemName}] Приказ проигнорирован: игрок не зарегистрирован.");
+            return;
+        }
+
         // Логика поиска свободного юнита
-        List<Unit> allUnits = _allUnitsDict[evt.Owner];
-        Unit idleUnit = allUnits.Find(u => u.CurrentUnitWork == UnitWork.Idle);
+        Unit idleUnit = allUnits.Find(u => u != null && u.CurrentUnitWork == UnitWork.Idle);
 
         if (idleUnit != null)
         {

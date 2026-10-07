@@ -1,39 +1,68 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// Здание с производством и визуальными эффектами.
+/// Сам цикл производства живёт в <see cref="Building"/>.
+/// </summary>
 public class ProductionBuilding : Building
 {
     [Header("Production Settings")]
-    [SerializeField] public ResourcePair[] inputResources;
-    [SerializeField] public ResourcePair[] outputResources;
-    [SerializeField] private float productionInterval = 5f;
+    [SerializeField] protected ResourcePair[] inputResources;
+    [SerializeField] protected ResourcePair[] outputResources;
 
     [Header("Visuals")]
-    [SerializeField] public ParticleSystem productionParticles;
-    [SerializeField] public Animator productionAnimator;
+    [SerializeField] protected ParticleSystem productionParticles;
+    [SerializeField] protected Animator productionAnimator;
 
-    private float lastProductionTime;
+    /// <summary>Данные префаба имеют приоритет над данными BuildingData.</summary>
+    protected override ResourcePair[] ProductionInputs =>
+        inputResources != null && inputResources.Length > 0 ? inputResources : base.ProductionInputs;
 
-    public override void Update()
+    /// <inheritdoc cref="ProductionInputs"/>
+    protected override ResourcePair[] ProductionOutputs =>
+        outputResources != null && outputResources.Length > 0 ? outputResources : base.ProductionOutputs;
+
+    /// <summary>True, если ресурсы производства заданы в префабе, а не унаследованы от BuildingData.</summary>
+    protected bool HasConfiguredResources =>
+        (inputResources != null && inputResources.Length > 0) ||
+        (outputResources != null && outputResources.Length > 0);
+
+    /// <summary>Фактические входные ресурсы производства (для UI).</summary>
+    public ResourcePair[] InputResources => ProductionInputs;
+
+    /// <summary>Фактические выходные ресурсы производства (для UI).</summary>
+    public ResourcePair[] OutputResources => ProductionOutputs;
+
+    /// <summary>
+    /// Задает ресурсы производства, копируя значения. Копия обязательна: запись
+    /// по ссылке меняла бы сам ассет BuildingData и все здания этого типа.
+    /// </summary>
+    protected void SetProductionResources(ResourcePair[] inputs, ResourcePair[] outputs)
     {
-        base.Update();
-
-        if (State != BuildingState.Operational) return;
-
-        if (Time.time - lastProductionTime > productionInterval)
-        {
-            TryProduceResources();
-        }
+        inputResources = Clone(inputs);
+        outputResources = Clone(outputs);
     }
 
-    protected virtual void TryProduceResources()
+    private static ResourcePair[] Clone(ResourcePair[] source)
     {
-        if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(Owner, inputResources))
+        if (source == null) return null;
+
+        var copy = new ResourcePair[source.Length];
+        for (int i = 0; i < source.Length; i++)
         {
-            GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(Owner, outputResources);
-            PlayProductionEffects();
-            lastProductionTime = Time.time;
+            copy[i] = new ResourcePair(source[i].Type, source[i].Amount);
         }
+
+        return copy;
+    }
+
+    protected override bool ProduceResources()
+    {
+        if (!base.ProduceResources()) return false;
+
+        PlayProductionEffects();
+        return true;
     }
 
     private void PlayProductionEffects()
@@ -52,24 +81,14 @@ public class ProductionBuilding : Building
         productionAnimator.SetBool("Producing", false);
     }
 
-    protected virtual void UpgradeProduction(float efficiencyMultiplier)
-    {
-        productionInterval *= efficiencyMultiplier;
-        MultiplyResourceBundle(efficiencyMultiplier);
-    }
-
-    protected virtual void MultiplyResourceBundle(float multiplier)
-    {
-        for (int i = 0; i < outputResources.Length; i++) 
-        {
-            outputResources[i].Amount *= Mathf.RoundToInt(multiplier);
-        }
-    }
-
     public override void Initialize(BuildingData data)
     {
         base.Initialize(data);
-        inputResources = data.InputResources;
-        outputResources = data.OutputResources;
+
+        if (data == null) return;
+
+        // Копируем массивы: иначе апгрейд производства мутировал бы ассет.
+        inputResources = Clone(data.InputResources);
+        outputResources = Clone(data.OutputResources);
     }
 }

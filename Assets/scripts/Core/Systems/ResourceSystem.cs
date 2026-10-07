@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
 /// Управляет экономикой игры: хранением, начислением и списанием ресурсов.
 /// Рассылает события (ResourceChangedEvent) при любом изменении баланса.
 /// </summary>
-public class ResourceSystem : IGameSystem
+public class ResourceSystem : IGameSystem, IResourceProvider
 {
     public string SystemName => nameof(ResourceSystem);
     public bool IsActive { get; set; } = true;
@@ -32,17 +32,65 @@ public class ResourceSystem : IGameSystem
 
     public void Shutdown()
     {
-        //_resources.Clear();
-        //_storageLimits.Clear();
+        var clientNotifier = GetNotifier();
+        if (clientNotifier != null)
+        {
+            // Отписываемся от событий для всех игроков
+            foreach (var player in _playersResources.Keys)
+            {
+                clientNotifier.Unsubscribe(player);
+            }
+        }
+
+        _playersResources.Clear();
     }
 
     /// <summary>
     /// Задает начальные значения и лимиты для всех существующих типов ресурсов.
+    /// Повторный вызов (реконнект) безопасен.
     /// </summary>
     public void RegisterPlayer(Player player)
     {
-        ResourceBundle StartResourceBundle = new ResourceBundle();
-        _playersResources.Add(player, StartResourceBundle);
+        if (player == null) return;
+
+        if (!_playersResources.ContainsKey(player))
+        {
+            _playersResources.Add(player, new ResourceBundle());
+        }
+
+        GetNotifier()?.Subscribe(player);
+    }
+
+    /// <summary>
+    /// Убирает игрока из экономики. Player — это NetworkBehaviour, и после его
+    /// уничтожения запись в словаре оставалась мусором навсегда.
+    /// </summary>
+    public void UnregisterPlayer(Player player)
+    {
+        if (player == null) return;
+
+        _playersResources.Remove(player);
+        GetNotifier()?.Unsubscribe(player);
+    }
+
+    private ResourceChangedClientNotifier GetNotifier()
+    {
+        return _kernel != null && _kernel.TryGetSystem(out ResourceChangedClientNotifier notifier)
+            ? notifier
+            : null;
+    }
+
+    /// <summary>
+    /// Безопасно достает хранилище игрока: прямой индексатор бросал
+    /// KeyNotFoundException для незарегистрированного или уже уничтоженного игрока.
+    /// </summary>
+    private bool TryGetBundle(Player player, out ResourceBundle bundle)
+    {
+        bundle = null;
+
+        if (player == null) return false;
+
+        return _playersResources.TryGetValue(player, out bundle) && bundle != null;
     }
 
     /// <summary>
@@ -50,14 +98,12 @@ public class ResourceSystem : IGameSystem
     /// </summary>
     public bool HasResources(Player player, ResourcePair[] cost)
     {
-        ResourceBundle bundle = _playersResources[player];
-        return bundle.HasResources(cost);
+        return TryGetBundle(player, out var bundle) && bundle.HasResources(cost);
     }
 
     public bool HasResource(Player player, ResourcePair cost)
     {
-        ResourceBundle bundle = _playersResources[player];
-        return bundle.HasResource(cost);
+        return TryGetBundle(player, out var bundle) && bundle.HasResource(cost);
     }
 
     /// <summary>
@@ -66,6 +112,9 @@ public class ResourceSystem : IGameSystem
     /// <returns>True, если ресурсы успешно списаны.</returns>
     public bool TrySpendResources(Player player, ResourcePair[] outcome)
     {
+        // Пустой список расходов — операция успешна (например, бесплатное здание).
+        if (outcome == null || outcome.Length == 0) return true;
+
         if (!HasResources(player, outcome)) 
         {
             Debug.LogWarning($"[{SystemName}] Попытка списать ресурсы провалена: недостаточно средств.");
@@ -85,6 +134,8 @@ public class ResourceSystem : IGameSystem
     /// </summary>
     public void AddResources(Player player, ResourcePair[] income)
     {
+        if (income == null) return;
+
         foreach (var resPair in income)
         {
             AddResource(player, resPair);
@@ -96,7 +147,12 @@ public class ResourceSystem : IGameSystem
     /// </summary>
     public void AddResource(Player player, ResourcePair income)
     {
-        ResourceBundle bundle = _playersResources[player];
+        if (!TryGetBundle(player, out var bundle))
+        {
+            Debug.LogWarning($"[{SystemName}] Начисление ресурса {income.Type} проигнорировано: игрок не зарегистрирован.");
+            return;
+        }
+
         var resources = bundle.Resources;
 
         if (!resources.ContainsKey(income.Type))
@@ -119,12 +175,12 @@ public class ResourceSystem : IGameSystem
 
     public int GetResource(Player player, ResourceType type)
     {
-        return _playersResources[player].GetResource(type);
+        return TryGetBundle(player, out var bundle) ? bundle.GetResource(type) : 0;
     }
 
     public int GetStorageLimit(Player player, ResourceType type)
     {
-        return _playersResources[player].GetStorageLimit(type);
+        return TryGetBundle(player, out var bundle) ? bundle.GetStorageLimit(type) : 0;
     }
 
     /// <summary>
@@ -132,8 +188,11 @@ public class ResourceSystem : IGameSystem
     /// </summary>
     private void SpendResourceInternal(Player player, ResourcePair outcome)
     {
-        ResourceBundle bundle = _playersResources[player];
-        var resources = _playersResources[player].Resources;
+        if (!TryGetBundle(player, out var bundle)) return;
+
+        var resources = bundle.Resources;
+
+        if (!resources.ContainsKey(outcome.Type)) return;
 
         int oldVal = resources[outcome.Type];
 
@@ -152,17 +211,22 @@ public class ResourceSystem : IGameSystem
     /// </summary>
     public void IncreaseStorage(Player player, ResourcePair resourcePair)
     {
-        var storageLimits = _playersResources[player].StorageLimits;
-
-        for(int i = 0; i < storageLimits.Count; i++) 
+        if (!TryGetBundle(player, out var bundle))
         {
-            if (storageLimits[i].Type == resourcePair.Type)
-            {
-                storageLimits[i].Amount += resourcePair.Amount;
-                _kernel.EventBus.Raise(new ResourceChangedEvent(player, resourcePair.Type, 0, 0 , storageLimits[i].Amount));
-                return;
-            }
+            Debug.LogWarning($"[{SystemName}] Увеличение хранилища проигнорировано: игрок не зарегистрирован.");
+            return;
         }
+
+        int newLimit = bundle.GetStorageLimit(resourcePair.Type) + resourcePair.Amount;
+        bundle.SetStorageLimit(resourcePair.Type, newLimit);
+
+        // Раньше в событие уходили нули, поэтому UI показывал 0/лимит.
+        _kernel.EventBus.Raise(new ResourceChangedEvent(
+            player,
+            resourcePair.Type,
+            bundle.GetResource(resourcePair.Type),
+            0,
+            newLimit));
     }
 
     /// <summary>
@@ -171,16 +235,29 @@ public class ResourceSystem : IGameSystem
     /// </summary>
     public void DecreaseStorage(Player player, ResourcePair resourcePair)
     {
-        var storageLimits = _playersResources[player].StorageLimits;
-
-        for (int i = 0; i < storageLimits.Count; i++)
+        if (!TryGetBundle(player, out var bundle))
         {
-            if (storageLimits[i].Type == resourcePair.Type)
-            {
-                storageLimits[i].Amount -= resourcePair.Amount;
-                _kernel.EventBus.Raise(new ResourceChangedEvent(player, resourcePair.Type, 0, 0, storageLimits[i].Amount));
-                return;
-            }
+            Debug.LogWarning($"[{SystemName}] Уменьшение хранилища проигнорировано: игрок не зарегистрирован.");
+            return;
         }
+
+        int newLimit = Mathf.Max(0, bundle.GetStorageLimit(resourcePair.Type) - resourcePair.Amount);
+        bundle.SetStorageLimit(resourcePair.Type, newLimit);
+
+        int current = bundle.GetResource(resourcePair.Type);
+        if (current > newLimit)
+        {
+            // Излишки действительно сгорают — как и обещает документация метода.
+            bundle.SetResource(resourcePair.Type, newLimit);
+            _kernel.EventBus.Raise(new ResourceChangedEvent(
+                player,
+                resourcePair.Type,
+                newLimit,
+                newLimit - current,
+                newLimit));
+            return;
+        }
+
+        _kernel.EventBus.Raise(new ResourceChangedEvent(player, resourcePair.Type, current, 0, newLimit));
     }
 }

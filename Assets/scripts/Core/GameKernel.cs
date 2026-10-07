@@ -1,4 +1,4 @@
-﻿using Mirror;
+using Mirror;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -95,14 +95,28 @@ public class GameKernel : NetworkBehaviour
 
         _systems.Clear();
         _systemMap.Clear();
+
+        // Иначе остаётся «фантомная» ссылка на уничтоженный объект,
+        // и следующий запуск ядра в том же процессе не сможет стать Instance.
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     public override void OnStartServer()
     {
         base.OnStartServer();
 
+        // Серверные системы: экономика и учёт юнитов живут только на сервере.
         RegisterSystem(new ResourceSystem());
         RegisterSystem(new UnitSystem());
+
+        if (networkSystemsPrefab == null)
+        {
+            Debug.LogError($"[Kernel] Не назначен networkSystemsPrefab: WorldSystem, BuilderSystem и ResourceChangedClientNotifier не будут созданы!");
+            return;
+        }
 
         GameObject go = Instantiate(networkSystemsPrefab);
         NetworkServer.Spawn(go);
@@ -112,7 +126,11 @@ public class GameKernel : NetworkBehaviour
     {
         base.OnStartClient();
 
-        //RegisterSystem(new SelectionSystem());
+        // Клиентские системы. Раньше они не регистрировались нигде, поэтому
+        // GetSystem<UISystem>() возвращал null и UI падал с NullReferenceException,
+        // а выделение зданий не работало вовсе.
+        RegisterSystem(new UISystem());
+        RegisterSystem(new SelectionSystem());
 
         Debug.Log("[Kernel] Клиент подключён");
     }
@@ -121,6 +139,7 @@ public class GameKernel : NetworkBehaviour
     {
         try
         {
+            // Передаем Kernel и Services для инициализации
             system.Initialize(this);
             Debug.Log($"[Kernel] Система инициализирована: {system.SystemName}");
         }
@@ -131,7 +150,8 @@ public class GameKernel : NetworkBehaviour
     }
 
     /// <summary>
-    /// Регистрирует новую систему в Ядре. Вызывается только при инициализации в Awake.
+    /// Регистрирует систему в Ядре. Если ядро уже запущено, система инициализируется сразу,
+    /// иначе её инициализирует Start(). Повторная регистрация того же типа игнорируется.
     /// </summary>
     /// <param name="system">Экземпляр системы, реализующей IGameSystem.</param>
     public void RegisterSystem(IGameSystem system)
@@ -167,5 +187,25 @@ public class GameKernel : NetworkBehaviour
 
         Debug.LogError($"[Kernel] Запрошенная система не найдена: {type.Name}");
         return null;
+    }
+
+    /// <summary>
+    /// Пытается получить систему, не записывая ошибку в лог.
+    /// Нужен для горячих путей (Update), где штатное отсутствие системы
+    /// (например, до её регистрации) не является ошибкой, и для необязательных зависимостей.
+    /// </summary>
+    /// <typeparam name="T">Тип системы.</typeparam>
+    /// <param name="system">Найденная система или null.</param>
+    /// <returns>True, если система зарегистрирована.</returns>
+    public bool TryGetSystem<T>(out T system) where T : class, IGameSystem
+    {
+        if (_systemMap.TryGetValue(typeof(T), out var found))
+        {
+            system = found as T;
+            return system != null;
+        }
+
+        system = null;
+        return false;
     }
 }

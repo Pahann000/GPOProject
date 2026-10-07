@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -44,7 +44,13 @@ public class BuildingButtonUI : MonoBehaviour
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(OnButtonClicked);
 
-        var hoverHandler = gameObject.AddComponent<BuildingButtonHover>();
+        // Initialize может вызываться повторно: без проверки на объекте
+        // накапливались дубли компонента.
+        var hoverHandler = GetComponent<BuildingButtonHover>();
+        if (hoverHandler == null)
+        {
+            hoverHandler = gameObject.AddComponent<BuildingButtonHover>();
+        }
         hoverHandler.Initialize(button, tooltipObject, backgroundImage, hoverColor);
 
         // Обновляем доступность
@@ -73,12 +79,18 @@ public class BuildingButtonUI : MonoBehaviour
 
     private void OnButtonClicked()
     {
-        if (_buildingData == null || GameKernel.Instance == null) return;
+        if (_buildingData == null) return;
 
-        var builer = GameKernel.Instance.GetSystem<BuilderSystem>();
-        if (builer != null)
+        var kernel = GameKernel.Instance;
+        if (kernel == null) return;
+
+        if (kernel.TryGetSystem(out BuilderSystem builder))
         {
-            builer.StartPlacement(_buildingData);
+            builder.StartPlacement(_buildingData);
+        }
+
+        if (_parentPanel != null)
+        {
             _parentPanel.SetBuildingsVisible(false);
         }
     }
@@ -88,9 +100,15 @@ public class BuildingButtonUI : MonoBehaviour
     /// </summary>
     public void UpdateAvailability()
     {
-        if (_buildingData == null || GameKernel.Instance == null) return;
+        if (_buildingData == null) return;
 
-        var player = GameKernel.Instance.GetSystem<UISystem>().LocalPlayer;
+        Player player = null;
+        var kernel = GameKernel.Instance;
+        if (kernel != null && kernel.TryGetSystem(out UISystem uiSystem))
+        {
+            player = uiSystem.LocalPlayer;
+        }
+
         bool canAfford = player != null && player.Resources.HasResources(_buildingData.ConstructionCost);
 
         // Визуальная индикация доступности

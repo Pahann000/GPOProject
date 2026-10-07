@@ -2,37 +2,37 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
-/// Усовершенствованный класс месторождения ресурсов с визуальной обратной связью и событиями
+/// РЈСЃРѕРІРµСЂС€РµРЅСЃС‚РІРѕРІР°РЅРЅС‹Р№ РєР»Р°СЃСЃ РјРµСЃС‚РѕСЂРѕР¶РґРµРЅРёСЏ СЂРµСЃСѓСЂСЃРѕРІ СЃ РІРёР·СѓР°Р»СЊРЅРѕР№ РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·СЊСЋ Рё СЃРѕР±С‹С‚РёСЏРјРё
 /// </summary>
 public class ResourceDeposit : MonoBehaviour
 {
     [System.Serializable]
     public class DepositEvent : UnityEvent<ResourceDeposit> { }
 
-    [Header("Основные настройки")]
+    [Header("РћСЃРЅРѕРІРЅС‹Рµ РЅР°СЃС‚СЂРѕР№РєРё")]
     [SerializeField] private ResourceType _resourceType;
     [SerializeField] private int _totalAmount = 1000;
     [SerializeField] private int _minimalAmount = 50;
 
-    [Header("Визуальные элементы")]
+    [Header("Р’РёР·СѓР°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹")]
     [SerializeField] private ParticleSystem _miningParticles;
     [SerializeField] private GameObject _depletedVisual;
     [SerializeField] private GameObject _activeVisual;
 
-    [Header("События")]
+    [Header("РЎРѕР±С‹С‚РёСЏ")]
     public DepositEvent OnDepleted = new DepositEvent();
     public DepositEvent OnAmountChanged = new DepositEvent();
 
     private int _remainingAmount;
     private bool _wasDepleted;
 
-    /// <summary> Тип ресурса в месторождении </summary>
+    /// <summary> РўРёРї СЂРµСЃСѓСЂСЃР° РІ РјРµСЃС‚РѕСЂРѕР¶РґРµРЅРёРё </summary>
     public ResourceType ResourceType => _resourceType;
 
-    /// <summary> Общий начальный объем ресурсов </summary>
+    /// <summary> РћР±С‰РёР№ РЅР°С‡Р°Р»СЊРЅС‹Р№ РѕР±СЉРµРј СЂРµСЃСѓСЂСЃРѕРІ </summary>
     public int TotalAmount => _totalAmount;
 
-    /// <summary> Текущий остаток ресурсов </summary>
+    /// <summary> РўРµРєСѓС‰РёР№ РѕСЃС‚Р°С‚РѕРє СЂРµСЃСѓСЂСЃРѕРІ </summary>
     public int RemainingAmount
     {
         get => _remainingAmount;
@@ -44,10 +44,10 @@ public class ResourceDeposit : MonoBehaviour
         }
     }
 
-    /// <summary> Процент оставшихся ресурсов (0-1) </summary>
+    /// <summary> РџСЂРѕС†РµРЅС‚ РѕСЃС‚Р°РІС€РёС…СЃСЏ СЂРµСЃСѓСЂСЃРѕРІ (0-1) </summary>
     public float RemainingPercent => (float)RemainingAmount / TotalAmount;
 
-    /// <summary> Флаг полного истощения </summary>
+    /// <summary> Р¤Р»Р°Рі РїРѕР»РЅРѕРіРѕ РёСЃС‚РѕС‰РµРЅРёСЏ </summary>
     public bool IsDepleted => RemainingAmount <= _minimalAmount;
 
     private void Start()
@@ -56,7 +56,7 @@ public class ResourceDeposit : MonoBehaviour
         UpdateVisuals();
     }
 
-    /// <summary> Извлечение ресурсов с визуальной обратной связью </summary>
+    /// <summary> РР·РІР»РµС‡РµРЅРёРµ СЂРµСЃСѓСЂСЃРѕРІ СЃ РІРёР·СѓР°Р»СЊРЅРѕР№ РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·СЊСЋ </summary>
     public int ExtractResource(int requestedAmount)
     {
         if (IsDepleted) return 0;
@@ -70,7 +70,7 @@ public class ResourceDeposit : MonoBehaviour
         return actualAmount;
     }
 
-    /// <summary> Сброс месторождения в исходное состояние </summary>
+    /// <summary> РЎР±СЂРѕСЃ РјРµСЃС‚РѕСЂРѕР¶РґРµРЅРёСЏ РІ РёСЃС…РѕРґРЅРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ </summary>
     public void ResetDeposit()
     {
         RemainingAmount = _totalAmount;
@@ -104,7 +104,7 @@ public class ResourceDeposit : MonoBehaviour
             _activeVisual.SetActive(!IsDepleted);
     }
 
-    /// <summary> Вспомогательный метод для редактора: предпросмотр состояния </summary>
+    /// <summary> Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Р№ РјРµС‚РѕРґ РґР»СЏ СЂРµРґР°РєС‚РѕСЂР°: РїСЂРµРґРїСЂРѕСЃРјРѕС‚СЂ СЃРѕСЃС‚РѕСЏРЅРёСЏ </summary>
     private void OnValidate()
     {
         _remainingAmount = Mathf.Clamp(_remainingAmount, 0, _totalAmount);

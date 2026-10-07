@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -21,11 +21,34 @@ public class BuildingPanelUI : MonoBehaviour
 
     private Dictionary<BuildingData, Button> _buildingButtons = new Dictionary<BuildingData, Button>();
 
+    /// <summary>
+    /// BuilderSystem берётся лениво: он регистрируется в своём Start(), а порядок
+    /// вызова Start у объектов недетерминирован — раньше ссылка навсегда оставалась null.
+    /// </summary>
+    private BuilderSystem Builder
+    {
+        get
+        {
+            if (_builderSystem == null)
+            {
+                var kernel = GameKernel.Instance;
+                if (kernel != null && kernel.TryGetSystem(out BuilderSystem builder))
+                {
+                    _builderSystem = builder;
+                }
+            }
+
+            return _builderSystem;
+        }
+    }
+
     void Start()
     {
-        _builderSystem = GameKernel.Instance.GetSystem<BuilderSystem>();
-
-        GameKernel.Instance.EventBus.Subscribe<ResourceChangedEvent>(OnResourceChangedBus);
+        var kernel = GameKernel.Instance;
+        if (kernel != null)
+        {
+            kernel.EventBus.Subscribe<ResourceChangedEvent>(OnResourceChangedBus);
+        }
 
         if (toggleButton != null)
             toggleButton.onClick.AddListener(TogglePanel);
@@ -80,98 +103,6 @@ public class BuildingPanelUI : MonoBehaviour
             panel.SetActive(_isPanelOpen);
     }
     
-    // Для обновления доступности кнопок при изменении ресурсов
-    void Update()
-    {
-    }
-
-    void UpdateButtonsAvailability()
-    {
-        foreach (Transform child in buttonsContainer)
-        {
-            BuildingButtonUI buttonUI = child.GetComponent<BuildingButtonUI>();
-            if (buttonUI != null)
-            {
-                // Нужно получить BuildingData для этой кнопки
-                // Это можно сделать, если сохранять ссылку в кнопке
-            }
-        }
-    }
-
-    private void InitializeBuildingButtons()
-    {
-        if (buttonsContainer == null || buildingButtonPrefab == null) return;
-
-        // Очищаем контейнер
-        foreach (Transform child in buttonsContainer)
-            Destroy(child.gameObject);
-
-        // Создаем кнопки для каждого здания
-        foreach (BuildingData buildingData in availableBuildings)
-        {
-            if (buildingData == null) continue;
-
-            CreateBuildingButton(buildingData);
-        }
-    }
-
-    private void CreateBuildingButton(BuildingData data)
-    {
-        GameObject buttonGO = Instantiate(buildingButtonPrefab, buttonsContainer);
-        Button button = buttonGO.GetComponent<Button>();
-
-        if (button == null) return;
-
-
-        // Настраиваем иконку
-        Image iconImage = buttonGO.GetComponent<Image>();
-        if (iconImage != null && data.Icon != null)
-            iconImage.sprite = data.Icon;
-
-        // Настраиваем текст
-        TextMeshProUGUI[] texts = buttonGO.GetComponentsInChildren<TextMeshProUGUI>();
-        if (texts.Length > 0)
-        {
-            // Первый текст - название
-            texts[0].text = data.DisplayName;
-
-            // Второй текст - стоимость (только если есть стоимость)
-            if (texts.Length > 1)
-            {
-                if (data.ConstructionCost != null && data.ConstructionCost.Length > 0)
-                {
-                    StringBuilder costText = new StringBuilder();
-                    foreach (var resource in data.ConstructionCost)
-                    {
-                        costText.AppendLine($"{resource.Type}: {resource.Amount}");
-                    }
-                    texts[1].text = costText.ToString();
-                }
-                else
-                {
-                    texts[1].text = "Бесплатно";
-                }
-            }
-        }
-
-        // Сохраняем кнопку
-        _buildingButtons[data] = button;
-
-        // Назначаем обработчик клика
-        button.onClick.AddListener(() =>
-        {
-            if (_builderSystem != null)
-            {
-                _builderSystem.StartPlacement(data);
-                // Закрываем панель после выбора
-                TogglePanel();
-            }
-        });
-
-        // Обновляем доступность кнопки
-        UpdateButtonAvailability(data, button);
-    }
-
     private void UpdateButtonAvailability(BuildingData data, Button button)
     {
         if (button == null || data == null) return;
@@ -181,8 +112,15 @@ public class BuildingPanelUI : MonoBehaviour
 
         if (hasCost)
         {
-            Player player = GameKernel.Instance.GetSystem<UISystem>().LocalPlayer;
-            bool canAfford = player.Resources.HasResources(data.ConstructionCost);
+            Player player = null;
+            var kernel = GameKernel.Instance;
+            if (kernel != null && kernel.TryGetSystem(out UISystem uiSystem))
+            {
+                player = uiSystem.LocalPlayer;
+            }
+
+            // Раньше здесь был GetSystem<UISystem>().LocalPlayer без проверок — NRE.
+            bool canAfford = player != null && player.Resources.HasResources(data.ConstructionCost);
             button.interactable = canAfford;
 
             // Визуальная индикация
@@ -228,7 +166,7 @@ public class BuildingPanelUI : MonoBehaviour
         if (!availableBuildings.Contains(buildingData))
         {
             availableBuildings.Add(buildingData);
-            CreateBuildingButton(buildingData);
+            CreateButtonForBuilding(buildingData);
         }
     }
 

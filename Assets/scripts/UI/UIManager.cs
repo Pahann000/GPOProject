@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class UIManager : MonoBehaviour
 {
@@ -20,7 +20,7 @@ public class UIManager : MonoBehaviour
 
         if (selectionPanel == null) selectionPanel = GetComponentInChildren<SelectionPanelUI>(true);
 
-        if (tooltip != null) tooltip = GetComponentInChildren<AdvancedTooltip>(true);
+        if (tooltip == null) tooltip = GetComponentInChildren<AdvancedTooltip>(true);
 
         Debug.Log("[UIManager] Готов к работе.");
     }

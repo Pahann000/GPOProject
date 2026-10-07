@@ -2,60 +2,45 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Специальное здание - научная лаборатория, занимающаяся исследованиями технологий.
-/// Наследует функциональность базового здания и добавляет систему исследований.
+/// РЎРїРµС†РёР°Р»СЊРЅРѕРµ Р·РґР°РЅРёРµ вЂ” РЅР°СѓС‡РЅР°СЏ Р»Р°Р±РѕСЂР°С‚РѕСЂРёСЏ, Р·Р°РЅРёРјР°СЋС‰Р°СЏСЃСЏ РёСЃСЃР»РµРґРѕРІР°РЅРёСЏРјРё С‚РµС…РЅРѕР»РѕРіРёР№.
+/// РќР°СЃР»РµРґСѓРµС‚ С„СѓРЅРєС†РёРѕРЅР°Р»СЊРЅРѕСЃС‚СЊ Р±Р°Р·РѕРІРѕРіРѕ Р·РґР°РЅРёСЏ Рё РґРѕР±Р°РІР»СЏРµС‚ СЃРёСЃС‚РµРјСѓ РёСЃСЃР»РµРґРѕРІР°РЅРёР№.
 /// </summary>
 public class ResearchLab : Building
 {
     [Header("Research Settings")]
-    /// <summary>
-    /// Список доступных для исследования проектов в этой лаборатории.
-    /// </summary>
-    public List<ResearchProject> availableProjects;
+    [Tooltip("РЎРїРёСЃРѕРє РґРѕСЃС‚СѓРїРЅС‹С… РґР»СЏ РёСЃСЃР»РµРґРѕРІР°РЅРёСЏ РїСЂРѕРµРєС‚РѕРІ РІ СЌС‚РѕР№ Р»Р°Р±РѕСЂР°С‚РѕСЂРёРё.")]
+    [SerializeField] private List<ResearchProject> availableProjects = new List<ResearchProject>();
 
-    /// <summary>
-    /// Множитель скорости исследования (1 = нормальная скорость).
-    /// </summary>
-    public float researchSpeed = 1f;
+    [Tooltip("РњРЅРѕР¶РёС‚РµР»СЊ СЃРєРѕСЂРѕСЃС‚Рё РёСЃСЃР»РµРґРѕРІР°РЅРёСЏ (1 = РЅРѕСЂРјР°Р»СЊРЅР°СЏ СЃРєРѕСЂРѕСЃС‚СЊ).")]
+    [SerializeField] private float researchSpeed = 1f;
 
-    /// <summary>
-    /// Количество научных очков, производимых лабораторией за день.
-    /// </summary>
-    public int sciencePointsPerDay = 10;
+    [Tooltip("РљРѕР»РёС‡РµСЃС‚РІРѕ РЅР°СѓС‡РЅС‹С… РѕС‡РєРѕРІ, РїСЂРѕРёР·РІРѕРґРёРјС‹С… Р»Р°Р±РѕСЂР°С‚РѕСЂРёРµР№ Р·Р° РґРµРЅСЊ.")]
+    [SerializeField] private int sciencePointsPerDay = 10;
 
     private ResearchProject _currentProject;
-    private float _researchProgress;
-    private float _lastResearchTick;
+    private float _researchProgress = 0f;
+
+    /// <summary>Р”РѕСЃС‚СѓРїРЅС‹Рµ РїСЂРѕРµРєС‚С‹ (С‚РѕР»СЊРєРѕ С‡С‚РµРЅРёРµ).</summary>
+    public IReadOnlyList<ResearchProject> AvailableProjects => availableProjects;
+
+    /// <summary>РўРµРєСѓС‰РёР№ РёСЃСЃР»РµРґСѓРµРјС‹Р№ РїСЂРѕРµРєС‚ РёР»Рё null.</summary>
+    public ResearchProject CurrentProject => _currentProject;
 
     /// <summary>
-    /// Обновление состояния лаборатории каждый кадр.
+    /// РћР±РЅРѕРІР»РµРЅРёРµ СЃРѕСЃС‚РѕСЏРЅРёСЏ Р»Р°Р±РѕСЂР°С‚РѕСЂРёРё РєР°Р¶РґС‹Р№ РєР°РґСЂ.
     /// </summary>
-    /// <remarks>
-    /// Если лаборатория функционирует и есть текущий проект исследования,
-    /// вызывает обработку исследования раз в секунду.
-    /// </remarks>
     public override void Update()
     {
+        if (!isServer) return;
+
+        // РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ Р±Р°Р·РѕРІРѕРіРѕ РєР»Р°СЃСЃР° РЅРµ С‚РµСЂСЏРµРј.
+        base.Update();
+
         if (State != BuildingState.Operational || _currentProject == null) return;
 
-        if (Time.time - _lastResearchTick > 1f)
-        {
-            ResearchTick();
-            _lastResearchTick = Time.time;
-        }
-    }
-
-    /// <summary>
-    /// Обрабатывает один "тик" исследования.
-    /// </summary>
-    /// <remarks>
-    /// Увеличивает прогресс исследования и проверяет его завершение.
-    /// Если проект завершен, вызывает CompleteResearch().
-    /// </remarks>
-    private void ResearchTick()
-    {
-        if (_currentProject.IsCompleted) return;
-
+        // РџСЂРѕРіСЂРµСЃСЃ РёРґС‘С‚ РЅРµРїСЂРµСЂС‹РІРЅРѕ. Р Р°РЅСЊС€Рµ ResearchTick() РІС‹Р·С‹РІР°Р»СЃСЏ СЂР°Р· РІ СЃРµРєСѓРЅРґСѓ,
+        // Р° РІРЅСѓС‚СЂРё СѓРјРЅРѕР¶Р°Р»СЃСЏ РЅР° Time.deltaTime РѕРґРЅРѕРіРѕ РєР°РґСЂР° вЂ” С„Р°РєС‚РёС‡РµСЃРєР°СЏ СЃРєРѕСЂРѕСЃС‚СЊ
+        // РёСЃСЃР»РµРґРѕРІР°РЅРёСЏ Р·Р°РІРёСЃРµР»Р° РѕС‚ FPS.
         _researchProgress += sciencePointsPerDay * researchSpeed * Time.deltaTime;
 
         if (_researchProgress >= _currentProject.requiredSciencePoints)
@@ -65,18 +50,20 @@ public class ResearchLab : Building
     }
 
     /// <summary>
-    /// Начинает новый исследовательский проект.
+    /// РќР°С‡РёРЅР°РµС‚ РЅРѕРІС‹Р№ РёСЃСЃР»РµРґРѕРІР°С‚РµР»СЊСЃРєРёР№ РїСЂРѕРµРєС‚.
     /// </summary>
-    /// <param name="project">Проект для исследования</param>
-    /// <remarks>
-    /// Проверяет, не завершен ли проект уже, перед началом исследования.
-    /// Сбрасывает прогресс исследования при старте нового проекта.
-    /// </remarks>
+    /// <param name="project">РџСЂРѕРµРєС‚ РґР»СЏ РёСЃСЃР»РµРґРѕРІР°РЅРёСЏ</param>
     public void StartResearch(ResearchProject project)
     {
+        if (project == null)
+        {
+            Debug.LogWarning("[ResearchLab] РџСЂРѕРµРєС‚ РЅРµ РїРµСЂРµРґР°РЅ.");
+            return;
+        }
+
         if (project.IsCompleted)
         {
-            Debug.LogWarning("This research is already completed!");
+            Debug.LogWarning($"[ResearchLab] РџСЂРѕРµРєС‚ {project.projectName} СѓР¶Рµ Р·Р°РІРµСЂС€С‘РЅ.");
             return;
         }
 
@@ -85,30 +72,25 @@ public class ResearchLab : Building
     }
 
     /// <summary>
-    /// Завершает текущее исследование и применяет его эффекты.
+    /// Р—Р°РІРµСЂС€Р°РµС‚ С‚РµРєСѓС‰РµРµ РёСЃСЃР»РµРґРѕРІР°РЅРёРµ Рё РїСЂРёРјРµРЅСЏРµС‚ РµРіРѕ СЌС„С„РµРєС‚С‹.
     /// </summary>
-    /// <remarks>
-    /// Вызывает метод Complete() у текущего проекта и сбрасывает текущий проект.
-    /// </remarks>
     private void CompleteResearch()
     {
-        _currentProject.Complete();
-        Debug.Log($"Research completed: {_currentProject.projectName}");
+        ResearchProject completed = _currentProject;
 
-        // Можно автоматически начать следующий проект или оставить выбор игроку
         _currentProject = null;
+        _researchProgress = 0f;
+
+        completed.Complete();
+        Debug.Log($"[ResearchLab] РСЃСЃР»РµРґРѕРІР°РЅРёРµ Р·Р°РІРµСЂС€РµРЅРѕ: {completed.projectName}");
     }
 
     /// <summary>
-    /// Улучшает лабораторию, увеличивая производство научных очков.
+    /// РЈР»СѓС‡С€Р°РµС‚ Р»Р°Р±РѕСЂР°С‚РѕСЂРёСЋ, СѓРІРµР»РёС‡РёРІР°СЏ РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕ РЅР°СѓС‡РЅС‹С… РѕС‡РєРѕРІ.
     /// </summary>
-    /// <param name="additionalSciencePoints">Дополнительные очки науки в день</param>
-    /// <remarks>
-    /// Может быть расширен для добавления визуальных эффектов улучшения.
-    /// </remarks>
+    /// <param name="additionalSciencePoints">Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РѕС‡РєРё РЅР°СѓРєРё РІ РґРµРЅСЊ</param>
     public void UpgradeLab(int additionalSciencePoints)
     {
         sciencePointsPerDay += additionalSciencePoints;
-        // Можно добавить визуальные эффекты улучшения
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 
 /// <summary>
-/// Вспомогательный класс для анимаций UI
+/// Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Р№ РєР»Р°СЃСЃ РґР»СЏ Р°РЅРёРјР°С†РёР№ UI
 /// </summary>
 public class ResourceDisplayAnimator : MonoBehaviour
 {

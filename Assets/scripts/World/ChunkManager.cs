@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -8,10 +8,15 @@ public class ChunkManager : MonoBehaviour
 {
     private Map _map;
 
-    [SerializeField] private int LoadingRadius = 2;
-    private HashSet<Vector2Int> _requiredChunks = new HashSet<Vector2Int>();
-    private HashSet<Vector2Int> _loadedChunks = new HashSet<Vector2Int>();
-    private List<IChunkObserver> _observers = new List<IChunkObserver>();
+    [SerializeField] private int loadingRadius = 2;
+    private readonly HashSet<Vector2Int> _requiredChunks = new HashSet<Vector2Int>();
+    private readonly HashSet<Vector2Int> _loadedChunks = new HashSet<Vector2Int>();
+    private readonly List<IChunkObserver> _observers = new List<IChunkObserver>();
+
+    /// <summary>Переиспользуемый буфер: раньше список аллоцировался каждый физический тик.</summary>
+    private readonly List<Vector2Int> _chunksToRemove = new List<Vector2Int>();
+
+    private bool _warnedNoObservers;
 
     public void Initialize(Map map)
     {
@@ -33,25 +38,41 @@ public class ChunkManager : MonoBehaviour
 
         if (_observers.Count == 0)
         {
-            Debug.LogWarning("[ChunkManager] Нет активных наблюдателей!");
-            return;
-        }
-
-        foreach (var observer in _observers)
-        {
-            if (observer == null) continue;
-
-            Vector2Int ObserverPosition = new Vector2Int(observer.X, observer.Y);
-
-            for (int x = -LoadingRadius; x <= LoadingRadius; x++)
+            // Предупреждение пишем один раз по изменению состояния, а не 50 раз в секунду.
+            if (!_warnedNoObservers)
             {
-                for (int y = -LoadingRadius; y <= LoadingRadius; y++)
-                {
-                    int ChunkPosX = ObserverPosition.x + x * _map.ChunkSize;
-                    int ChunkPosy = ObserverPosition.y + y * _map.ChunkSize;
+                Debug.LogWarning("[ChunkManager] Нет активных наблюдателей!");
+                _warnedNoObservers = true;
+            }
+        }
+        else
+        {
+            _warnedNoObservers = false;
 
-                    Vector2Int newChunkPosition = _map.GetChunkPosition(ChunkPosX, ChunkPosy);
-                    _requiredChunks.Add(newChunkPosition);
+            // Идём с конца: уничтоженные наблюдатели удаляются из списка сразу,
+            // иначе они оставались в нём навсегда и ломали обращение к transform.
+            for (int i = _observers.Count - 1; i >= 0; i--)
+            {
+                IChunkObserver observer = _observers[i];
+
+                if (!IsAlive(observer))
+                {
+                    _observers.RemoveAt(i);
+                    continue;
+                }
+
+                Vector2Int ObserverPosition = new Vector2Int(observer.X, observer.Y);
+
+                for (int x = -loadingRadius; x <= loadingRadius; x++)
+                {
+                    for (int y = -loadingRadius; y <= loadingRadius; y++)
+                    {
+                        int ChunkPosX = ObserverPosition.x + x * _map.ChunkSize;
+                        int ChunkPosy = ObserverPosition.y + y * _map.ChunkSize;
+
+                        Vector2Int newChunkPosition = _map.GetChunkPosition(ChunkPosX, ChunkPosy);
+                        _requiredChunks.Add(newChunkPosition);
+                    }
                 }
             }
         }
@@ -67,20 +88,31 @@ public class ChunkManager : MonoBehaviour
         }
 
         // Удаляем старые
-        var chunksToRemove = new List<Vector2Int>();
+        _chunksToRemove.Clear();
         foreach (Vector2Int loadedChunk in _loadedChunks)
         {
             if (!_requiredChunks.Contains(loadedChunk))
             {
-                chunksToRemove.Add(loadedChunk);
+                _chunksToRemove.Add(loadedChunk);
             }
         }
 
-        foreach (Vector2Int chunk in chunksToRemove)
+        for (int i = 0; i < _chunksToRemove.Count; i++)
         {
-            _loadedChunks.Remove(chunk);
-            _map.DestroyChunk(chunk.x, chunk.y);
+            _loadedChunks.Remove(_chunksToRemove[i]);
+            _map.DestroyChunk(_chunksToRemove[i].x, _chunksToRemove[i].y);
         }
+    }
+
+    /// <summary>
+    /// Проверяет, жив ли наблюдатель. IChunkObserver — обычный интерфейс, поэтому
+    /// сравнение с null не учитывает «фальшивый null» уничтоженных Unity-объектов.
+    /// </summary>
+    private static bool IsAlive(IChunkObserver observer)
+    {
+        if (observer == null) return false;
+
+        return !(observer is Object unityObject) || unityObject != null;
     }
 
     /// <summary>
@@ -90,6 +122,8 @@ public class ChunkManager : MonoBehaviour
     /// <param name="observer"> Объект, вокруг которого требуется генерировать мир. </param>
     public void RegisterObserver(IChunkObserver observer)
     {
+        if (observer == null) return;
+
         if (!_observers.Contains(observer))
         {
             _observers.Add(observer);
@@ -102,6 +136,8 @@ public class ChunkManager : MonoBehaviour
     /// <param name="observer"> Отписываемый объект. </param>
     public void UnregisterObserver(IChunkObserver observer)
     {
+        if (observer == null) return;
+
         _observers.Remove(observer);
     }
 }

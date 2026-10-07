@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
@@ -10,10 +10,22 @@ public class Map : MonoBehaviour
     private float _seed;
     private Dictionary<Vector2Int, MapChunk> _chunks = new Dictionary<Vector2Int, MapChunk>();
     private Dictionary<Vector2Int, Block> _tileData = new Dictionary<Vector2Int, Block>();
+
     /// <summary>
-    /// Словарь с шумами для каждого типа блоков.
+    /// Слои шума: тип блока и параметры формулы Перлина.
+    /// Раньше это был словарь Texture2D, то есть шум пекся в две текстуры
+    /// 1600x1600 (~5 млн вызовов SetPixel на старте и ~20 МБ памяти),
+    /// а тип каждого блока читался через Texture2D.GetPixel.
     /// </summary>
-    private Dictionary<Texture2D, BlockType> _noises = new Dictionary<Texture2D, BlockType>();
+    private struct NoiseLayer
+    {
+        public float Frequency;
+        public float Limit;
+        public float SeedOffset;
+        public BlockType Type;
+    }
+
+    private readonly List<NoiseLayer> _noises = new List<NoiseLayer>();
 
     public int ChunkSize => _config.ChunkSize;
     public int Width => _config.WorldWidth * _config.ChunkSize;
@@ -24,37 +36,34 @@ public class Map : MonoBehaviour
         _config = config;
         _seed = seed;
 
-        GenerateNoises();
+        BuildNoiseLayers();
 
-        Debug.Log("[Map] Карта инициализирована и шумы сгенерированы");
+        Debug.Log("[Map] Карта инициализирована");
     }
 
-    private void GenerateNoises()
+    /// <summary>
+    /// Порядок слоёв важен: первый слой, у которого значение шума больше порога,
+    /// определяет тип блока (раньше это зависело от порядка обхода словаря).
+    /// </summary>
+    private void BuildNoiseLayers()
     {
-        Texture2D caveNoise = GenerateNoiseTexture(_config.CaveFreq, _config.CaveSize, _seed);
-        Texture2D goldNoise = GenerateNoiseTexture(_config.GoldFrequency, _config.GoldSize, _seed + 100);
+        _noises.Clear();
 
-        _noises.Add(goldNoise, BlockType.Gold);
-        _noises.Add(caveNoise, BlockType.Stone);
-    }
-
-    private Texture2D GenerateNoiseTexture(float frequency, float limit, float seed)
-    {
-        Texture2D noise = new Texture2D(Width, Height);
-        for (int x = 0; x < Width; x++)
+        _noises.Add(new NoiseLayer
         {
-            for (int y = 0; y < Height; y++)
-            {
-                float xCoord = (x + seed) * frequency;
-                float yCoord = (y + seed) * frequency;
-                float value = Mathf.PerlinNoise(xCoord, yCoord);
+            Frequency = _config.GoldFrequency,
+            Limit = _config.GoldSize,
+            SeedOffset = 100f,
+            Type = BlockType.Gold
+        });
 
-                noise.SetPixel(x, y, value > limit ? Color.white : Color.black);
-            }
-        }
-
-        noise.Apply();
-        return noise;
+        _noises.Add(new NoiseLayer
+        {
+            Frequency = _config.CaveFreq,
+            Limit = _config.CaveSize,
+            SeedOffset = 0f,
+            Type = BlockType.Stone
+        });
     }
 
     private MapChunk CreateChunk(Vector2Int chunkPos)
@@ -68,7 +77,7 @@ public class Map : MonoBehaviour
         );
 
         MapChunk chunk = chunkObj.AddComponent<MapChunk>();
-        chunk.Init(ChunkSize, _config.BlockAtlas, _config.AtlasMaterial);
+        chunk.Init(this, ChunkSize, _config.BlockAtlas, _config.AtlasMaterial);
         return chunk;
     }
 
@@ -82,7 +91,7 @@ public class Map : MonoBehaviour
     {
         Vector2Int pos = new Vector2Int(x, y);
         _tileData[pos] = new Block(new BlockData(type), x, y);
-        
+
         Vector2Int chunkPos = GetChunkPosition(x, y);
         if (_chunks.ContainsKey(chunkPos))
         {
@@ -114,33 +123,77 @@ public class Map : MonoBehaviour
     /// <returns> <see cref="Block"/> не привязанный к карте. </returns>
     public Block GetBlockInfo(int x, int y)
     {
-        // Проверка границ
-        if (x > Width || x < 0 || y > Height || y < 0)
-        {
-            return new Block(new BlockData(BlockType.Air), x, y);
-        }
-
         Vector2Int pos = new Vector2Int(x, y);
+
         // Если блок уже был создан, возвращаем его
         if (_tileData.TryGetValue(pos, out Block data))
         {
             return data;
         }
 
-        // Если блока нет в памяти вычичляем его тип по шуму
-        BlockType type = BlockType.Air;
-        foreach (var (noise, blockType) in _noises)
+        return new Block(new BlockData(GetBlockType(x, y)), x, y);
+    }
+
+    /// <summary>
+    /// Возвращает тип блока, не создавая объекты <see cref="Block"/> и <see cref="BlockData"/>.
+    /// Нужен для горячих путей (поиск пути, построение меша), где GetBlockInfo
+    /// давал по две аллокации на каждую проверку клетки.
+    /// </summary>
+    public BlockType GetBlockType(int x, int y)
+    {
+        // Проверка границ: индексы валидны до Width-1 / Height-1,
+        // иначе GetPixel уходил за пределы текстуры шума.
+        if (x < 0 || y < 0 || x >= Width || y >= Height)
         {
-            if (noise.GetPixel(x, y).r > 0.5f)
+            return BlockType.Air;
+        }
+
+        Vector2Int pos = new Vector2Int(x, y);
+        if (_tileData.TryGetValue(pos, out Block data))
+        {
+            return data.tileData.Type;
+        }
+
+        // Если блока нет в памяти, вычисляем его тип по шуму.
+        // Формула та же, что раньше запекалась в текстуру: value > limit.
+        for (int i = 0; i < _noises.Count; i++)
+        {
+            NoiseLayer layer = _noises[i];
+            float value = Mathf.PerlinNoise(
+                (x + _seed + layer.SeedOffset) * layer.Frequency,
+                (y + _seed + layer.SeedOffset) * layer.Frequency);
+
+            if (value > layer.Limit)
             {
-                type = blockType;
-                break;
+                return layer.Type;
             }
         }
 
-        Block block = new Block(new BlockData(type), x, y);
+        return BlockType.Air;
+    }
 
-        return block;
+    /// <summary>
+    /// Мировая высота верхней грани самого верхнего твёрдого блока в колонке.
+    /// Нужна, чтобы ставить юнитов и объекты на поверхность, а не внутрь породы.
+    /// </summary>
+    /// <param name="x">Координата колонки.</param>
+    /// <param name="surfaceWorldY">Высота верхней грани блока (например, для блока y=4 это 5).</param>
+    /// <returns>False, если в колонке нет твёрдых блоков.</returns>
+    public bool TryGetSurfaceWorldY(int x, out float surfaceWorldY)
+    {
+        surfaceWorldY = 0f;
+        if (x < 0 || x >= Width) return false;
+
+        // Идём сверху вниз: выше поверхности блоков нет по определению.
+        for (int y = Height - 1; y >= 0; y--)
+        {
+            if (GetBlockType(x, y) == BlockType.Air) continue;
+
+            surfaceWorldY = y + 1;
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -190,8 +243,7 @@ public class Map : MonoBehaviour
     }
 
     /// <summary>
-    /// Очищает всю карту. 
-    /// P.S. добавил на будущее.
+    /// Очищает всю карту: чанки и кэш блоков.
     /// </summary>
     private void CleanUp()
     {
@@ -202,5 +254,10 @@ public class Map : MonoBehaviour
         _chunks.Clear();
         _tileData.Clear();
         _noises.Clear();
+    }
+
+    private void OnDestroy()
+    {
+        CleanUp();
     }
 }

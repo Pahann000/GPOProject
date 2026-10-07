@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Mirror;
 
 /// <summary>
@@ -7,12 +7,13 @@ using Mirror;
 public class Player : NetworkBehaviour, IChunkObserver
 {
     private bool _isRegistered = false;
+    private WorldSystem _worldSystem;
 
     private void OnDestroy()
     {
-        if (_isRegistered && GameKernel.Instance != null)
+        if (_isRegistered && _worldSystem != null && _worldSystem.WorldChunks != null)
         {
-            GameKernel.Instance.GetSystem<WorldSystem>()?.WorldChunks?.UnregisterObserver(this);
+            _worldSystem.WorldChunks.UnregisterObserver(this);
         }
     }
 
@@ -24,101 +25,87 @@ public class Player : NetworkBehaviour, IChunkObserver
     /// <summary>
     /// Положение игрока по X.
     /// </summary>
-    public int X => (int)this.transform.position.x;
+    public int X => (int)transform.position.x;
 
     /// <summary>
-    /// Положение игрока по X.
+    /// Положение игрока по Y.
     /// </summary>
-    public int Y => (int)this.transform.position.y;
+    public int Y => (int)transform.position.y;
 
     /// <inheritdoc/>
     void Update()
     {
-        if (!_isRegistered && GameKernel.Instance != null)
+        if (_isRegistered) return;
+
+        var kernel = GameKernel.Instance;
+        if (kernel == null) return;
+
+        // TryGetSystem не пишет ошибку в лог: до регистрации системы её отсутствие —
+        // это штатная ситуация, а не ошибка (раньше лог засорялся каждый кадр).
+        if (_worldSystem == null && !kernel.TryGetSystem(out _worldSystem)) return;
+        if (_worldSystem.WorldChunks == null) return;
+
+        _worldSystem.WorldChunks.RegisterObserver(this);
+
+        if (isLocalPlayer)
         {
-            var worldSys = GameKernel.Instance.GetSystem<WorldSystem>();
-            if (worldSys != null && worldSys.WorldChunks != null)
-            {
-                worldSys.WorldChunks.RegisterObserver(this);
-                if (isLocalPlayer)
-                {
-                    worldSys.CmdSpawnUnit(this);
-                }
-                _isRegistered = true;
-                Debug.Log("[Player] Успешно зарегистрирован в системе чанков.");
-            }
+            _worldSystem.CmdSpawnUnit(this);
         }
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            var mousePos = Camera.main.ScreenPointToRay(Input.mousePosition);
-            OnPlayerClicked(new Vector2(mousePos.origin.x, mousePos.origin.y));
-        }
+        _isRegistered = true;
+        Debug.Log("[Player] Успешно зарегистрирован в системе чанков.");
     }
 
     public override void OnStartClient()
     {
         base.OnStartClient();
 
-        UISystem uiSystem = new UISystem();
-        uiSystem.InitialiseLocalPlyer(this);
-        GameKernel.Instance.RegisterSystem(uiSystem);
-
-        RegisterClient();
-    }
-
-    [Command]
-    public void RegisterClient()
-    {
-        if (isServer)
+        // Создаем player UI
+        PlayerUI playerUi = GetComponent<PlayerUI>();
+        if (playerUi != null)
         {
-            GameKernel.Instance.GetSystem<UnitSystem>().RegisterPlayer(this);
-            GameKernel.Instance.GetSystem<ResourceSystem>().RegisterPlayer(this);
-        }
-    }
-
-    [Command]
-    private void OnPlayerClicked(Vector2 position)
-    {
-        if (isServer)
-        {
-            SelectTarget(position);
-        }
-    }
-
-    //TODO: сделать нормальное выделение, и вообще работу игрока с блоками
-    /// <summary>
-    /// выделяет блок(заглушка заставляющая юнита уничтожить блок).
-    /// </summary>
-    /// <param name="position">Позиция выделяемого блока.</param>
-    [Server]
-    private void SelectTarget(Vector2 position)
-    {
-        IDamagable target = null;
-        Block selectedBlock = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockObj(((int)position.x), ((int)position.y));
-
-        if (selectedBlock.tileData.Type != BlockType.Air)
-        {
-            target = selectedBlock;
+            playerUi.Initialize(this);
         }
         else
         {
-            Vector3 vector3 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            var targetCollider = Physics2D.OverlapPoint(new Vector2(vector3.x, vector3.y));
-            if (targetCollider)
-            {
-                Unit unit = targetCollider.gameObject.GetComponent<Unit>();
-                if (unit != null && !(unit.Owner == this))
-                {
-                    target = unit;
-                }
-                else return;
-            }
+            Debug.LogWarning("[Player] На префабе игрока нет компонента PlayerUI.");
         }
 
-        if (target != null && GameKernel.Instance != null)
+        CmdRegisterPlayer();
+    }
+
+    public override void OnStartLocalPlayer()
+    {
+        base.OnStartLocalPlayer();
+
+        // UI нужно знать локального игрока: без этого ResourcePanelUI/SelectionPanelUI
+        // не могли получить его данные (LocalPlayer оставался null).
+        if (GameKernel.Instance != null && GameKernel.Instance.TryGetSystem(out UISystem uiSystem))
         {
-            GameKernel.Instance.EventBus.Raise(new UnitCommandEvent(target, position, this));
+            uiSystem.InitialiseLocalPlyer(this);
         }
+    }
+
+    public override void OnStopServer()
+    {
+        base.OnStopServer();
+
+        // Player — ключ в словарях экономики и юнитов; без явной очистки
+        // записи уничтоженного игрока оставались в них навсегда.
+        var kernel = GameKernel.Instance;
+        if (kernel == null) return;
+
+        if (kernel.TryGetSystem(out UnitSystem unitSystem)) unitSystem.UnregisterPlayer(this);
+        if (kernel.TryGetSystem(out ResourceSystem resourceSystem)) resourceSystem.UnregisterPlayer(this);
+    }
+
+    [Command]
+    public void CmdRegisterPlayer()
+    {
+        var kernel = GameKernel.Instance;
+        if (kernel == null) return;
+
+        if (kernel.TryGetSystem(out UnitSystem unitSystem)) unitSystem.RegisterPlayer(this);
+        if (kernel.TryGetSystem(out ResourceSystem resourceSystem)) resourceSystem.RegisterPlayer(this);
     }
 }

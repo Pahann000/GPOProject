@@ -1,19 +1,24 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
-[CreateAssetMenu(fileName = "GreenhouseData", menuName = "Buildings/Greenhouse Data")]
+/// <summary>
+/// Теплица: перерабатывает лёд в пищу (ResourceType.Root).
+/// Раньше теплица производила Energy, а электростанция — те же Minerals,
+/// которые тратила на входе; данные были перепутаны между классами.
+/// </summary>
 public class Greenhouse : ProductionBuilding
 {
-    //[Header("Greenhouse Settings")]
-    //[SerializeField] private int waterConsumption = 3;
-    //[SerializeField] private int foodProduction = 5;
-
     protected override void Start()
     {
-        base.Start();
+        // До base.Start(): от ресурсов зависит, запустится ли производство.
+        if (!HasConfiguredResources)
+        {
+            SetProductionResources(
+                new[] { new ResourcePair(ResourceType.Ice, 1) },
+                new[] { new ResourcePair(ResourceType.Root, 3) });
+        }
 
-        inputResources = new ResourcePair[] {new ResourcePair(ResourceType.Ice, 1) };
-        outputResources = new ResourcePair[] { new ResourcePair(ResourceType.Energy, 3) };
+        base.Start();
     }
 
     protected override IEnumerator ProductionAnimation()

@@ -1,68 +1,134 @@
-using System.Security.Cryptography.X509Certificates;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Класс турели, представляющий оборонительное сооружение, способное атаковать врагов.
-/// Наследуется от базового класса <see cref="Building"/>.
+/// РћР±РѕСЂРѕРЅРёС‚РµР»СЊРЅРѕРµ СЃРѕРѕСЂСѓР¶РµРЅРёРµ: РёС‰РµС‚ РІСЂР°РіРѕРІ РІ СЂР°РґРёСѓСЃРµ РґРµР№СЃС‚РІРёСЏ Рё Р°С‚Р°РєСѓРµС‚ РёС….
+/// Р Р°Р±РѕС‚Р°РµС‚ С‚РѕР»СЊРєРѕ РЅР° СЃРµСЂРІРµСЂРµ вЂ” РєР°Рє Рё РІСЃСЏ Р±РѕРµРІР°СЏ Р»РѕРіРёРєР°.
 /// </summary>
+/// <remarks>
+/// Р Р°РЅСЊС€Рµ <c>FindTarget()</c> Рё <c>Attack()</c> Р±С‹Р»Рё РїСѓСЃС‚С‹РјРё, Р° <c>_currentTarget</c>
+/// РЅРµ РїСЂРёСЃРІР°РёРІР°Р»СЃСЏ РЅРёРіРґРµ, РїРѕСЌС‚РѕРјСѓ Р°С‚Р°РєР° Р±С‹Р»Р° РЅРµРґРѕСЃС‚РёР¶РёРјС‹Рј РєРѕРґРѕРј (Рё РєРѕРјРїРёР»СЏС‚РѕСЂ
+/// РїСЂРµРґСѓРїСЂРµР¶РґР°Р» РѕР± СЌС‚РѕРј: CS0649).
+/// </remarks>
 public class Turret : Building
 {
-    /// <summary>
-    /// Дальность действия турели (радиус обнаружения целей).
-    /// </summary>
-    public int DefenseRange;
+    [Header("РўСѓСЂРµР»СЊ")]
+    [Tooltip("Р Р°РґРёСѓСЃ РѕР±РЅР°СЂСѓР¶РµРЅРёСЏ С†РµР»РµР№.")]
+    [SerializeField] private float defenseRange = 6f;
+
+    [Tooltip("РЈСЂРѕРЅ Р·Р° РѕРґРЅСѓ Р°С‚Р°РєСѓ.")]
+    [SerializeField] private int damage = 5;
+
+    [Tooltip("Р’СЂРµРјСЏ РјРµР¶РґСѓ Р°С‚Р°РєР°РјРё РІ СЃРµРєСѓРЅРґР°С….")]
+    [SerializeField] private float attackCooldown = 1f;
+
+    [Tooltip("РЎР»РѕРё, РЅР° РєРѕС‚РѕСЂС‹С… РёС‰СѓС‚СЃСЏ С†РµР»Рё. РџСѓСЃС‚Рѕ = Default.")]
+    [SerializeField] private LayerMask targetLayers;
 
     /// <summary>
-    /// Урон, наносимый турелью за одну атаку.
+    /// Р®РЅРёС‚С‹ Рё РїСЂРµРїСЏС‚СЃС‚РІРёСЏ Р»РµР¶Р°С‚ РЅР° Default вЂ” СЌС‚Рѕ РјР°СЃРєР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ.
+    /// Р’С‹С‡РёСЃР»СЏРµС‚СЃСЏ Р»РµРЅРёРІРѕ: LayerMask.GetMask РЅРµР»СЊР·СЏ РІС‹Р·С‹РІР°С‚СЊ РёР· СЃС‚Р°С‚РёС‡РµСЃРєРѕРіРѕ
+    /// РёРЅРёС†РёР°Р»РёР·Р°С‚РѕСЂР° MonoBehaviour (Unity Р±СЂРѕСЃР°РµС‚ UnityException).
     /// </summary>
-    public int Damage;
+    private static int _defaultTargetMask = -1;
 
-    /// <summary>
-    /// Время между атаками (в секундах).
-    /// </summary>
-    public float AttackCooldown;
-
-    private float _lastAttackTime;
-    private GameObject _currentTarget;
-
-    /// <summary>
-    /// Обновляет состояние турели каждый кадр.
-    /// Если турель функционирует (<see cref="Building.State"/> == <see cref="BuildingState.Operational"/>),
-    /// ищет цели и атакует их при соблюдении условий.
-    /// </summary>
-    public override void Update()
+    private static int DefaultTargetMask
     {
-        if (State != BuildingState.Operational) return;
-
-        FindTarget();
-
-        if (_currentTarget != null && Time.time - _lastAttackTime > AttackCooldown)
+        get
         {
-            Attack();
-            _lastAttackTime = Time.time;
+            if (_defaultTargetMask < 0)
+            {
+                _defaultTargetMask = LayerMask.GetMask("Default");
+            }
+
+            return _defaultTargetMask;
         }
     }
 
-    /// <summary>
-    /// Поиск цели в радиусе действия турели (<see cref="DefenseRange"/>).
-    /// </summary>
-    /// <remarks>
-    /// При обнаружении врага устанавливает его в качестве текущей цели (<see cref="_currentTarget"/>).
-    /// Если врагов нет, сбрасывает цель в <c>null</c>.
-    /// </remarks>
-    private void FindTarget()
+    private readonly List<Collider2D> _overlapResults = new List<Collider2D>();
+    private ContactFilter2D _targetFilter;
+    private float _lastAttackTime;
+    private Unit _currentTarget;
+
+    protected override void Start()
     {
-        // Логика поиска целей
+        base.Start();
+
+        _targetFilter = new ContactFilter2D();
+        _targetFilter.SetLayerMask(targetLayers.value != 0 ? targetLayers : DefaultTargetMask);
+        _targetFilter.useTriggers = false;
     }
 
     /// <summary>
-    /// Производит атаку текущей цели (<see cref="_currentTarget"/>).
+    /// РћР±РЅРѕРІР»СЏРµС‚ СЃРѕСЃС‚РѕСЏРЅРёРµ С‚СѓСЂРµР»Рё РєР°Р¶РґС‹Р№ РєР°РґСЂ.
+    /// Р•СЃР»Рё С‚СѓСЂРµР»СЊ С„СѓРЅРєС†РёРѕРЅРёСЂСѓРµС‚ (<see cref="Building.State"/> == <see cref="BuildingState.Operational"/>),
+    /// РёС‰РµС‚ С†РµР»Рё Рё Р°С‚Р°РєСѓРµС‚ РёС… РїСЂРё СЃРѕР±Р»СЋРґРµРЅРёРё СѓСЃР»РѕРІРёР№.
+    /// </summary>
+    public override void Update()
+    {
+        if (!isServer) return;
+
+        // РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ Р±Р°Р·РѕРІРѕРіРѕ РєР»Р°СЃСЃР° (Сѓ С‚СѓСЂРµР»Рё РµРіРѕ РЅРµС‚, РЅРѕ РїРѕРІРµРґРµРЅРёРµ Р±Р°Р·РѕРІРѕРіРѕ С‚РёРїР° РЅРµ С‚РµСЂСЏРµРј).
+        base.Update();
+
+        if (State != BuildingState.Operational) return;
+
+        if (!HasValidTarget())
+        {
+            _currentTarget = FindTarget();
+        }
+
+        if (_currentTarget == null) return;
+        if (Time.time - _lastAttackTime < attackCooldown) return;
+
+        Attack(_currentTarget);
+        _lastAttackTime = Time.time;
+    }
+
+    private bool HasValidTarget()
+    {
+        if (_currentTarget == null) return false;
+        if (_currentTarget.CurrentHealth <= 0) return false;
+
+        return Vector2.Distance(transform.position, _currentTarget.transform.position) <= defenseRange;
+    }
+
+    /// <summary>
+    /// РџРѕРёСЃРє Р±Р»РёР¶Р°Р№С€РµРіРѕ РІСЂР°РіР° РІ СЂР°РґРёСѓСЃРµ РґРµР№СЃС‚РІРёСЏ С‚СѓСЂРµР»Рё (<see cref="defenseRange"/>).
     /// </summary>
     /// <remarks>
-    /// Наносит урон (<see cref="Damage"/>) цели, если она существует.
+    /// РЎРІРѕРё СЋРЅРёС‚С‹ С†РµР»СЊСЋ РЅРµ СЃС‚Р°РЅРѕРІСЏС‚СЃСЏ. Р‘СѓС„РµСЂ РєРѕР»Р»Р°Р№РґРµСЂРѕРІ РїРµСЂРµРёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ,
+    /// С‡С‚РѕР±С‹ РЅРµ Р°Р»Р»РѕС†РёСЂРѕРІР°С‚СЊ РјР°СЃСЃРёРІ РєР°Р¶РґС‹Р№ РєР°РґСЂ.
     /// </remarks>
-    private void Attack()
+    private Unit FindTarget()
     {
-        // Логика атаки
+        int count = Physics2D.OverlapCircle(transform.position, defenseRange, _targetFilter, _overlapResults);
+
+        Unit best = null;
+        float bestDistance = float.MaxValue;
+
+        for (int i = 0; i < count; i++)
+        {
+            Unit candidate = _overlapResults[i].GetComponentInParent<Unit>();
+            if (candidate == null) continue;
+            if (candidate.CurrentHealth <= 0) continue;
+            if (candidate.Owner != null && candidate.Owner == Owner) continue;
+
+            float distance = Vector2.Distance(transform.position, candidate.transform.position);
+            if (distance >= bestDistance) continue;
+
+            best = candidate;
+            bestDistance = distance;
+        }
+
+        return best;
+    }
+
+    /// <summary>
+    /// РџСЂРѕРёР·РІРѕРґРёС‚ Р°С‚Р°РєСѓ С‚РµРєСѓС‰РµР№ С†РµР»Рё.
+    /// </summary>
+    private void Attack(Unit target)
+    {
+        target.TakeDamage(damage, Owner);
     }
 }

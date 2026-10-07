@@ -1,138 +1,71 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Класс, реализующий поиск пути по карте.
+/// Поиск пути по игровой карте: обвязка вокруг <see cref="GridPathfinder"/>.
+/// Здесь только доступ к миру, выбор клетки назначения и преобразование координат;
+/// сам алгоритм вынесен в чистый C# и покрыт тестами.
 /// </summary>
 public static class Pathfinding
 {
-    private class Node
-    {
-        public int X { get; }
-        public int Y { get; }
-        public int GCost { get; set; } // Расстояние от старта
-        public int HCost { get; set; } // Эвристическое расстояние до цели
-        public int FCost => GCost + HCost;
-        public Node Parent { get; set; }
+    /// <summary>Кандидаты клеток назначения: переиспользуется между запросами.</summary>
+    private static readonly List<(int x, int y)> GoalCandidates = new List<(int x, int y)>(64);
 
-        public Node(int x, int y)
+    /// <summary>
+    /// Находит путь от start до клетки, с которой юнит может дотянуться до цели.
+    /// </summary>
+    /// <param name="start"> Начальная позиция поиска пути. </param>
+    /// <param name="target"> Цель, до которой требуется найти путь. </param>
+    /// <param name="reachRadius"> Радиус добычи/атаки: с этого расстояния юнит уже действует. </param>
+    /// <param name="rules"> Правила перемещения юнита (подъём, спуск, прыжки через ямы). </param>
+    /// <returns>
+    /// Шаги маршрута до позиции, откуда цель достижима; null — если пути нет.
+    /// </returns>
+    public static List<GridPathfinder.PathStep> FindPath(Vector2Int start, Vector2Int target,
+        int reachRadius = 1, GridPathfinder.MoveRules? rules = null)
+    {
+        Map map = ResolveMap();
+        if (map == null) return null;
+
+        GridPathfinder.MoveRules moveRules = rules ?? GridPathfinder.MoveRules.Default;
+
+        GridPathfinder.CollectGoalCandidates(start.x, start.y, target.x, target.y, reachRadius,
+            (x, y) => IsWalkable(map, x, y), GoalCandidates);
+
+        // Кандидаты идут по предпочтению: сначала ближайшая к цели клетка (обычно
+        // соседняя). Если до неё пути нет, пробуем следующие в пределах радиуса.
+        for (int i = 0; i < GoalCandidates.Count; i++)
         {
-            X = x;
-            Y = y;
+            (int x, int y) goal = GoalCandidates[i];
+
+            List<GridPathfinder.PathStep> path = GridPathfinder.FindPath(
+                start.x, start.y, goal.x, goal.y, (x, y) => IsWalkable(map, x, y), moveRules);
+
+            if (path != null) return path;
         }
+
+        return null;
     }
 
     /// <summary>
-    /// Находит путь от start до target.
+    /// Клетка проходима: сама она пустая, а под ней есть опора (на одной или двух
+    /// клетках ниже — юнит умеет прыгать).
     /// </summary>
-    /// <param name="start"> Начальная позиция поиска пути. </param>
-    /// <param name="target"> Цель, до котрой требуется найти путь. </param>
-    /// <returns>
-    /// List<Vector2Int> - путь до цели виде набора векторов.
-    /// null - если путь не найден.
-    /// </returns>
-    public static List<Vector2Int> FindPath(Vector2Int start, Vector2Int target)
+    private static bool IsWalkable(Map map, int x, int y)
     {
-        Node startNode = new Node(start.x, start.y);
-        Node targetNode = new Node(target.x, target.y+1);
+        if (map.GetBlockType(x, y) != BlockType.Air) return false;
 
-        List<Node> openSet = new List<Node>();
-        HashSet<Vector2Int> closedSet = new HashSet<Vector2Int>();
-        openSet.Add(startNode);
-
-        while (openSet.Count > 0)
-        {
-            Node currentNode = openSet[0];
-            for (int i = 1; i < openSet.Count; i++)
-            {
-                if (openSet[i].FCost < currentNode.FCost ||
-                    (openSet[i].FCost == currentNode.FCost && openSet[i].HCost < currentNode.HCost))
-                {
-                    currentNode = openSet[i];
-                }
-            }
-
-            openSet.Remove(currentNode);
-            closedSet.Add(new Vector2Int(currentNode.X, currentNode.Y));
-
-            if (currentNode.X == targetNode.X && currentNode.Y == targetNode.Y)
-                return RetracePath(startNode, currentNode);
-
-            foreach (Node neighbour in GetNeighbours(currentNode))
-            {
-                if (closedSet.Contains(new Vector2Int(neighbour.X, neighbour.Y)))
-                    continue;
-
-                int newMovementCostToNeighbour = currentNode.GCost + GetDistance(currentNode, neighbour);
-                if (newMovementCostToNeighbour < neighbour.GCost || !openSet.Contains(neighbour))
-                {
-                    neighbour.GCost = newMovementCostToNeighbour;
-                    neighbour.HCost = GetDistance(neighbour, targetNode);
-                    neighbour.Parent = currentNode;
-
-                    if (!openSet.Contains(neighbour))
-                    {
-                        openSet.Add(neighbour);
-                    }
-                }
-            }
-        }
-
-        return null; // Путь не найден
+        return map.GetBlockType(x, y - 1) != BlockType.Air ||
+               map.GetBlockType(x, y - 2) != BlockType.Air;
     }
 
-    private static List<Node> GetNeighbours(Node node)
+    private static Map ResolveMap()
     {
-        List<Node> neighbours = new List<Node>();
+        var kernel = GameKernel.Instance;
+        if (kernel == null) return null;
 
-        // Проверяем соседей по горизонтали и вертикали
-        int[] dx = { 0, 1, 0, -1 };
-        int[] dy = { 1, 0, -1, 0 };
+        if (!kernel.TryGetSystem(out WorldSystem worldSystem)) return null;
 
-        for (int i = 0; i < 4; i++)
-        {
-            int checkX = node.X + dx[i];
-            int checkY = node.Y + dy[i];
-
-            if (checkX >= 0 && checkY >= 0 && IsWalkable(checkX, checkY))
-            {
-                Node neighbour = new Node(checkX, checkY);
-                neighbours.Add(neighbour);
-            }
-        }
-
-        return neighbours;
-    }
-
-    private static int GetDistance(Node nodeA, Node nodeB)
-    {
-        int dstX = Mathf.Abs(nodeA.X - nodeB.X);
-        int dstY = Mathf.Abs(nodeA.Y - nodeB.Y);
-        return dstX + dstY; // Манхэттенское расстояние
-    }
-
-    private static List<Vector2Int> RetracePath(Node startNode, Node endNode)
-    {
-        List<Vector2Int> path = new List<Vector2Int>();
-        Node currentNode = endNode;
-
-        while (currentNode != startNode)
-        {
-            path.Add(new Vector2Int(currentNode.X, currentNode.Y));
-            currentNode = currentNode.Parent;
-        }
-        path.Reverse();
-        return path;
-    }
-
-    //TODO: создать алгоритм нахождения блоков, до которых юнит может добраться.
-    private static bool IsWalkable(int x, int y)
-    {
-        Block block = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockInfo(x, y);
-        Block blockUnder = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockInfo(x, y - 1);
-        Block blockUnderUnder = GameKernel.Instance.GetSystem<WorldSystem>().WorldMap.GetBlockInfo(x, y - 2);
-
-        return block != null && block.tileData.Type == BlockType.Air && 
-            (blockUnder.tileData.Type != BlockType.Air || blockUnderUnder.tileData.Type != BlockType.Air);
+        return worldSystem.WorldMap;
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -148,10 +148,10 @@ public class SelectionPanelUI : MonoBehaviour
     private void UpdateProductionInfo(ProductionBuilding production)
     {
         if (inputResourcesText != null)
-            inputResourcesText.text = FormatResources(production.inputResources, "Вход:");
+            inputResourcesText.text = FormatResources(production.InputResources, "Вход:");
 
         if (outputResourcesText != null)
-            outputResourcesText.text = FormatResources(production.outputResources, "Выход:");
+            outputResourcesText.text = FormatResources(production.OutputResources, "Выход:");
 
         // Прогресс производства (примерная реализация)
         if (productionProgress != null)
@@ -220,105 +220,25 @@ public class SelectionPanelUI : MonoBehaviour
     {
         if (selectedBuilding == null) return;
 
-        // Здесь реализуйте логику улучшения здания
-        Debug.Log($"Улучшаем здание: {selectedBuilding.Data.DisplayName}");
-
-        // Пример: проверка ресурсов и улучшение
-        //ResourcePair[] upgradeCost = CalculateUpgradeCost(selectedBuilding);
-        //if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(selectedBuilding.Data.Owner, upgradeCost))
-        //{
-        //    // Применить улучшения к зданию
-        //    // selectedBuilding.Upgrade();
-        //}
+        // TODO: реализовать улучшение здания (стоимость и применение эффекта).
+        Debug.Log($"[SelectionPanelUI] Улучшение здания {selectedBuilding.Data?.DisplayName} пока не реализовано.");
     }
 
     private void RepairBuilding()
     {
         if (selectedBuilding == null) return;
 
-        Debug.Log($"Чиним здание: {selectedBuilding.Data.DisplayName}");
-        //int repairCost = CalculateRepairCost(selectedBuilding);
-        //ResourcePair[] costBundle = new ResourcePair[] { new ResourcePair(ResourceType.Minerals, repairCost) };
-
-        //if (GameKernel.Instance.GetSystem<ResourceSystem>().TrySpendResources(selectedBuilding.Data.Owner, costBundle))
-        //{
-        //    selectedBuilding.CurrentHealth = selectedBuilding.Data.MaxHealth;
-        //    Debug.Log($"Здание {selectedBuilding.Data.DisplayName} отремонтировано");
-        //}
+        // TODO: реализовать ремонт за ресурсы.
+        Debug.Log($"[SelectionPanelUI] Ремонт здания {selectedBuilding.Data?.DisplayName} пока не реализован.");
     }
 
     private void DemolishBuilding()
     {
-        //if (selectedBuilding == null) return;
+        if (selectedBuilding == null) return;
 
-        //// Возвращаем часть ресурсов при сносе
-        //ResourcePair[] refund = CalculateRefund(selectedBuilding.Data.ConstructionCost);
-        //GameKernel.Instance.GetSystem<ResourceSystem>().AddResources(selectedBuilding.Owner, refund);
-
-        //// Уничтожаем здание
-        //Destroy(selectedBuilding.gameObject);
-        //Deselect();
-
-        //Debug.Log($"Здание снесено. Возвращено ресурсов на: {CalculateRefundValue(refund)}");
+        // TODO: реализовать снос. Часть стоимости уже возвращает сам Building
+        // (см. ReturnResourcesOnDestroy), поэтому здесь нужен только вызов уничтожения.
+        Debug.Log($"[SelectionPanelUI] Снос здания {selectedBuilding.Data?.DisplayName} пока не реализован.");
     }
 
-    private ResourcePair[] CalculateUpgradeCost(Building building)
-    {
-        // Пример: стоимость улучшения = 50% от исходной стоимости
-        return MultiplyResourceBundle(building.Data.ConstructionCost, 0.5f);
-    }
-
-    private int CalculateRepairCost(Building building)
-    {
-        int missingHealth = building.Data.MaxHealth - building.CurrentHealth;
-        return missingHealth * 2; // Примерная формула: 2 единицы ресурса за 1 HP
-    }
-
-    private ResourcePair[] CalculateRefund(ResourcePair[] originalCost)
-    {
-        // Возвращаем 50% от исходной стоимости
-        return MultiplyResourceBundle(originalCost, 0.5f);
-    }
-
-    private int CalculateRefundValue(ResourcePair[] refund)
-    {
-        int total = 0;
-        foreach (var resource in refund)
-        {
-            total += resource.Amount;
-        }
-        return total;
-    }
-
-    private ResourcePair[] MultiplyResourceBundle(ResourcePair[] resources, float multiplier)
-    {
-        var result = new ResourcePair[resources.Length];
-
-        for (int i = 0; i < resources.Length; i++)
-        {
-            result[i] = new ResourcePair(
-                resources[i].Type,
-                Mathf.RoundToInt(resources[i].Amount * multiplier)
-            );
-        }
-
-        return result;
-    }
-
-    private IEnumerator TestPanel()
-    {
-        yield return new WaitForSeconds(1f);
-
-        // Создайте тестовое здание для проверки
-        Debug.Log("Testing Selection Panel...");
-
-        // Здесь можно временно заполнить панель тестовыми данными
-        if (nameText != null) nameText.text = "Тестовая шахта";
-        if (healthText != null) healthText.text = "Здоровье: 75/100";
-        if (stateText != null) stateText.text = "Состояние: Работает";
-        if (healthBar != null) healthBar.value = 0.75f;
-
-        if (panel != null)
-            panel.SetActive(true);
-    }
 }

@@ -1,9 +1,11 @@
-﻿using UnityEngine;
+using System.Collections.Generic;
+using UnityEngine;
 using Mirror;
 
 /// <summary>
 /// Управляет процессом размещения зданий на карте.
-/// Обрабатывает пользовательский ввод, проверяет возможность постройки и списывает ресурсы.
+/// Обрабатывает пользовательский ввод на клиенте, а проверку и списание
+/// ресурсов, назначение владельца и спавн выполняет сервер.
 /// </summary>
 public class BuilderSystem : NetworkBehaviour, IGameSystem
 {
@@ -13,16 +15,36 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
     private GameKernel _kernel;
     private ResourceSystem _resourceSystem;
 
-    // Состояние режима стройки
+    // Состояние режима стройки (только клиент)
     private bool _isPlacing;
     private BuildingData _selectedBuilding;
     private GameObject _currentPreview;
     private SpriteRenderer _previewRenderer;
     private Camera _mainCamera;
-    [SerializeField] private BuildingAtlas _buildingAtlas;
 
-    // TODO: Вынести настройки слоев и материалов в ScriptableObject, чтобы не "хардкодить" их имена в скрипте.
-    private LayerMask _obstacleLayer;
+    [SerializeField] private BuildingAtlas _buildingAtlas;
+    [Tooltip("Слои препятствий, которые мешают постройке. Пусто = Obstacle + Building.")]
+    [SerializeField] private LayerMask obstacleLayers;
+
+    private ContactFilter2D _obstacleFilter;
+    private readonly List<Collider2D> _overlapResults = new List<Collider2D>();
+
+    /// <summary>
+    /// Система ресурсов резолвится лениво: на клиенте её нет, а на сервере
+    /// порядок Start не гарантирует, что она уже зарегистрирована.
+    /// </summary>
+    private ResourceSystem Resources
+    {
+        get
+        {
+            if (_resourceSystem == null && _kernel != null && _kernel.TryGetSystem(out ResourceSystem resourceSystem))
+            {
+                _resourceSystem = resourceSystem;
+            }
+
+            return _resourceSystem;
+        }
+    }
 
     private void Start()
     {
@@ -39,10 +61,13 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
     public void Initialize(GameKernel kernel)
     {
         _kernel = kernel;
-        _resourceSystem = _kernel.GetSystem<ResourceSystem>();
+        _resourceSystem = kernel.TryGetSystem(out ResourceSystem resourceSystem) ? resourceSystem : null;
 
-        // Слой, на котором ищутся препятствия (другие здания)
-        _obstacleLayer = LayerMask.GetMask("Obstacle", "Building");
+        LayerMask mask = obstacleLayers.value != 0 ? obstacleLayers : LayerMask.GetMask("Obstacle", "Building");
+        _obstacleFilter = new ContactFilter2D();
+        _obstacleFilter.SetLayerMask(mask);
+        _obstacleFilter.useTriggers = false;
+
         _mainCamera = Camera.main;
 
         Debug.Log($"[{SystemName}] Инициализирована.");
@@ -50,7 +75,13 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
 
     public void Tick(float deltaTime)
     {
-        if (!_isPlacing) return;
+        // Выделенный сервер мышь не читает.
+        if (!isClient || !_isPlacing) return;
+        if (_selectedBuilding == null || _currentPreview == null)
+        {
+            CancelBuilding();
+            return;
+        }
 
         if (_mainCamera == null) _mainCamera = Camera.main;
         if (_mainCamera == null) return;
@@ -65,7 +96,7 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
         {
             if (CanPlaceBuilding())
             {
-                PlaceBuilding(_selectedBuilding.BuildingTypeName, _currentPreview.transform.position);
+                CmdPlaceBuilding(_selectedBuilding.BuildingTypeName, _currentPreview.transform.position);
                 CancelBuilding();
             }
         }
@@ -87,7 +118,6 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
     /// Активирует режим строительства выбранного здания. Вызывается из UI кнопок.
     /// </summary>
     /// <param name="buildingData">Данные о здании (цена, иконка).</param>
-    [Client]
     public void StartPlacement(BuildingData buildingData)
     {
         if (buildingData == null) return;
@@ -102,22 +132,22 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
     /// <summary>
     /// Отменяет текущий режим стройки и уничтожает голограмму-превью.
     /// </summary>
-    [Client]
     public void CancelBuilding()
     {
         if (_currentPreview != null)
         {
-            Object.Destroy(_currentPreview);
+            Destroy(_currentPreview);
         }
+
         _isPlacing = false;
         _selectedBuilding = null;
         _currentPreview = null;
+        _previewRenderer = null;
     }
 
     /// <summary>
     /// Создает визуальную "голограмму" здания, которая следует за курсором.
     /// </summary>
-    [Client]
     private void CreatePreview()
     {
         _currentPreview = new GameObject("BuildingPreview");
@@ -140,7 +170,10 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
     /// </summary>
     private void UpdatePreviewPosition()
     {
-        Vector2 mousePos = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        // z задаёт плоскость мира: с нулём перспективная камера дала бы точку у самой камеры.
+        Vector3 screenPoint = Input.mousePosition;
+        screenPoint.z = Mathf.Abs(_mainCamera.transform.position.z);
+        Vector2 mousePos = _mainCamera.ScreenToWorldPoint(screenPoint);
 
         // TODO: Добавить поддержку сетки разного размера, если здания будут не 1x1.
         _currentPreview.transform.position = new Vector2(
@@ -168,16 +201,16 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
         Vector2 checkPos = _currentPreview.transform.position;
         Vector2 checkSize = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
 
-        // 1. Проверка препятствий (пересечение с другими зданиями)
-        Collider2D[] overlaps = Physics2D.OverlapBoxAll(checkPos, checkSize, 0, _obstacleLayer);
-        foreach (var col in overlaps)
+        // 1. Проверка препятствий (пересечение с другими зданиями).
+        // Коллайдеры триггеров фильтр не пропускает, поэтому превью само себя не блокирует.
+        int overlapCount = Physics2D.OverlapBox(checkPos, checkSize, 0f, _obstacleFilter, _overlapResults);
+        for (int i = 0; i < overlapCount; i++)
         {
-            if (!col.isTrigger && col.gameObject != _currentPreview) return false;
+            if (_overlapResults[i].gameObject != _currentPreview) return false;
         }
 
         // 2. Проверка взаимодействия с миром (опора под зданием)
-        var world = _kernel.GetSystem<WorldSystem>();
-        if (world != null)
+        if (_kernel != null && _kernel.TryGetSystem(out WorldSystem world))
         {
             if (!world.IsSurfaceBuildable(checkPos, checkSize))
             {
@@ -190,41 +223,96 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
 
     private GameObject GetBuildingByName(BuildingTypeNames buildingTypeName)
     {
-        switch(buildingTypeName){
+        switch (buildingTypeName)
+        {
             case BuildingTypeNames.House:
-                return _buildingAtlas.House;
+                return _buildingAtlas != null ? _buildingAtlas.House : null;
         }
+
         return null;
     }
 
     /// <summary>
-    /// Окончательное размещение здания: списание ресурсов и создание объекта на сцене.
+    /// Окончательное размещение здания. Выполняется на сервере: списание ресурсов,
+    /// назначение владельца и спавн объекта.
     /// </summary>
     [Command(requiresAuthority = false)]
-    private void PlaceBuilding(BuildingTypeNames buildingTypeName, Vector2 position)
+    private void CmdPlaceBuilding(BuildingTypeNames buildingTypeName, Vector2 position, NetworkConnectionToClient sender = null)
     {
-        if (true)//_resourceSystem.TrySpendResources(player ,_selectedBuilding.ConstructionCost)
+        if (!isServer) return;
+
+        // sender == null означает вызов на сервере напрямую (в том числе в режиме Host).
+        Player player = sender != null && sender.identity != null
+            ? sender.identity.GetComponent<Player>()
+            : null;
+
+        if (player == null)
         {
-            GameObject prefab = GetBuildingByName(buildingTypeName);
-            GameObject buildingObj = Object.Instantiate(prefab, position, Quaternion.identity);
-
-            // Жестко задаем слой, чтобы SelectionSystem мог его найти
-            buildingObj.layer = LayerMask.NameToLayer("Building");
-
-            Building building = buildingObj.GetComponent<Building>();
-
-            BoxCollider2D collider = buildingObj.GetComponent<BoxCollider2D>();
-            if (collider == null)
-            {
-                collider = buildingObj.AddComponent<BoxCollider2D>();
-                collider.size = new Vector2(building.Data.Width, building.Data.Height);
-            }
-
-            NetworkServer.Spawn(buildingObj);
-
-            // TODO: Отправить событие "BuildingPlacedEvent" в EventBus для звуков и эффектов
-            //CancelBuilding();
+            Debug.LogWarning($"[{SystemName}] Постройка отклонена: не удалось определить игрока.");
+            return;
         }
+
+        GameObject prefab = GetBuildingByName(buildingTypeName);
+        if (prefab == null)
+        {
+            Debug.LogError($"[{SystemName}] Не найден префаб для здания {buildingTypeName}.");
+            return;
+        }
+
+        // Данные берём у префаба, а не из клиентского поля _selectedBuilding:
+        // на сервере оно могло быть другим или пустым.
+        Building prefabBuilding = prefab.GetComponent<Building>();
+        BuildingData data = prefabBuilding != null ? prefabBuilding.Data : null;
+        if (data == null)
+        {
+            Debug.LogError($"[{SystemName}] У префаба {prefab.name} не задан BuildingData.");
+            return;
+        }
+
+        ResourceSystem resources = Resources;
+        if (resources == null)
+        {
+            Debug.LogError($"[{SystemName}] ResourceSystem недоступен: постройка невозможна.");
+            return;
+        }
+
+        // Стоимость списывается на сервере: раньше проверка жила только в UI,
+        // поэтому здания можно было строить бесплатно.
+        if (!resources.TrySpendResources(player, data.ConstructionCost))
+        {
+            Debug.Log($"[{SystemName}] Постройка {data.DisplayName} отклонена: недостаточно ресурсов.");
+            return;
+        }
+
+        GameObject buildingObj = Instantiate(prefab, position, Quaternion.identity);
+
+        // Жестко задаем слой, чтобы SelectionSystem мог его найти
+        buildingObj.layer = LayerMask.NameToLayer("Building");
+
+        // Коллайдер нужен для выделения мышью. Если он уже есть в префабе,
+        // его размер не трогаем — префаб авторитетнее данных о размере.
+        BoxCollider2D collider = buildingObj.GetComponent<BoxCollider2D>();
+        if (collider == null)
+        {
+            collider = buildingObj.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(data.Width, data.Height);
+        }
+
+        Building building = buildingObj.GetComponent<Building>();
+        if (building == null)
+        {
+            Debug.LogError($"[{SystemName}] На префабе {prefab.name} нет компонента Building.");
+            Destroy(buildingObj);
+            return;
+        }
+
+        // Владелец раньше не назначался вообще, из-за чего экономика здания
+        // падала на null-ключе, а стоимость не возвращалась.
+        building.Owner = player;
+
+        NetworkServer.Spawn(buildingObj);
+
+        _kernel.EventBus.Raise(new BuildingPlacedEvent(data, player));
     }
 
     public bool IsPlacingBuilding() => _isPlacing;

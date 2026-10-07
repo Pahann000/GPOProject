@@ -1,6 +1,5 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
-using Mirror.Examples.Common.Controllers.Player;
 
 public class ResourcePanelUI : MonoBehaviour
 {
@@ -71,11 +70,14 @@ public class ResourcePanelUI : MonoBehaviour
 
     private void UpdateAllDisplays()
     {
+        var kernel = GameKernel.Instance;
+        if (kernel == null || !kernel.TryGetSystem(out UISystem uiSystem)) return;
+
+        Player player = uiSystem.LocalPlayer;
+        if (player == null) return;
+
         foreach (ResourceType type in System.Enum.GetValues(typeof(ResourceType)))
         {
-            Player player = GameKernel.Instance.GetSystem<UISystem>().LocalPlayer;
-            if (player == null) return;
-
             int amount = player.Resources.GetResource(type);
             int limit = player.Resources.GetStorageLimit(type);
 

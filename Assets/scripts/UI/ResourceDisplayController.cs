@@ -3,8 +3,8 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Контроллер для отображения информации об одном типе ресурса
-/// Управляет иконкой, текстом и визуальными эффектами
+/// РљРѕРЅС‚СЂРѕР»Р»РµСЂ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ РёРЅС„РѕСЂРјР°С†РёРё РѕР± РѕРґРЅРѕРј С‚РёРїРµ СЂРµСЃСѓСЂСЃР°
+/// РЈРїСЂР°РІР»СЏРµС‚ РёРєРѕРЅРєРѕР№, С‚РµРєСЃС‚РѕРј Рё РІРёР·СѓР°Р»СЊРЅС‹РјРё СЌС„С„РµРєС‚Р°РјРё
 /// </summary>
 public class ResourceDisplayController : MonoBehaviour
 {
@@ -21,8 +21,8 @@ public class ResourceDisplayController : MonoBehaviour
     [SerializeField] private Color backgroundColor = new Color(0.1f, 0.1f, 0.1f, 0.8f);
 
     [Header("Warning Settings")]
-    [SerializeField] private float lowThreshold = 0.2f;    // 20% от лимита
-    [SerializeField] private float warningThreshold = 0.5f; // 50% от лимита
+    [SerializeField] private float lowThreshold = 0.2f;    // 20% РѕС‚ Р»РёРјРёС‚Р°
+    [SerializeField] private float warningThreshold = 0.5f; // 50% РѕС‚ Р»РёРјРёС‚Р°
     [SerializeField] private bool enablePulseEffect = true;
     [SerializeField] private float pulseSpeed = 2f;
 
@@ -31,41 +31,41 @@ public class ResourceDisplayController : MonoBehaviour
     private float pulseTimer = 0f;
 
     /// <summary>
-    /// Инициализация контроллера
+    /// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РєРѕРЅС‚СЂРѕР»Р»РµСЂР°
     /// </summary>
-    /// <param name="type">Тип ресурса</param>
-    /// <param name="icon">Спрайт иконки</param>
+    /// <param name="type">РўРёРї СЂРµСЃСѓСЂСЃР°</param>
+    /// <param name="icon">РЎРїСЂР°Р№С‚ РёРєРѕРЅРєРё</param>
     public void Initialize(ResourceType type, Sprite icon)
     {
         resourceType = type;
 
-        // Устанавливаем иконку
+        // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РёРєРѕРЅРєСѓ
         if (iconImage != null && icon != null)
         {
             iconImage.sprite = icon;
         }
 
-        // Настраиваем цвет фона в зависимости от типа ресурса
+        // РќР°СЃС‚СЂР°РёРІР°РµРј С†РІРµС‚ С„РѕРЅР° РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ С‚РёРїР° СЂРµСЃСѓСЂСЃР°
         if (backgroundImage != null)
         {
             backgroundImage.color = GetBackgroundColorForResourceType(type);
         }
 
-        // Скрываем предупреждение по умолчанию
+        // РЎРєСЂС‹РІР°РµРј РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
         if (warningIcon != null)
         {
             warningIcon.SetActive(false);
         }
 
-        // Устанавливаем начальный текст
+        // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅР°С‡Р°Р»СЊРЅС‹Р№ С‚РµРєСЃС‚
         UpdateDisplay(0, 100);
     }
 
     /// <summary>
-    /// Обновляет отображение количества ресурса
+    /// РћР±РЅРѕРІР»СЏРµС‚ РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° СЂРµСЃСѓСЂСЃР°
     /// </summary>
-    /// <param name="currentAmount">Текущее количество</param>
-    /// <param name="storageLimit">Лимит хранилища</param>
+    /// <param name="currentAmount">РўРµРєСѓС‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ</param>
+    /// <param name="storageLimit">Р›РёРјРёС‚ С…СЂР°РЅРёР»РёС‰Р°</param>
     public void UpdateDisplay(int currentAmount, int storageLimit)
     {
         if (amountText != null)
@@ -78,7 +78,7 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Обновляет цвет текста в зависимости от количества ресурсов
+    /// РћР±РЅРѕРІР»СЏРµС‚ С†РІРµС‚ С‚РµРєСЃС‚Р° РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РєРѕР»РёС‡РµСЃС‚РІР° СЂРµСЃСѓСЂСЃРѕРІ
     /// </summary>
     private void UpdateTextColor(int currentAmount, int storageLimit)
     {
@@ -104,7 +104,7 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Обновляет состояние предупреждения
+    /// РћР±РЅРѕРІР»СЏРµС‚ СЃРѕСЃС‚РѕСЏРЅРёРµ РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёСЏ
     /// </summary>
     private void UpdateWarningState(int currentAmount, int storageLimit)
     {
@@ -115,7 +115,7 @@ public class ResourceDisplayController : MonoBehaviour
 
         warningIcon.SetActive(shouldShowWarning);
 
-        // Если ресурсов мало, можно добавить вибрацию или другие эффекты
+        // Р•СЃР»Рё СЂРµСЃСѓСЂСЃРѕРІ РјР°Р»Рѕ, РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РІРёР±СЂР°С†РёСЋ РёР»Рё РґСЂСѓРіРёРµ СЌС„С„РµРєС‚С‹
         if (shouldShowWarning)
         {
             PlayLowResourceEffect();
@@ -123,38 +123,38 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Эффект для низкого уровня ресурсов
+    /// Р­С„С„РµРєС‚ РґР»СЏ РЅРёР·РєРѕРіРѕ СѓСЂРѕРІРЅСЏ СЂРµСЃСѓСЂСЃРѕРІ
     /// </summary>
     private void PlayLowResourceEffect()
     {
-        // Можно добавить звук, анимацию и т.д.
-        // Debug.Log($"Внимание! Ресурс {resourceType} на низком уровне!");
+        // РњРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ Р·РІСѓРє, Р°РЅРёРјР°С†РёСЋ Рё С‚.Рґ.
+        // Debug.Log($"Р’РЅРёРјР°РЅРёРµ! Р РµСЃСѓСЂСЃ {resourceType} РЅР° РЅРёР·РєРѕРј СѓСЂРѕРІРЅРµ!");
     }
 
     /// <summary>
-    /// Возвращает цвет фона в зависимости от типа ресурса
+    /// Р’РѕР·РІСЂР°С‰Р°РµС‚ С†РІРµС‚ С„РѕРЅР° РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ С‚РёРїР° СЂРµСЃСѓСЂСЃР°
     /// </summary>
     private Color GetBackgroundColorForResourceType(ResourceType type)
     {
         switch (type)
         {
             case ResourceType.Ice:
-                return new Color(0.7f, 0.7f, 0.8f, 0.3f); // Светло-синий
+                return new Color(0.7f, 0.7f, 0.8f, 0.3f); // РЎРІРµС‚Р»Рѕ-СЃРёРЅРёР№
             case ResourceType.Minerals:
-                return new Color(0.8f, 0.7f, 0.5f, 0.3f); // Светло-коричневый
+                return new Color(0.8f, 0.7f, 0.5f, 0.3f); // РЎРІРµС‚Р»Рѕ-РєРѕСЂРёС‡РЅРµРІС‹Р№
             case ResourceType.Rock:
-                return new Color(0.7f, 0.8f, 1f, 0.3f);   // Светло-голубой
+                return new Color(0.7f, 0.8f, 1f, 0.3f);   // РЎРІРµС‚Р»Рѕ-РіРѕР»СѓР±РѕР№
             case ResourceType.Root:
-                return new Color(0.8f, 1f, 0.8f, 0.3f);   // Светло-зеленый
+                return new Color(0.8f, 1f, 0.8f, 0.3f);   // РЎРІРµС‚Р»Рѕ-Р·РµР»РµРЅС‹Р№
             case ResourceType.Energy:
-                return new Color(1f, 1f, 0.7f, 0.3f);     // Светло-желтый
+                return new Color(1f, 1f, 0.7f, 0.3f);     // РЎРІРµС‚Р»Рѕ-Р¶РµР»С‚С‹Р№
             default:
                 return backgroundColor;
         }
     }
 
     /// <summary>
-    /// Устанавливает кастомную иконку
+    /// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РєР°СЃС‚РѕРјРЅСѓСЋ РёРєРѕРЅРєСѓ
     /// </summary>
     public void SetIcon(Sprite newIcon)
     {
@@ -165,7 +165,7 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Устанавливает кастомный цвет фона
+    /// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РєР°СЃС‚РѕРјРЅС‹Р№ С†РІРµС‚ С„РѕРЅР°
     /// </summary>
     public void SetBackgroundColor(Color newColor)
     {
@@ -176,7 +176,7 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Включает/выключает отображение
+    /// Р’РєР»СЋС‡Р°РµС‚/РІС‹РєР»СЋС‡Р°РµС‚ РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ
     /// </summary>
     public void SetVisible(bool isVisible)
     {
@@ -184,29 +184,29 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Показывает анимацию при изменении количества ресурсов
+    /// РџРѕРєР°Р·С‹РІР°РµС‚ Р°РЅРёРјР°С†РёСЋ РїСЂРё РёР·РјРµРЅРµРЅРёРё РєРѕР»РёС‡РµСЃС‚РІР° СЂРµСЃСѓСЂСЃРѕРІ
     /// </summary>
     public void PlayChangeAnimation(bool isIncrease)
     {
         if (isIncrease)
         {
-            // Анимация для увеличения ресурсов
+            // РђРЅРёРјР°С†РёСЏ РґР»СЏ СѓРІРµР»РёС‡РµРЅРёСЏ СЂРµСЃСѓСЂСЃРѕРІ
             PlayIncreaseAnimation();
         }
         else
         {
-            // Анимация для уменьшения ресурсов
+            // РђРЅРёРјР°С†РёСЏ РґР»СЏ СѓРјРµРЅСЊС€РµРЅРёСЏ СЂРµСЃСѓСЂСЃРѕРІ
             PlayDecreaseAnimation();
         }
     }
 
     /// <summary>
-    /// Анимация для увеличения ресурсов
+    /// РђРЅРёРјР°С†РёСЏ РґР»СЏ СѓРІРµР»РёС‡РµРЅРёСЏ СЂРµСЃСѓСЂСЃРѕРІ
     /// </summary>
     private void PlayIncreaseAnimation()
     {
-        // Можно добавить LeanTween или другие анимации
-        // Например: увеличение масштаба и возврат
+        // РњРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ LeanTween РёР»Рё РґСЂСѓРіРёРµ Р°РЅРёРјР°С†РёРё
+        // РќР°РїСЂРёРјРµСЂ: СѓРІРµР»РёС‡РµРЅРёРµ РјР°СЃС€С‚Р°Р±Р° Рё РІРѕР·РІСЂР°С‚
         if (gameObject.activeInHierarchy)
         {
             // LeanTween.scale(gameObject, Vector3.one * 1.2f, 0.2f)
@@ -216,11 +216,11 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Анимация для уменьшения ресурсов
+    /// РђРЅРёРјР°С†РёСЏ РґР»СЏ СѓРјРµРЅСЊС€РµРЅРёСЏ СЂРµСЃСѓСЂСЃРѕРІ
     /// </summary>
     private void PlayDecreaseAnimation()
     {
-        // Можно добавить вибрацию или изменение цвета
+        // РњРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РІРёР±СЂР°С†РёСЋ РёР»Рё РёР·РјРµРЅРµРЅРёРµ С†РІРµС‚Р°
         if (gameObject.activeInHierarchy)
         {
             // LeanTween.color(amountText.gameObject, Color.red, 0.1f)
@@ -229,7 +229,7 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Обновление визуальных эффектов
+    /// РћР±РЅРѕРІР»РµРЅРёРµ РІРёР·СѓР°Р»СЊРЅС‹С… СЌС„С„РµРєС‚РѕРІ
     /// </summary>
     private void Update()
     {
@@ -237,20 +237,20 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Эффект пульсации для низкого уровня ресурсов
+    /// Р­С„С„РµРєС‚ РїСѓР»СЊСЃР°С†РёРё РґР»СЏ РЅРёР·РєРѕРіРѕ СѓСЂРѕРІРЅСЏ СЂРµСЃСѓСЂСЃРѕРІ
     /// </summary>
     private void UpdatePulseEffect()
     {
         if (!enablePulseEffect || !isLow || amountText == null) return;
 
         pulseTimer += Time.deltaTime * pulseSpeed;
-        float alpha = (Mathf.Sin(pulseTimer) + 1f) * 0.5f; // От 0 до 1
+        float alpha = (Mathf.Sin(pulseTimer) + 1f) * 0.5f; // РћС‚ 0 РґРѕ 1
 
         Color currentColor = amountText.color;
         currentColor.a = Mathf.Lerp(0.3f, 1f, alpha);
         amountText.color = currentColor;
 
-        // Пульсация для иконки предупреждения
+        // РџСѓР»СЊСЃР°С†РёСЏ РґР»СЏ РёРєРѕРЅРєРё РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёСЏ
         if (warningIcon != null)
         {
             warningIcon.transform.localScale = Vector3.one * Mathf.Lerp(0.8f, 1.2f, alpha);
@@ -258,7 +258,7 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Получает тип ресурса, который отображает этот контроллер
+    /// РџРѕР»СѓС‡Р°РµС‚ С‚РёРї СЂРµСЃСѓСЂСЃР°, РєРѕС‚РѕСЂС‹Р№ РѕС‚РѕР±СЂР°Р¶Р°РµС‚ СЌС‚РѕС‚ РєРѕРЅС‚СЂРѕР»Р»РµСЂ
     /// </summary>
     public ResourceType GetResourceType()
     {
@@ -266,7 +266,7 @@ public class ResourceDisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Сбрасывает состояние контроллера
+    /// РЎР±СЂР°СЃС‹РІР°РµС‚ СЃРѕСЃС‚РѕСЏРЅРёРµ РєРѕРЅС‚СЂРѕР»Р»РµСЂР°
     /// </summary>
     public void Reset()
     {

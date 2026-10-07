@@ -1,28 +1,28 @@
-﻿/// <summary>
+/// <summary>
 /// Интерфейс для любого объекта, способного получать урон.
 /// </summary>
 public interface IDamagable
 {
     /// <summary>
-    /// Наносит урон объекту.
+    /// Наносит урон объекту. Множители урона считает атакующий:
+    /// получателю передаётся уже итоговое значение.
     /// </summary>
     /// <param name="amount"> Количество урона. </param>
-    /// <param name="Damager"> Игрок, нанёсший урон. </param>
-    /// <param name="unitType"> Тип юнита, нанёсшего урон. </param>
-    public void TakeDamage(int amount, Player Damager, UnitTypeName unitType);
+    /// <param name="damager"> Игрок, нанёсший урон. </param>
+    void TakeDamage(int amount, Player damager);
 
     /// <summary>
     /// Текущее здоровье объекта.
     /// </summary>
-    public int CurrentHealth { get; }
+    int CurrentHealth { get; }
 
     /// <summary>
     /// Положение объекта по X.
     /// </summary>
-    public int X { get; }
+    int X { get; }
 
     /// <summary>
-    /// Положение объекта по X.
+    /// Положение объекта по Y.
     /// </summary>
-    public int Y { get; }
+    int Y { get; }
 }

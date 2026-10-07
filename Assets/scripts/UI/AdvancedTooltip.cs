@@ -70,7 +70,7 @@ public class AdvancedTooltip : MonoBehaviour
         Vector2 mousePos = Input.mousePosition;
         Vector2 tooltipPos;
 
-        // Конвертируем позицию мыши в локальные координаты канваса
+        // РљРѕРЅРІРµСЂС‚РёСЂСѓРµРј РїРѕР·РёС†РёСЋ РјС‹С€Рё РІ Р»РѕРєР°Р»СЊРЅС‹Рµ РєРѕРѕСЂРґРёРЅР°С‚С‹ РєР°РЅРІР°СЃР°
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             parentCanvas.transform as RectTransform,
             mousePos,
@@ -78,10 +78,10 @@ public class AdvancedTooltip : MonoBehaviour
             out tooltipPos
         );
 
-        // Применяем смещение
+        // РџСЂРёРјРµРЅСЏРµРј СЃРјРµС‰РµРЅРёРµ
         tooltipPos += offset;
 
-        // Устанавливаем позицию
+        // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РїРѕР·РёС†РёСЋ
         tooltipPanel.transform.localPosition = tooltipPos;
     }
 }

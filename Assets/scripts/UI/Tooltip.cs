@@ -15,13 +15,13 @@ public class Tooltip : MonoBehaviour
 
     private void Start()
     {
-        // Если текстовый объект не назначен, попробуем найти его
+        // Р•СЃР»Рё С‚РµРєСЃС‚РѕРІС‹Р№ РѕР±СЉРµРєС‚ РЅРµ РЅР°Р·РЅР°С‡РµРЅ, РїРѕРїСЂРѕР±СѓРµРј РЅР°Р№С‚Рё РµРіРѕ
         if (tooltipText == null)
         {
             tooltipText = GetComponentInChildren<TextMeshProUGUI>();
         }
 
-        // Находим родительский объект тултипа
+        // РќР°С…РѕРґРёРј СЂРѕРґРёС‚РµР»СЊСЃРєРёР№ РѕР±СЉРµРєС‚ С‚СѓР»С‚РёРїР°
         if (tooltipText != null)
         {
             tooltipObject = tooltipText.gameObject;
@@ -29,12 +29,12 @@ public class Tooltip : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Tooltip: TextMeshProUGUI не найден на {gameObject.name}");
+            Debug.LogWarning($"Tooltip: TextMeshProUGUI РЅРµ РЅР°Р№РґРµРЅ РЅР° {gameObject.name}");
         }
     }
 
     /// <summary>
-    /// Устанавливает текст тултипа
+    /// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ С‚РµРєСЃС‚ С‚СѓР»С‚РёРїР°
     /// </summary>
     public void SetText(string text)
     {
@@ -49,7 +49,7 @@ public class Tooltip : MonoBehaviour
     }
 
     /// <summary>
-    /// Показывает тултип
+    /// РџРѕРєР°Р·С‹РІР°РµС‚ С‚СѓР»С‚РёРї
     /// </summary>
     public void Show()
     {
@@ -61,7 +61,7 @@ public class Tooltip : MonoBehaviour
     }
 
     /// <summary>
-    /// Скрывает тултип
+    /// РЎРєСЂС‹РІР°РµС‚ С‚СѓР»С‚РёРї
     /// </summary>
     public void Hide()
     {
@@ -72,7 +72,7 @@ public class Tooltip : MonoBehaviour
         }
     }
 
-    // Опционально: можно добавить обработчики наведения мыши
+    // РћРїС†РёРѕРЅР°Р»СЊРЅРѕ: РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РѕР±СЂР°Р±РѕС‚С‡РёРєРё РЅР°РІРµРґРµРЅРёСЏ РјС‹С€Рё
     public void OnPointerEnter()
     {
         if (showOnHover && !string.IsNullOrEmpty(tooltipText?.text))

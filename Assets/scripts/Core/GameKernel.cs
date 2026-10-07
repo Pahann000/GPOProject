@@ -179,6 +179,8 @@ public class GameKernel : NetworkBehaviour
         
         RegisterSystem(new BuilderSystem());
 
+        RegisterSystem(new TechTreeSystem());
+
         RegisterSystem(new SelectionSystem());
         
         RegisterSystem(new UnitSystem());
@@ -186,5 +188,6 @@ public class GameKernel : NetworkBehaviour
         RegisterSystem(new IncidentSystem());
 
         RegisterSystem(new MinimapSystem());
+
     }
 }

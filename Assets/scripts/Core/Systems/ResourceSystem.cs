@@ -19,6 +19,11 @@ public class ResourceSystem : IGameSystem
     public void Initialize(GameKernel kernel)
     {
         _kernel = kernel;
+
+        // Подписка на события-запросы
+        _kernel.EventBus.Subscribe<CheckResourcesEvent>(OnCheckResources);
+        _kernel.EventBus.Subscribe<SpendResourcesEvent>(OnSpendResources);
+
         Debug.Log($"[{SystemName}] Инициализирована.");
     }
 
@@ -32,8 +37,20 @@ public class ResourceSystem : IGameSystem
 
     public void Shutdown()
     {
+        _kernel.EventBus.Unsubscribe<CheckResourcesEvent>(OnCheckResources);
+        _kernel.EventBus.Unsubscribe<SpendResourcesEvent>(OnSpendResources);
         //_resources.Clear();
         //_storageLimits.Clear();
+    }
+
+    private void OnCheckResources(CheckResourcesEvent evt)
+    {
+        evt.Result = HasResources(evt.Player, evt.Cost);
+    }
+
+    private void OnSpendResources(SpendResourcesEvent evt)
+    {
+        evt.Result = TrySpendResources(evt.Player, evt.Cost);
     }
 
     /// <summary>

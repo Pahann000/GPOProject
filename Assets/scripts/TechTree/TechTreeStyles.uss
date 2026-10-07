@@ -1,0 +1,35 @@
+/* Стиль для заблокированной технологии */
+.TechNode.locked {
+    border-color: rgb(107, 79, 79);
+    background-color: rgba(42, 42, 62, 0.6);
+}
+
+.TechNode.locked .Icon {
+    opacity: 0.5;
+}
+
+/* Стиль для исследованной технологии */
+.TechNode.researched {
+    border-color: rgb(90, 158, 90);
+    background-color: rgba(42, 62, 42, 0.95);
+}
+
+.TechNode.researched .UnlockButton {
+    background-color: rgb(90, 158, 90);
+}
+
+/* Стиль для доступной технологии */
+.TechNode.available {
+    border-color: rgb(74, 111, 165);
+    background-color: rgba(42, 42, 62, 0.95);
+}
+
+.TechNode.available .UnlockButton {
+    background-color: rgb(74, 111, 165);
+}
+
+/* Анимация при наведении */
+.TechNode:hover {
+    scale: 1.02;
+    transition: scale 0.1s;
+}

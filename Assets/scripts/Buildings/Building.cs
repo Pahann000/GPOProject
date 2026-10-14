@@ -55,6 +55,12 @@ public class Building : NetworkBehaviour
     /// <summary>Выходные ресурсы цикла производства.</summary>
     protected virtual ResourcePair[] ProductionOutputs => _data != null ? _data.OutputResources : null;
 
+    /// <summary>
+    /// Экономика для наследников (бонусы складов, пассивный доход).
+    /// Может быть null, если система недоступна.
+    /// </summary>
+    protected ResourceSystem Economy { get; private set; }
+
     protected virtual void Start()
     {
         if (_data == null)
@@ -70,6 +76,7 @@ public class Building : NetworkBehaviour
             if (GameKernel.Instance != null && GameKernel.Instance.TryGetSystem(out ResourceSystem resourceSystem))
             {
                 _resourceManager = resourceSystem;
+                Economy = resourceSystem;
             }
             else
             {

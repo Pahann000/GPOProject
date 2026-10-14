@@ -13,3 +13,5 @@ MonoBehaviour:
   m_Name: BuildingAtlas
   m_EditorClassIdentifier: 
   House: {fileID: 6320938056590036663, guid: e1bf0c42750b0d14b81fe007769ddb8a, type: 3}
+  MainBuilding: {fileID: 5752040734098384485, guid: a8644cdef974bd447b62731cff0952e9, type: 3}
+  ExtendsBuilding: {fileID: 418415661544268778, guid: ccaaaa6a807d13446af78f722fa260d3, type: 3}

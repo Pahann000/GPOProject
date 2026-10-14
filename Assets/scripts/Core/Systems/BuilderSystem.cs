@@ -227,6 +227,12 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
         {
             case BuildingTypeNames.House:
                 return _buildingAtlas != null ? _buildingAtlas.House : null;
+
+            case BuildingTypeNames.MainBuilding:
+                return _buildingAtlas != null ? _buildingAtlas.MainBuilding : null;
+
+            case BuildingTypeNames.ExtendsBuilding:
+                return _buildingAtlas != null ? _buildingAtlas.ExtendsBuilding : null;
         }
 
         return null;

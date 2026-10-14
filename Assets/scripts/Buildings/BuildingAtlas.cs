@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 /// <summary>
 /// Описывает атлас, содержащий типы зданий.
@@ -10,4 +10,10 @@ public class BuildingAtlas : ScriptableObject
     /// Дом.
     /// </summary>
     public GameObject House;
+
+    /// <summary>Главное здание фракции: пассивный доход и склады.</summary>
+    public GameObject MainBuilding;
+
+    /// <summary>Здание-бонус: расширяет лимит хранения ресурса.</summary>
+    public GameObject ExtendsBuilding;
 }

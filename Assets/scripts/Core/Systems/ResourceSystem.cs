@@ -14,6 +14,13 @@ public class ResourceSystem : IGameSystem, IResourceProvider
 
     private Dictionary<Player, ResourceBundle> _playersResources = new Dictionary<Player, ResourceBundle>();
 
+    /// <summary>
+    /// Все типы ресурсов: нужны бонусам, которые касаются складов целиком
+    /// (главное здание увеличивает лимит сразу по всем ресурсам).
+    /// </summary>
+    private static readonly ResourceType[] AllResourceTypes =
+        (ResourceType[])System.Enum.GetValues(typeof(ResourceType));
+
     // TODO: В будущем можно вынести стартовые значения и лимиты в отдельный ScriptableObject (Config),
     // чтобы можно было настраивать без перекомпиляции кода.
     public void Initialize(GameKernel kernel)
@@ -209,6 +216,32 @@ public class ResourceSystem : IGameSystem, IResourceProvider
     /// <summary>
     /// Увеличивает максимальную вместимость хранилища для ресурса.
     /// </summary>
+    /// <summary>
+    /// Увеличивает лимит хранения всех ресурсов игрока. Бонус главного здания фракции.
+    /// </summary>
+    public void IncreaseAllStorage(Player player, int amount)
+    {
+        if (amount <= 0) return;
+
+        for (int i = 0; i < AllResourceTypes.Length; i++)
+        {
+            IncreaseStorage(player, new ResourcePair(AllResourceTypes[i], amount));
+        }
+    }
+
+    /// <summary>
+    /// Снимает бонус со всех складов игрока. Вызывается при уничтожении главного здания.
+    /// </summary>
+    public void DecreaseAllStorage(Player player, int amount)
+    {
+        if (amount <= 0) return;
+
+        for (int i = 0; i < AllResourceTypes.Length; i++)
+        {
+            DecreaseStorage(player, new ResourcePair(AllResourceTypes[i], amount));
+        }
+    }
+
     public void IncreaseStorage(Player player, ResourcePair resourcePair)
     {
         if (!TryGetBundle(player, out var bundle))

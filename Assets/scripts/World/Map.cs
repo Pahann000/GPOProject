@@ -31,6 +31,15 @@ public class Map : MonoBehaviour
     public int Width => _config.WorldWidth * _config.ChunkSize;
     public int Height => _config.WorldHeight * _config.ChunkSize;
 
+    /// <summary>
+    /// Шина событий карты. Через неё сообщается о появлении чанков и об изменении
+    /// блоков (это нужно миникарте). Может быть не задана — тогда просто нет подписчиков.
+    /// </summary>
+    public EventBus EventBus { get; set; }
+
+    /// <summary>Позиции уже загруженных чанков (например, чтобы дорисовать миникарту).</summary>
+    public IEnumerable<Vector2Int> LoadedChunks => _chunks.Keys;
+
     public void Initialize(WorldConfig config, float seed)
     {
         _config = config;
@@ -97,6 +106,9 @@ public class Map : MonoBehaviour
         {
             GenerateChunk(chunkPos.x, chunkPos.y);
         }
+
+        // Один пиксель миникарты: блок поставлен или сломан.
+        EventBus?.Raise(new BlockChangedEvent(x, y, type));
     }
 
     /// <summary>
@@ -222,6 +234,11 @@ public class Map : MonoBehaviour
         {
             chunk = CreateChunk(chunkPos);
             _chunks.Add(chunkPos, chunk);
+
+            // Чанк появился впервые: миникарта дорисовывает его клетки.
+            // При повторной генерации (постановка блока) событие не нужно —
+            // об изменении сообщает PlaceBlock.
+            EventBus?.Raise(new ChunkGeneratedEvent(chunkPos.x, chunkPos.y, ChunkSize));
         }
 
         chunk.needsUpdate = true;

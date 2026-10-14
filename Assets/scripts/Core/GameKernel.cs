@@ -132,6 +132,9 @@ public class GameKernel : NetworkBehaviour
         RegisterSystem(new UISystem());
         RegisterSystem(new SelectionSystem());
 
+        // Миникарта — чисто клиентская: она рисует уже синхронизированный мир.
+        RegisterSystem(new MinimapSystem());
+
         Debug.Log("[Kernel] Клиент подключён");
     }
 

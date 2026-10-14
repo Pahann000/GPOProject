@@ -118,6 +118,14 @@ public class WorldSystem : NetworkBehaviour, IGameSystem
         Map map = MapGameObject.AddComponent<Map>();
 
         map.Initialize(_worldConfig, _seed);
+
+        // Карта сообщает о появлении чанков и изменении блоков через шину:
+        // это слушает миникарта (клиентская система).
+        // Ядро берём и через поле, и через синглтон: WorldSystem создаётся префабом
+        // раньше, чем Kernel успевает вызвать Initialize, и поле тогда ещё пустое.
+        GameKernel kernel = _kernel != null ? _kernel : GameKernel.Instance;
+        map.EventBus = kernel != null ? kernel.EventBus : null;
+
         return map;
     }
 

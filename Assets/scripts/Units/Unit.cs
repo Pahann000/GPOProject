@@ -102,6 +102,12 @@ public class Unit : NetworkBehaviour, IDamagable, IChunkObserver
     }
 
     /// <summary>
+    /// Имя типа юнита: по нему задачи подбирают исполнителя (шахтёр, солдат, рабочий).
+    /// Юнит без типа считается рабочим и на задачи шахтёра или солдата не претендует.
+    /// </summary>
+    public UnitTypeName TypeName => unitType != null ? unitType.UnitTypeName : UnitTypeName.Worker;
+
+    /// <summary>
     /// Скорость передвижения. Берётся из <see cref="UnitType"/>, если он задан:
     /// раньше MoveSpeed из ScriptableObject вообще не использовался.
     /// </summary>

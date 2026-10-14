@@ -7,7 +7,7 @@ using UnityEngine;
 /// Скрывает в себе работу с объектами Map, MapChunk и ChunkManager.
 /// Предоставляет удобный API для получения информации о блоках на карте.
 /// </summary>
-public class WorldSystem : NetworkBehaviour, IGameSystem
+public class WorldSystem : NetworkBehaviour, IGameSystem, IDataProvider<SaveData>
 {
 
     private GameKernel _kernel;
@@ -60,6 +60,60 @@ public class WorldSystem : NetworkBehaviour, IGameSystem
     {
         _seed = newSeed;
         EnsureWorld(_seed);
+    }
+
+    /// <summary>
+    /// Отдаёт данные мира для сохранения: сид и правки блоков. Полную карту хранить
+    /// не нужно — она детерминированно восстанавливается по сиду.
+    /// </summary>
+    public SaveData GetSaveData()
+    {
+        if (WorldMap == null) return null;
+
+        return new SaveData
+        {
+            seed = _seed,
+            worldWidth = WorldMap.Width,
+            worldHeight = WorldMap.Height,
+            chunkSize = WorldMap.ChunkSize,
+            changedBlocks = WorldMap.GetChangedBlocks()
+        };
+    }
+
+    /// <summary>
+    /// Восстанавливает мир из сохранения: сначала пересоздаёт его с нужным сидом
+    /// (сид — SyncVar, поэтому клиенты пересоберут карту сами), затем накладывает
+    /// правки блоков.
+    /// </summary>
+    public void RestoreFromSaveData(SaveData data)
+    {
+        if (data == null) return;
+
+        Debug.Log($"[{SystemName}] Загрузка мира: сид {data.seed}, изменённых блоков {data.changedBlocks?.Count ?? 0}.");
+
+        _seed = data.seed;
+        EnsureWorld(_seed);
+
+        if (WorldMap == null)
+        {
+            Debug.LogError($"[{SystemName}] Не удалось создать мир для загруженного сида.");
+            return;
+        }
+
+        if (data.worldWidth > 0 && (data.worldWidth != WorldMap.Width || data.worldHeight != WorldMap.Height))
+        {
+            Debug.LogWarning($"[{SystemName}] Сохранение сделано для мира {data.worldWidth}x{data.worldHeight}, "
+                + $"текущий {WorldMap.Width}x{WorldMap.Height}: часть блоков может не примениться.");
+        }
+
+        // Сначала откатываем правки текущей сессии, иначе они останутся поверх сохранения.
+        int reverted = WorldMap.ClearBlockChanges();
+        if (reverted > 0)
+        {
+            Debug.Log($"[{SystemName}] Откатано правок перед загрузкой: {reverted}.");
+        }
+
+        WorldMap.ApplyBlockChanges(data.changedBlocks);
     }
 
     /// <summary>

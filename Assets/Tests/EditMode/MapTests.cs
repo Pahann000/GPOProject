@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -82,6 +83,120 @@ namespace GPOProject.Tests
 
             Object.DestroyImmediate(otherObject);
             Object.DestroyImmediate(otherConfig);
+        }
+
+        // --- Сохранение: какие блоки попадают в файл и как они восстанавливаются ---
+
+        [Test]
+        public void ChangedBlocks_ContainOnlyPlayerEdits()
+        {
+            int x = 1, y = 1;
+            BlockType generated = _map.GetGeneratedBlockType(x, y);
+            BlockType placed = generated == BlockType.Air ? BlockType.Stone : BlockType.Air;
+
+            _map.PlaceBlock(x, y, placed);
+            var changed = _map.GetChangedBlocks();
+
+            Assert.AreEqual(1, changed.Count, "в сохранение попадает только изменённый блок");
+            Assert.AreEqual(x, changed[0].x);
+            Assert.AreEqual(y, changed[0].y);
+            Assert.AreEqual(placed, changed[0].type);
+        }
+
+        [Test]
+        public void ChangedBlocks_IgnoreQueriedBlocks()
+        {
+            // GetBlockInfo и GetBlockObj кладут блок в кэш, но карту не меняют:
+            // раньше такие блоки могли уехать в сохранение как «изменения».
+            _map.GetBlockInfo(2, 3);
+            _map.GetBlockObj(4, 5);
+
+            Assert.AreEqual(0, _map.GetChangedBlocks().Count, "простые запросы блоков не являются правками карты");
+        }
+
+        [Test]
+        public void ApplyBlockChanges_RestoresMapOnSameSeed()
+        {
+            int x = 2, y = 2;
+            BlockType generated = _map.GetGeneratedBlockType(x, y);
+            BlockType placed = generated == BlockType.Air ? BlockType.Gold : BlockType.Air;
+
+            _map.PlaceBlock(x, y, placed);
+            var changed = _map.GetChangedBlocks();
+
+            var freshObject = new GameObject("TestMapRestored");
+            var fresh = freshObject.AddComponent<Map>();
+            fresh.Initialize(_config, 12345f);
+
+            try
+            {
+                Assert.AreEqual(0, fresh.GetChangedBlocks().Count, "свежая карта правок не имеет");
+
+                fresh.ApplyBlockChanges(changed);
+
+                Assert.AreEqual(placed, fresh.GetBlockType(x, y), "правка должна примениться поверх генерации");
+                Assert.AreEqual(changed.Count, fresh.GetChangedBlocks().Count, "и снова считаться правкой");
+            }
+            finally
+            {
+                Object.DestroyImmediate(freshObject);
+            }
+        }
+
+        [Test]
+        public void ClearBlockChanges_RevertsMapToGeneration()
+        {
+            int x = 3, y = 3;
+            BlockType generated = _map.GetGeneratedBlockType(x, y);
+            BlockType placed = generated == BlockType.Air ? BlockType.Stone : BlockType.Air;
+
+            _map.PlaceBlock(x, y, placed);
+            Assert.AreEqual(1, _map.GetChangedBlocks().Count);
+
+            int reverted = _map.ClearBlockChanges();
+
+            Assert.AreEqual(1, reverted, "должна откатиться одна правка");
+            Assert.AreEqual(generated, _map.GetBlockType(x, y), "блок возвращается к сгенерированному типу");
+            Assert.AreEqual(0, _map.GetChangedBlocks().Count, "правок больше нет");
+        }
+
+        [Test]
+        public void ClearBlockChanges_KeepsQueriedBlocksAsCache()
+        {
+            // Запрошенный блок лежит в кэше, но правкой не является: откатывать нечего.
+            var cached = _map.GetBlockObj(4, 2);
+
+            int reverted = _map.ClearBlockChanges();
+
+            Assert.AreEqual(0, reverted);
+            Assert.AreEqual(cached.tileData.Type, _map.GetBlockType(4, 2));
+        }
+
+        [Test]
+        public void SaveData_JsonRoundTrip_KeepsSeedAndBlocks()
+        {
+            var data = new SaveData
+            {
+                seed = 12345f,
+                worldWidth = 64,
+                worldHeight = 64,
+                chunkSize = 16,
+                changedBlocks = new List<BlockChangeData>
+                {
+                    new BlockChangeData { x = 3, y = 4, type = BlockType.Air },
+                    new BlockChangeData { x = 7, y = 8, type = BlockType.Gold }
+                }
+            };
+
+            var restored = JsonUtility.FromJson<SaveData>(JsonUtility.ToJson(data, true));
+
+            Assert.IsNotNull(restored);
+            Assert.AreEqual(data.seed, restored.seed);
+            Assert.AreEqual(64, restored.worldWidth);
+            Assert.AreEqual(16, restored.chunkSize);
+            Assert.AreEqual(2, restored.changedBlocks.Count);
+            Assert.AreEqual(BlockType.Gold, restored.changedBlocks[1].type);
+            Assert.AreEqual(7, restored.changedBlocks[1].x);
         }
     }
 }

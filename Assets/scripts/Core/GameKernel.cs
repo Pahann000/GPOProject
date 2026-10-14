@@ -12,9 +12,11 @@ public class GameKernel : NetworkBehaviour
 {
     private bool _started;
 
+    /// <summary>Провайдеры данных для сохранения подключаются один раз, когда мир уже создан.</summary>
+    private bool _dataProvidersRegistered;
+
     /// <summary> Глобальная ссылка на Ядро. </summary>
     public static GameKernel Instance { get; private set; }
-
     [Header("Global Settings")]
     [Tooltip("Если true, логика систем в методах Tick и FixedTick ставится на паузу.")]
     public bool IsPaused = false;
@@ -69,6 +71,28 @@ public class GameKernel : NetworkBehaviour
                 system.Tick(dt);
             }
         }
+
+        // Провайдеры данных для сохранения подключаются, когда WorldSystem уже
+        // существует: он появляется из заспавненного префаба позже, чем OnStartServer.
+        if (!_dataProvidersRegistered)
+        {
+            RegisterDataProviders();
+        }
+    }
+
+    /// <summary>
+    /// Регистрирует в DataCollector системах-провайдерах данных. Вызывается из Update,
+    /// пока не сработает: порядок создания систем не гарантирован.
+    /// </summary>
+    private void RegisterDataProviders()
+    {
+        if (!TryGetSystem(out DataCollectorSystem collector)) return;
+        if (!TryGetSystem(out WorldSystem worldSystem)) return;
+
+        collector.RegisterProvider<SaveData>(worldSystem);
+        _dataProvidersRegistered = true;
+
+        Debug.Log("[Kernel] Провайдеры данных для сохранения зарегистрированы.");
     }
 
     private void FixedUpdate()
@@ -111,6 +135,10 @@ public class GameKernel : NetworkBehaviour
         // Серверные системы: экономика и учёт юнитов живут только на сервере.
         RegisterSystem(new ResourceSystem());
         RegisterSystem(new UnitSystem());
+
+        // Сохранение серверное: файл пишет только сервер, клиенты получают мир по сиду.
+        RegisterSystem(new DataCollectorSystem());
+        RegisterSystem(new SavingSystem());
 
         if (networkSystemsPrefab == null)
         {

@@ -153,6 +153,21 @@ public class Map : MonoBehaviour
     /// </summary>
     public BlockType GetBlockType(int x, int y)
     {
+        Vector2Int pos = new Vector2Int(x, y);
+        if (_tileData.TryGetValue(pos, out Block data))
+        {
+            return data.tileData.Type;
+        }
+
+        return GetGeneratedBlockType(x, y);
+    }
+
+    /// <summary>
+    /// Тип блока по одной генерации, без учёта поставленных игроком блоков.
+    /// Нужен, чтобы понять, какие клетки игрок действительно изменил (для сохранения).
+    /// </summary>
+    public BlockType GetGeneratedBlockType(int x, int y)
+    {
         // Проверка границ: индексы валидны до Width-1 / Height-1,
         // иначе GetPixel уходил за пределы текстуры шума.
         if (x < 0 || y < 0 || x >= Width || y >= Height)
@@ -160,13 +175,6 @@ public class Map : MonoBehaviour
             return BlockType.Air;
         }
 
-        Vector2Int pos = new Vector2Int(x, y);
-        if (_tileData.TryGetValue(pos, out Block data))
-        {
-            return data.tileData.Type;
-        }
-
-        // Если блока нет в памяти, вычисляем его тип по шуму.
         // Формула та же, что раньше запекалась в текстуру: value > limit.
         for (int i = 0; i < _noises.Count; i++)
         {
@@ -182,6 +190,89 @@ public class Map : MonoBehaviour
         }
 
         return BlockType.Air;
+    }
+
+    /// <summary>
+    /// Список блоков, которые отличаются от генерации. Сохранять всю карту не нужно:
+    /// сид восстанавливает её детерминированно, а хранить надо только правки игрока.
+    /// </summary>
+    public List<BlockChangeData> GetChangedBlocks()
+    {
+        var changed = new List<BlockChangeData>();
+
+        foreach (KeyValuePair<Vector2Int, Block> pair in _tileData)
+        {
+            Block block = pair.Value;
+            if (block == null) continue;
+
+            // В кэше лежат и просто запрошенные блоки: они совпадают с генерацией.
+            if (block.tileData.Type == GetGeneratedBlockType(pair.Key.x, pair.Key.y)) continue;
+
+            changed.Add(new BlockChangeData
+            {
+                x = pair.Key.x,
+                y = pair.Key.y,
+                type = block.tileData.Type
+            });
+        }
+
+        return changed;
+    }
+
+    /// <summary>Применяет правки блоков из сохранения (ставит их поверх сгенерированной карты).</summary>
+    public void ApplyBlockChanges(List<BlockChangeData> changes)
+    {
+        if (changes == null) return;
+
+        for (int i = 0; i < changes.Count; i++)
+        {
+            BlockChangeData change = changes[i];
+            if (change == null) continue;
+
+            PlaceBlock(change.x, change.y, change.type);
+        }
+    }
+
+    /// <summary>
+    /// Возвращает карту к сгенерированному состоянию: убирает правки блоков.
+    /// Нужно перед загрузкой сохранения, иначе поверх него останутся правки текущей сессии.
+    /// </summary>
+    public int ClearBlockChanges()
+    {
+        var toRevert = new List<Vector2Int>();
+
+        foreach (KeyValuePair<Vector2Int, Block> pair in _tileData)
+        {
+            Block block = pair.Value;
+            if (block == null)
+            {
+                toRevert.Add(pair.Key);
+                continue;
+            }
+
+            if (block.tileData.Type != GetGeneratedBlockType(pair.Key.x, pair.Key.y))
+            {
+                toRevert.Add(pair.Key);
+            }
+        }
+
+        for (int i = 0; i < toRevert.Count; i++)
+        {
+            Vector2Int pos = toRevert[i];
+            _tileData.Remove(pos);
+
+            Vector2Int chunkPos = GetChunkPosition(pos.x, pos.y);
+            if (_chunks.ContainsKey(chunkPos))
+            {
+                GenerateChunk(chunkPos.x, chunkPos.y);
+            }
+
+            // Миникарта должна вернуть исходный цвет клетки.
+            BlockType generated = GetGeneratedBlockType(pos.x, pos.y);
+            EventBus?.Raise(new BlockChangedEvent(pos.x, pos.y, generated));
+        }
+
+        return toRevert.Count;
     }
 
     /// <summary>

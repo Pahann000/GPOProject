@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cf11f852c0749f458d5c8e7b07a2531, type: 3}
+  m_Name: Mining
+  m_EditorClassIdentifier: 
+  projectName: "\u0413\u043E\u0440\u043D\u043E\u0435 \u0434\u0435\u043B\u043E"
+  description: "\u041F\u043E\u0437\u0432\u043E\u043B\u044F\u0435\u0442 \u0441\u0442\u0440\u043E\u0438\u0442\u044C
+    \u0448\u0430\u0445\u0442\u044B \u0438 \u0434\u043E\u0431\u044B\u0432\u0430\u0442\u044C
+    \u043C\u0438\u043D\u0435\u0440\u0430\u043B\u044B \u0438\u0437 \u043F\u043E\u0440\u043E\u0434\u044B
+    \u043F\u0440\u043E\u043C\u044B\u0448\u043B\u0435\u043D\u043D\u043E."
+  icon: {fileID: 21300000, guid: 3f48a50396b2d0b4b9618b56b11a3fc2, type: 3}
+  cost:
+  - Type: 2
+    Amount: 60
+  - Type: 0
+    Amount: 30
+  durationSeconds: 20
+  requiredPrerequisites: []
+  unlockBuildings: 03000000
+  unlockUnits: 
+  productionBonusPercent: 0
+  unitDamageBonusPercent: 0
+  unitHealthBonusPercent: 0
+  researchSpeedBonusPercent: 0

@@ -78,6 +78,21 @@ public class Unit : NetworkBehaviour, IDamagable, IChunkObserver
     public Player Owner;
 
     /// <summary>
+    /// Фракция юнита. Назначается сервером до спавна: клиентам она нужна,
+    /// чтобы нарисовать юнита спрайтами своей фракции (у людей и марсиан
+    /// разные текстуры и анимация).
+    /// </summary>
+    [SyncVar(hook = nameof(OnFactionChanged))]
+    private FactionType _faction = FactionType.None;
+
+    /// <summary>
+    /// Тип юнита для клиентов. Сам ассет <see cref="UnitType"/> не сериализуется
+    /// в префабе, поэтому клиент без этого поля не знал, чей спрайт рисовать.
+    /// </summary>
+    [SyncVar(hook = nameof(OnTypeNameChanged))]
+    private UnitTypeName _networkTypeName = UnitTypeName.Worker;
+
+    /// <summary>
     /// Положение юнита по X.
     /// </summary>
     public int X => (int)transform.position.x;
@@ -104,8 +119,13 @@ public class Unit : NetworkBehaviour, IDamagable, IChunkObserver
     /// <summary>
     /// Имя типа юнита: по нему задачи подбирают исполнителя (шахтёр, солдат, рабочий).
     /// Юнит без типа считается рабочим и на задачи шахтёра или солдата не претендует.
+    /// На клиентах ассет <see cref="unitType"/> пуст, поэтому там используется
+    /// значение, пришедшее по сети.
     /// </summary>
-    public UnitTypeName TypeName => unitType != null ? unitType.UnitTypeName : UnitTypeName.Worker;
+    public UnitTypeName TypeName => unitType != null ? unitType.UnitTypeName : _networkTypeName;
+
+    /// <summary>Фракция юнита.</summary>
+    public FactionType Faction => _faction;
 
     /// <summary>
     /// Скорость передвижения. Берётся из <see cref="UnitType"/>, если он задан:
@@ -165,8 +185,10 @@ public class Unit : NetworkBehaviour, IDamagable, IChunkObserver
         if (isServer)
         {
             // Раньше здоровье никогда не задавалось из UnitType, поэтому юнит
-            // начинал с 0 HP и умирал от первого удара.
-            CurrentHealth = unitType != null ? unitType.Health : 1;
+            // начинал с 0 HP и умирал от первого удара. Теперь к нему применяется
+            // бонус здоровья от изученных исследований владельца.
+            int baseHealth = unitType != null ? unitType.Health : 1;
+            CurrentHealth = Mathf.Max(1, Mathf.RoundToInt(baseHealth * HealthMultiplier));
 
             if (GameKernel.Instance != null && GameKernel.Instance.TryGetSystem(out UnitSystem unitSystem))
             {
@@ -175,6 +197,107 @@ public class Unit : NetworkBehaviour, IDamagable, IChunkObserver
         }
 
         TryRegisterObserver();
+
+        if (isClient) ApplyFactionVisuals();
+    }
+
+    /// <summary>
+    /// Множитель здоровья от изученных исследований владельца.
+    /// На клиенте и без <see cref="ResearchSystem"/> равен 1.
+    /// </summary>
+    public float HealthMultiplier
+    {
+        get
+        {
+            ResearchSystem research = GetResearchSystem();
+            if (research == null || Owner == null) return 1f;
+
+            return research.GetUnitHealthMultiplier(Owner);
+        }
+    }
+
+    /// <summary>
+    /// Множитель урона от изученных исследований владельца.
+    /// </summary>
+    public float DamageMultiplier
+    {
+        get
+        {
+            ResearchSystem research = GetResearchSystem();
+            if (research == null || Owner == null) return 1f;
+
+            return research.GetUnitDamageMultiplier(Owner);
+        }
+    }
+
+    /// <summary>
+    /// Серверная система исследований. На клиенте её нет — возвращается null.
+    /// </summary>
+    private static ResearchSystem GetResearchSystem()
+    {
+        var kernel = GameKernel.Instance;
+        if (kernel == null) return null;
+
+        return kernel.TryGetSystem(out ResearchSystem research) ? research : null;
+    }
+
+    /// <summary>
+    /// Назначает тип юнита. Вызывается только сервером (можно до Spawn);
+    /// клиенты узнают тип из SyncVar.
+    /// </summary>
+    public void SetUnitTypeServer(UnitType type)
+    {
+        if (!NetworkServer.active) return;
+
+        unitType = type;
+        _networkTypeName = type != null ? type.UnitTypeName : UnitTypeName.Worker;
+
+        ApplyFactionVisuals();
+    }
+
+    /// <summary>
+    /// Назначает фракцию юнита. Вызывается только сервером и до
+    /// <see cref="NetworkServer.Spawn"/>: у не заспавненного объекта isServer
+    /// ещё false, поэтому проверяется <see cref="NetworkServer.active"/>.
+    /// </summary>
+    public void SetFactionServer(FactionType faction)
+    {
+        if (!NetworkServer.active) return;
+
+        _faction = faction;
+
+        ApplyFactionVisuals();
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        ApplyFactionVisuals();
+    }
+
+    private void OnFactionChanged(FactionType oldFaction, FactionType newFaction)
+    {
+        ApplyFactionVisuals();
+    }
+
+    private void OnTypeNameChanged(UnitTypeName oldType, UnitTypeName newType)
+    {
+        ApplyFactionVisuals();
+    }
+
+    /// <summary>
+    /// Подставляет спрайты и анимацию фракции. Ничего не делает, пока фракция
+    /// неизвестна: так префабный спрайт остаётся до назначения фракции.
+    /// </summary>
+    private void ApplyFactionVisuals()
+    {
+        if (_faction == FactionType.None) return;
+
+        FactionDefinition definition = FactionAtlas.GetDefinition(_faction);
+        if (definition == null) return;
+
+        FactionVisuals.ApplyUnit(gameObject, definition, _networkTypeName);
     }
 
     private void OnDestroy()

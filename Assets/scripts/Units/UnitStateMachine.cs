@@ -338,13 +338,16 @@ public class AttackingState : UnitStateBase
     }
 
     /// <summary>
-    /// Итоговый урон атакующего: солдат бьёт вдвое сильнее, остальные — вдвое
-    /// слабее (но не меньше 1, иначе урон 1 пропадал из-за целочисленного деления).
-    /// Раньше этот множитель считался в получателе урона по типу атакующего.
+    /// Итоговый урон атакующего: базовый урон типа, умноженный на бонус от
+    /// изученных исследований владельца (но не меньше 1).
     /// </summary>
-    private static int GetDamage(UnitType type)
+    private int GetDamage(UnitType type)
     {
-        return type.DamagePerHit;
+        if (type == null) return 1;
+
+        float multiplier = _unit != null ? _unit.DamageMultiplier : 1f;
+
+        return Mathf.Max(1, Mathf.RoundToInt(type.DamagePerHit * multiplier));
     }
 
     public override void Exit() { }

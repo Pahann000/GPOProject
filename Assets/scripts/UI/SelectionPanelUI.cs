@@ -104,12 +104,22 @@ public class SelectionPanelUI : MonoBehaviour
     {
         if (selectedBuilding == null) return;
 
+        // Без данных нет ни имени, ни максимального здоровья: раньше обращение
+        // к Data напрямую падало с NullReferenceException на недонастроенном префабе.
+        BuildingData data = selectedBuilding.Data;
+        if (data == null) return;
+
         // Основная информация
         if (nameText != null)
-            nameText.text = selectedBuilding.Data.DisplayName;
+        {
+            string factionName = FactionName(selectedBuilding.Faction);
+            nameText.text = string.IsNullOrEmpty(factionName)
+                ? data.DisplayName
+                : $"{data.DisplayName} ({factionName})";
+        }
 
         if (healthText != null)
-            healthText.text = $"Здоровье: {selectedBuilding.CurrentHealth}/{selectedBuilding.Data.MaxHealth}";
+            healthText.text = $"Здоровье: {selectedBuilding.CurrentHealth}/{data.MaxHealth}";
 
         if (stateText != null)
             stateText.text = $"Состояние: {GetStateText(selectedBuilding.State)}";
@@ -228,17 +238,29 @@ public class SelectionPanelUI : MonoBehaviour
     {
         if (selectedBuilding == null) return;
 
-        // TODO: реализовать ремонт за ресурсы.
-        Debug.Log($"[SelectionPanelUI] Ремонт здания {selectedBuilding.Data?.DisplayName} пока не реализован.");
+        // Стоимость считает и списывает сервер (Building.CmdRepair), клиент только шлёт команду.
+        selectedBuilding.CmdRepair();
+
+        Debug.Log($"[SelectionPanelUI] Запрошен ремонт здания {selectedBuilding.Data?.DisplayName}.");
     }
 
     private void DemolishBuilding()
     {
         if (selectedBuilding == null) return;
 
-        // TODO: реализовать снос. Часть стоимости уже возвращает сам Building
-        // (см. ReturnResourcesOnDestroy), поэтому здесь нужен только вызов уничтожения.
-        Debug.Log($"[SelectionPanelUI] Снос здания {selectedBuilding.Data?.DisplayName} пока не реализован.");
+        // Сервер проверит владельца и вернёт половину стоимости
+        // (см. Building.ReturnResourcesOnDestroy).
+        selectedBuilding.CmdDemolish();
+
+        Debug.Log($"[SelectionPanelUI] Запрошен снос здания {selectedBuilding.Data?.DisplayName}.");
     }
 
+    /// <summary>
+    /// Название фракции здания для заголовка панели.
+    /// </summary>
+    private static string FactionName(FactionType faction)
+    {
+        FactionDefinition definition = FactionAtlas.GetDefinition(faction);
+        return definition != null ? definition.DisplayName : string.Empty;
+    }
 }

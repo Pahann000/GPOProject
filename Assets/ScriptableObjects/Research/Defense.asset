@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cf11f852c0749f458d5c8e7b07a2531, type: 3}
+  m_Name: Defense
+  m_EditorClassIdentifier: 
+  projectName: "\u041E\u0431\u043E\u0440\u043E\u043D\u0430"
+  description: "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0435
+    \u0442\u0443\u0440\u0435\u043B\u0438 \u0438 \u0432\u043E\u0435\u043D\u043D\u0430\u044F
+    \u043F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u043A\u0430: \u043E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442
+    \u0442\u0443\u0440\u0435\u043B\u044C \u0438 \u0441\u043E\u043B\u0434\u0430\u0442."
+  icon: {fileID: 21300000, guid: 0784351db4faabb49808358a97d1b4b6, type: 3}
+  cost:
+  - Type: 0
+    Amount: 120
+  - Type: 2
+    Amount: 80
+  durationSeconds: 45
+  requiredPrerequisites:
+  - {fileID: 11400000, guid: b1767ffa1d9841d42b8e52b841a9ed17, type: 2}
+  unlockBuildings: 06000000
+  unlockUnits: 01000000
+  productionBonusPercent: 0
+  unitDamageBonusPercent: 20
+  unitHealthBonusPercent: 0
+  researchSpeedBonusPercent: 0

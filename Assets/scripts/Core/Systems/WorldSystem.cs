@@ -210,9 +210,27 @@ public class WorldSystem : NetworkBehaviour, IGameSystem, IDataProvider<SaveData
     {
         if (isServer)
         {
+            if (WorldMap == null) return;
+
             WorldMap.PlaceBlock(x, y, blockType);
             RpcPlaceBlock(x, y, blockType);
         }
+    }
+
+    /// <summary>
+    /// Ставит блок только на этом пире, без RPC. Нужно для правок, которые
+    /// каждый клиент вычисляет сам: расчистка территории фракций детерминирована
+    /// по координатам базы, и гонять по сети каждый блок не нужно.
+    /// </summary>
+    public void ApplyBlockLocal(int x, int y, BlockType blockType)
+    {
+        if (WorldMap == null) return;
+
+        // Границы проверяются здесь: расчистка территории может задеть край карты,
+        // а PlaceBlock не валидирует координаты и завёл бы блоки вне мира.
+        if (x < 0 || y < 0 || x >= WorldMap.Width || y >= WorldMap.Height) return;
+
+        WorldMap.PlaceBlock(x, y, blockType);
     }
 
     [ClientRpc]
@@ -360,12 +378,13 @@ public class WorldSystem : NetworkBehaviour, IGameSystem, IDataProvider<SaveData
             return;
         }
 
-        // Юнит ставится НА поверхность. Раньше он появлялся в точке «игрок + (2,1)»,
-        // то есть внутри породы: ходить там некуда, путь не строился, и юнит
-        // просто стоял, молча теряя приказ.
-        if (!TryFindSurfaceSpawn(player.transform.position.x + unitSpawnOffsetX, out Vector3 spawnPosition))
+        // Юнит ставится НА поверхность фракции: у людей это поверхность планеты,
+        // у марсиан — пол вырубленной пещеры. Раньше юнит появлялся в точке
+        // «игрок + (2,1)», то есть внутри породы: ходить там некуда, путь не
+        // строился, и юнит просто стоял, молча теряя приказ.
+        if (!TryFindFactionSpawn(player, out Vector3 spawnPosition))
         {
-            Debug.LogWarning($"[{SystemName}] CmdSpawnUnit: рядом с игроком нет поверхности для появления юнита.");
+            Debug.LogWarning($"[{SystemName}] CmdSpawnUnit: рядом с базой фракции нет места для появления юнита.");
             return;
         }
 
@@ -380,9 +399,36 @@ public class WorldSystem : NetworkBehaviour, IGameSystem, IDataProvider<SaveData
         }
 
         unit.Owner = player;
-        unit.unitType = unitAtlas.Miner;
+
+        // Фракция и тип задаются до Spawn: клиенты получают их в стартовом
+        // пакете и рисуют юнита своими текстурами.
+        unit.SetFactionServer(player.Faction);
+        unit.SetUnitTypeServer(unitAtlas.Miner);
 
         NetworkServer.Spawn(unitObj);
+    }
+
+    /// <summary>
+    /// Ищет точку появления юнита: сначала база фракции игрока (поверхность или
+    /// пещера), затем — обычный поиск поверхности рядом с игроком.
+    /// </summary>
+    private bool TryFindFactionSpawn(Player player, out Vector3 spawnPosition)
+    {
+        spawnPosition = Vector3.zero;
+
+        var kernel = GameKernel.Instance;
+        if (kernel != null && player != null
+            && kernel.TryGetSystem(out FactionSystem factionSystem)
+            && factionSystem.TryGetUnitSpawnPoint(player.Faction, out Vector2 factionPoint))
+        {
+            // Центр колонки базы: юнит стоит на полу расчищенной площадки.
+            spawnPosition = new Vector3(factionPoint.x, factionPoint.y, 0f);
+            return true;
+        }
+
+        float preferredX = player != null ? player.transform.position.x + unitSpawnOffsetX : 0f;
+
+        return TryFindSurfaceSpawn(preferredX, out spawnPosition);
     }
 
     /// <summary>

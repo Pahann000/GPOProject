@@ -80,6 +80,16 @@ public class ResourceSystem : IGameSystem, IResourceProvider
         GetNotifier()?.Unsubscribe(player);
     }
 
+    /// <summary>
+    /// Зарегистрирован ли игрок в экономике. Нужно тем, кто выдаёт стартовые
+    /// ресурсы: до регистрации начисление невозможно, а повторять попытки
+    /// без проверки — это предупреждение в лог каждый кадр.
+    /// </summary>
+    public bool IsRegistered(Player player)
+    {
+        return player != null && _playersResources.ContainsKey(player);
+    }
+
     private ResourceChangedClientNotifier GetNotifier()
     {
         return _kernel != null && _kernel.TryGetSystem(out ResourceChangedClientNotifier notifier)

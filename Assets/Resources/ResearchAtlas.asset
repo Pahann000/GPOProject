@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f0d1db708858794cb7491b900273378, type: 3}
+  m_Name: ResearchAtlas
+  m_EditorClassIdentifier: 
+  projects:
+  - {fileID: 11400000, guid: d2fcd3799bf593e48be54614d8d32ead, type: 2}
+  - {fileID: 11400000, guid: 98035aac8887fba4ba60930db8928f4a, type: 2}
+  - {fileID: 11400000, guid: 5d53ede41bd6a034a826e715da08669c, type: 2}
+  - {fileID: 11400000, guid: b1767ffa1d9841d42b8e52b841a9ed17, type: 2}
+  - {fileID: 11400000, guid: 652af6e56c131e34e8f3ae22064fa24e, type: 2}
+  - {fileID: 11400000, guid: c1719deaf33fb694ca43de0c4fca20dc, type: 2}
+  - {fileID: 11400000, guid: 440b5b4c2e4e75d41a098f7e64b6baf4, type: 2}
+  - {fileID: 11400000, guid: c1b5fb21da210d145adbc3e7eb1c4487, type: 2}
+  - {fileID: 11400000, guid: b01d68dd5257ebf418cba896bf43ea3d, type: 2}
+  defaultBuildings: 0000000001000000
+  defaultUnits: 0000000002000000

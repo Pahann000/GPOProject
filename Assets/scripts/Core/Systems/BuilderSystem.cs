@@ -23,6 +23,7 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
     private Camera _mainCamera;
 
     [SerializeField] private BuildingAtlas _buildingAtlas;
+
     [Tooltip("Слои препятствий, которые мешают постройке. Пусто = Obstacle + Building.")]
     [SerializeField] private LayerMask obstacleLayers;
 
@@ -33,7 +34,7 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
     /// Система ресурсов резолвится лениво: на клиенте её нет, а на сервере
     /// порядок Start не гарантирует, что она уже зарегистрирована.
     /// </summary>
-    private ResourceSystem Resources
+    private ResourceSystem Economy
     {
         get
         {
@@ -43,6 +44,20 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
             }
 
             return _resourceSystem;
+        }
+    }
+
+    /// <summary>Атлас зданий. Если не назначен в инспекторе — ищется в Resources.</summary>
+    public BuildingAtlas Atlas
+    {
+        get
+        {
+            if (_buildingAtlas == null)
+            {
+                _buildingAtlas = UnityEngine.Resources.Load<BuildingAtlas>("BuildingAtlas");
+            }
+
+            return _buildingAtlas;
         }
     }
 
@@ -86,15 +101,12 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
         if (_mainCamera == null) _mainCamera = Camera.main;
         if (_mainCamera == null) return;
 
-        // Блокируем строительство, если мышка находится над кнопкой интерфейса
-        //if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
-
         UpdatePreviewPosition();
         UpdatePreviewVisuals();
 
         if (Input.GetMouseButtonDown(0))
         {
-            if (CanPlaceBuilding())
+            if (CanPlaceBuildingAt(_selectedBuilding, _currentPreview.transform.position))
             {
                 CmdPlaceBuilding(_selectedBuilding.BuildingTypeName, _currentPreview.transform.position);
                 CancelBuilding();
@@ -153,16 +165,42 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
         _currentPreview = new GameObject("BuildingPreview");
         _previewRenderer = _currentPreview.AddComponent<SpriteRenderer>();
 
-        if (_selectedBuilding.Icon != null)
+        // Превью показывает здание так, как его увидит фракция игрока:
+        // у людей и марсиан разные текстуры зданий.
+        Sprite previewSprite = ResolvePreviewSprite();
+        if (previewSprite != null)
         {
-            _previewRenderer.sprite = _selectedBuilding.Icon;
+            _previewRenderer.sprite = previewSprite;
         }
+
         _previewRenderer.sortingOrder = 100;
 
         // Коллайдер нужен для физической проверки пересечений с препятствиями
         BoxCollider2D collider = _currentPreview.AddComponent<BoxCollider2D>();
         collider.size = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
         collider.isTrigger = true;
+    }
+
+    /// <summary>
+    /// Спрайт для голограммы: фракционный вариант, а если он не задан — иконка из данных.
+    /// </summary>
+    private Sprite ResolvePreviewSprite()
+    {
+        FactionType faction = LocalPlayerFaction();
+        Sprite factionSprite = FactionAtlas.GetBuildingSprite(faction, _selectedBuilding.BuildingTypeName);
+
+        return factionSprite != null ? factionSprite : _selectedBuilding.Icon;
+    }
+
+    private FactionType LocalPlayerFaction()
+    {
+        var kernel = GameKernel.Instance;
+        if (kernel != null && kernel.TryGetSystem(out UISystem uiSystem) && uiSystem.LocalPlayer != null)
+        {
+            return uiSystem.LocalPlayer.Faction;
+        }
+
+        return FactionType.None;
     }
 
     /// <summary>
@@ -187,60 +225,61 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
     /// </summary>
     private void UpdatePreviewVisuals()
     {
-        bool canBuild = CanPlaceBuilding();
+        bool canBuild = CanPlaceBuildingAt(_selectedBuilding, _currentPreview.transform.position);
         _previewRenderer.color = canBuild ? new Color(0, 1, 0, 0.7f) : new Color(1, 0, 0, 0.7f);
     }
 
     /// <summary>
-    /// Выполняет полную проверку: Препятствия -> Почва.
+    /// Полная проверка места: препятствия -> почва -> дополнительные правила здания.
+    /// Вызывается и на клиенте (подсветка превью), и на сервере (защита от читов).
     /// </summary>
-    private bool CanPlaceBuilding()
+    /// <param name="data">Данные здания.</param>
+    /// <param name="position">Центр здания.</param>
+    private bool CanPlaceBuildingAt(BuildingData data, Vector2 position)
     {
-        if (_currentPreview == null || _selectedBuilding == null) return false;
+        if (data == null) return false;
 
-        Vector2 checkPos = _currentPreview.transform.position;
-        Vector2 checkSize = new Vector2(_selectedBuilding.Width, _selectedBuilding.Height);
+        Vector2 checkSize = new Vector2(data.Width, data.Height);
 
         // 1. Проверка препятствий (пересечение с другими зданиями).
         // Коллайдеры триггеров фильтр не пропускает, поэтому превью само себя не блокирует.
-        int overlapCount = Physics2D.OverlapBox(checkPos, checkSize, 0f, _obstacleFilter, _overlapResults);
+        int overlapCount = Physics2D.OverlapBox(position, checkSize, 0f, _obstacleFilter, _overlapResults);
         for (int i = 0; i < overlapCount; i++)
         {
-            if (_overlapResults[i].gameObject != _currentPreview) return false;
+            Collider2D overlap = _overlapResults[i];
+            if (overlap == null || overlap.gameObject == _currentPreview) continue;
+
+            return false;
         }
 
-        // 2. Проверка взаимодействия с миром (опора под зданием)
+        // 2. Проверка взаимодействия с миром (опора под зданием).
         if (_kernel != null && _kernel.TryGetSystem(out WorldSystem world))
         {
-            if (!world.IsSurfaceBuildable(checkPos, checkSize))
-            {
-                return false;
-            }
+            if (!world.IsSurfaceBuildable(position, checkSize)) return false;
         }
 
-        return true;
-    }
-
-    private GameObject GetBuildingByName(BuildingTypeNames buildingTypeName)
-    {
-        switch (buildingTypeName)
-        {
-            case BuildingTypeNames.House:
-                return _buildingAtlas != null ? _buildingAtlas.House : null;
-
-            case BuildingTypeNames.MainBuilding:
-                return _buildingAtlas != null ? _buildingAtlas.MainBuilding : null;
-
-            case BuildingTypeNames.ExtendsBuilding:
-                return _buildingAtlas != null ? _buildingAtlas.ExtendsBuilding : null;
-        }
-
-        return null;
+        // 3. Дополнительные правила из данных здания (например, «только на поверхности»).
+        return data.SatisfiesPlacementRules(position);
     }
 
     /// <summary>
-    /// Окончательное размещение здания. Выполняется на сервере: списание ресурсов,
-    /// назначение владельца и спавн объекта.
+    /// Префаб здания по типу: единственный источник истины — атлас.
+    /// </summary>
+    private GameObject GetBuildingPrefab(BuildingTypeNames buildingTypeName)
+    {
+        BuildingAtlas atlas = Atlas;
+        if (atlas == null)
+        {
+            Debug.LogError($"[{SystemName}] Не назначен BuildingAtlas: постройка невозможна.");
+            return null;
+        }
+
+        return atlas.GetPrefab(buildingTypeName);
+    }
+
+    /// <summary>
+    /// Окончательное размещение здания. Выполняется на сервере: проверка места,
+    /// списание ресурсов, назначение владельца и фракции, спавн объекта.
     /// </summary>
     [Command(requiresAuthority = false)]
     private void CmdPlaceBuilding(BuildingTypeNames buildingTypeName, Vector2 position, NetworkConnectionToClient sender = null)
@@ -258,7 +297,15 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
             return;
         }
 
-        GameObject prefab = GetBuildingByName(buildingTypeName);
+        // Тип здания должен быть открыт исследованием: клиентская панель не даёт
+        // нажать кнопку, но команду можно отправить и в обход интерфейса.
+        if (!IsBuildingUnlockedFor(player, buildingTypeName))
+        {
+            Debug.Log($"[{SystemName}] Постройка {buildingTypeName} отклонена: тип не открыт исследованием.");
+            return;
+        }
+
+        GameObject prefab = GetBuildingPrefab(buildingTypeName);
         if (prefab == null)
         {
             Debug.LogError($"[{SystemName}] Не найден префаб для здания {buildingTypeName}.");
@@ -275,7 +322,15 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
             return;
         }
 
-        ResourceSystem resources = Resources;
+        // Место проверяется повторно на сервере: клиентская проверка — только
+        // подсветка превью, доверять ей нельзя (иначе здание ставится в скалу).
+        if (!CanPlaceBuildingAt(data, position))
+        {
+            Debug.Log($"[{SystemName}] Постройка {data.DisplayName} отклонена: место занято или не подходит.");
+            return;
+        }
+
+        ResourceSystem resources = Economy;
         if (resources == null)
         {
             Debug.LogError($"[{SystemName}] ResourceSystem недоступен: постройка невозможна.");
@@ -316,10 +371,26 @@ public class BuilderSystem : NetworkBehaviour, IGameSystem
         // падала на null-ключе, а стоимость не возвращалась.
         building.Owner = player;
 
+        // Фракция нужна клиентам, чтобы нарисовать здание своей текстуры.
+        building.SetFactionServer(player.Faction);
+
         NetworkServer.Spawn(buildingObj);
 
         _kernel.EventBus.Raise(new BuildingPlacedEvent(data, player));
     }
 
     public bool IsPlacingBuilding() => _isPlacing;
+
+    /// <summary>
+    /// Открыт ли игроку тип здания. Если <see cref="ResearchSystem"/> недоступен
+    /// (например, на клиенте или до его регистрации), ограничение не применяется.
+    /// </summary>
+    private static bool IsBuildingUnlockedFor(Player player, BuildingTypeNames type)
+    {
+        var kernel = GameKernel.Instance;
+        if (kernel == null) return true;
+        if (!kernel.TryGetSystem(out ResearchSystem research)) return true;
+
+        return research.IsBuildingUnlocked(player, type);
+    }
 }

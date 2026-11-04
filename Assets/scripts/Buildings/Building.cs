@@ -16,6 +16,13 @@ public class Building : NetworkBehaviour
     [SyncVar]
     private int _currentHealth;
 
+    /// <summary>
+    /// Фракция-владелец. Нужна клиентам, чтобы нарисовать здание текстурой своей
+    /// фракции: у людей и марсиан разные спрайты зданий.
+    /// </summary>
+    [SyncVar(hook = nameof(OnFactionChanged))]
+    private FactionType _faction = FactionType.None;
+
     [Header("Визуальные эффекты")]
     [SerializeField] private GameObject selectionEffect;
     [SerializeField] private GameObject constructionEffect;
@@ -32,6 +39,12 @@ public class Building : NetworkBehaviour
 
     public BuildingData Data => _data;
 
+    /// <summary>Фракция здания (копия у клиентов).</summary>
+    public FactionType Faction => _faction;
+
+    /// <summary>Тип здания — из данных префаба, одинаковый на всех пирах.</summary>
+    public BuildingTypeNames TypeName => _data != null ? _data.BuildingTypeName : BuildingTypeNames.House;
+
     /// <summary>Текущее состояние здания (синхронизируется сервером).</summary>
     public BuildingState State
     {
@@ -45,6 +58,9 @@ public class Building : NetworkBehaviour
         get => _currentHealth;
         private set => _currentHealth = value;
     }
+
+    /// <summary>Здоровье не полное: здание можно ремонтировать.</summary>
+    public bool CanBeRepaired => _data != null && CurrentHealth < _data.MaxHealth;
 
     /// <summary>
     /// Входные ресурсы цикла производства. Вынесено в свойство, чтобы наследники
@@ -92,6 +108,10 @@ public class Building : NetworkBehaviour
             GameObject effect = Instantiate(constructionEffect, transform.position, Quaternion.identity);
             Destroy(effect, 3f);
         }
+
+        // Клиент может получить здание уже после того, как в Start пришла
+        // фракция: применяем текстуру здесь же, чтобы не ждать хука.
+        if (isClient) ApplyFactionVisuals();
     }
 
     public virtual void Initialize(BuildingData data)
@@ -107,6 +127,45 @@ public class Building : NetworkBehaviour
         {
             collider.size = new Vector2(data.Width, data.Height);
         }
+    }
+
+    /// <summary>
+    /// Назначает фракцию здания. Вызывается только сервером, причём до
+    /// <see cref="NetworkServer.Spawn"/>: клиентам значение приходит в стартовом
+    /// пакете. Проверка идёт по <see cref="NetworkServer.active"/>, а не по isServer:
+    /// у ещё не заспавненного объекта isServer ещё false, и раньше присваивание
+    /// молча игнорировалось (здание оставалось без фракции).
+    /// </summary>
+    public void SetFactionServer(FactionType faction)
+    {
+        if (!NetworkServer.active) return;
+
+        _faction = faction;
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        ApplyFactionVisuals();
+    }
+
+    private void OnFactionChanged(FactionType oldFaction, FactionType newFaction)
+    {
+        ApplyFactionVisuals();
+    }
+
+    /// <summary>
+    /// Подставляет текстуру здания выбранной фракции.
+    /// </summary>
+    private void ApplyFactionVisuals()
+    {
+        if (_data == null) return;
+
+        FactionAtlas atlas = FactionAtlas.Cached;
+        if (atlas == null) return;
+
+        FactionVisuals.ApplyBuilding(gameObject, atlas.Get(_faction), _data.BuildingTypeName);
     }
 
     public virtual void Update()
@@ -169,8 +228,52 @@ public class Building : NetworkBehaviour
 
         if (outputs == null || outputs.Length == 0) return false;
 
-        _resourceManager?.AddResources(Owner, outputs);
+        // Изученные технологии увеличивают выход производства владельца.
+        _resourceManager?.AddResources(Owner, ScaleResources(outputs, ProductionMultiplier));
         return true;
+    }
+
+    /// <summary>
+    /// Множитель производства с учётом изученных исследований владельца.
+    /// На клиенте и без <see cref="ResearchSystem"/> равен 1.
+    /// </summary>
+    protected float ProductionMultiplier
+    {
+        get
+        {
+            if (!isServer || Owner == null) return 1f;
+
+            var kernel = GameKernel.Instance;
+            if (kernel == null || !kernel.TryGetSystem(out ResearchSystem research)) return 1f;
+
+            return research.GetProductionMultiplier(Owner);
+        }
+    }
+
+    /// <summary>
+    /// Умножает количество ресурсов на множитель (минимум 1 для ненулевых значений).
+    /// Чистая функция — покрыта тестами.
+    /// </summary>
+    public static ResourcePair[] ScaleResources(ResourcePair[] resources, float multiplier)
+    {
+        if (resources == null || resources.Length == 0) return resources;
+        if (multiplier <= 0f) multiplier = 0f;
+
+        var scaled = new ResourcePair[resources.Length];
+
+        for (int i = 0; i < resources.Length; i++)
+        {
+            ResourcePair source = resources[i];
+            int amount = Mathf.RoundToInt(source.Amount * multiplier);
+
+            // Ненулевой ресурс не должен обнуляться округлением, но нулевой
+            // множитель (производство отключено) обязан давать ноль.
+            if (amount <= 0 && source.Amount > 0 && multiplier > 0f) amount = 1;
+
+            scaled[i] = new ResourcePair(source.Type, amount);
+        }
+
+        return scaled;
     }
 
     /// <summary>
@@ -221,6 +324,110 @@ public class Building : NetworkBehaviour
         }
 
         _resourceManager.AddResources(Owner, returnCost);
+    }
+
+    /// <summary>
+    /// Стоимость ремонта: доля стоимости постройки пропорциональна недостающему
+    /// здоровью, но не меньше одной единицы каждого ресурса.
+    /// Чистая функция — покрыта тестами.
+    /// </summary>
+    /// <returns>Массив расходов или null, если ремонт не нужен/невозможен.</returns>
+    public static ResourcePair[] ComputeRepairCost(ResourcePair[] constructionCost, int currentHealth, int maxHealth)
+    {
+        if (constructionCost == null || constructionCost.Length == 0) return null;
+        if (maxHealth <= 0) return null;
+        if (currentHealth >= maxHealth) return null;
+        if (currentHealth < 0) currentHealth = 0;
+
+        float missingFraction = (maxHealth - currentHealth) / (float)maxHealth;
+
+        var cost = new ResourcePair[constructionCost.Length];
+        for (int i = 0; i < constructionCost.Length; i++)
+        {
+            ResourcePair source = constructionCost[i];
+            int amount = Mathf.CeilToInt(source.Amount * missingFraction);
+
+            // Хоть один ресурс, но ремонт должен стоить: иначе починка бесплатна.
+            if (amount <= 0 && source.Amount > 0) amount = 1;
+
+            cost[i] = new ResourcePair(source.Type, amount);
+        }
+
+        return cost;
+    }
+
+    /// <summary>
+    /// Просит сервер разобрать здание. Вызывается кнопкой «Снести» в панели выделения.
+    /// </summary>
+    [Command(requiresAuthority = false)]
+    public void CmdDemolish(NetworkConnectionToClient sender = null)
+    {
+        if (!isServer) return;
+
+        Player caller = ResolveCaller(sender);
+        if (!IsOwnedBy(caller))
+        {
+            Debug.LogWarning($"[Building] {name}: снос отклонён — здание принадлежит другому игроку.");
+            return;
+        }
+
+        Debug.Log($"[Building] {name}: снесено владельцем.");
+        DestroyBuilding();
+    }
+
+    /// <summary>
+    /// Просит сервер отремонтировать здание за ресурсы владельца.
+    /// </summary>
+    [Command(requiresAuthority = false)]
+    public void CmdRepair(NetworkConnectionToClient sender = null)
+    {
+        if (!isServer) return;
+        if (_data == null) return;
+
+        Player caller = ResolveCaller(sender);
+        if (!IsOwnedBy(caller))
+        {
+            Debug.LogWarning($"[Building] {name}: ремонт отклонён — здание принадлежит другому игроку.");
+            return;
+        }
+
+        if (!CanBeRepaired) return;
+
+        if (Economy == null)
+        {
+            Debug.LogWarning($"[Building] {name}: ремонт невозможен, ResourceSystem недоступен.");
+            return;
+        }
+
+        ResourcePair[] cost = ComputeRepairCost(_data.ConstructionCost, CurrentHealth, _data.MaxHealth);
+        if (cost != null && !Economy.TrySpendResources(Owner, cost))
+        {
+            Debug.Log($"[Building] {name}: ремонт отклонён — недостаточно ресурсов.");
+            return;
+        }
+
+        CurrentHealth = _data.MaxHealth;
+        Debug.Log($"[Building] {name}: отремонтировано владельцем.");
+    }
+
+    /// <summary>
+    /// Определяет игрока, отправившего команду. sender == null — прямой вызов на сервере.
+    /// </summary>
+    private static Player ResolveCaller(NetworkConnectionToClient sender)
+    {
+        return sender != null && sender.identity != null
+            ? sender.identity.GetComponent<Player>()
+            : null;
+    }
+
+    /// <summary>
+    /// True, если здание принадлежит игроку. Выделенный сервер не имеет
+    /// локального игрока, поэтому для прямого вызова на сервере владелец
+    /// проверяется отдельно (см. ServerAuthorityTests).
+    /// </summary>
+    public bool IsOwnedBy(Player player)
+    {
+        return Owner != null && player != null && Owner == player;
     }
 
     public void Select()

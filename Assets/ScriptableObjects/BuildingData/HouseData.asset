@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a15c7ceb976134f4da24732efcb52a15, type: 3}
+  m_Name: HouseData
+  m_EditorClassIdentifier: 
+  DisplayName: "\u0414\u043E\u043C"
+  Icon: {fileID: 21300000, guid: 3d19b4748f1281d498d54f5b2604d200, type: 3}
+  ConstructionCost:
+  - Type: 2
+    Amount: 10
+  BuildingTypeName: 0
+  PlacementRules: []
+  MaxHealth: 100
+  Width: 1
+  Height: 1
+  InputResources: []
+  OutputResources: []

@@ -2,6 +2,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+/// <summary>
+/// Кнопка здания в окне строительства: показывает цену, решает, доступно ли
+/// здание (открыто исследованием и хватает ли ресурсов).
+/// </summary>
 public class BuildingButtonUI : MonoBehaviour
 {
     [Header("UI References")]
@@ -11,21 +15,24 @@ public class BuildingButtonUI : MonoBehaviour
     [SerializeField] private Image backgroundImage;
     [SerializeField] private Button button;
 
-    [Header("Color Settings")]
-    [SerializeField] private Color affordableColor = Color.white;
-    [SerializeField] private Color unaffordableColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-    [SerializeField] private Color hoverColor = new Color(0.8f, 0.8f, 1f, 1f);
+    [Header("Спрайты состояния (9-slice)")]
+    [SerializeField] private Sprite stateNormal;
+    [SerializeField] private Sprite stateHover;
+    [SerializeField] private Sprite stateLocked;
+    [SerializeField] private Sprite stateUnaffordable;
 
-    [Header("Tooltip Settings")]
-    [SerializeField] private GameObject tooltipObject;
-    [SerializeField] private TextMeshProUGUI tooltipText;
+    [Header("Цвета")]
+    [SerializeField] private Color affordableIconColor = Color.white;
+    [SerializeField] private Color unaffordableIconColor = new Color(0.62f, 0.66f, 0.72f, 1f);
+    [SerializeField] private Color lockedTextColor = new Color(0.72f, 0.72f, 0.76f, 1f);
 
     private BuildingData _buildingData;
     private BuildingPanelUI _parentPanel;
+    private string _costString = string.Empty;
 
-    /// <summary>
-    /// Инициализирует кнопку с данными здания
-    /// </summary>
+    /// <summary>Открыт ли тип здания исследованием.</summary>
+    public bool IsUnlocked => _buildingData == null || ResearchClientState.IsBuildingUnlocked(_buildingData.BuildingTypeName);
+
     public void Initialize(BuildingData data, BuildingPanelUI parentPanel)
     {
         _buildingData = data;
@@ -33,53 +40,41 @@ public class BuildingButtonUI : MonoBehaviour
 
         if (button == null) button = GetComponent<Button>();
 
-        // Устанавливаем визуальные элементы
         if (iconImage != null && data.Icon != null) iconImage.sprite = data.Icon;
 
-        if (nameText != null) nameText.text = data.DisplayName;
+        _costString = FormatCost(data);
+        if (costText != null) costText.text = _costString;
 
-        SetupTooltipAndCost(data);
-        
-        // Клик -> обращаемся к Ядру
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(OnButtonClicked);
-
-        // Initialize может вызываться повторно: без проверки на объекте
-        // накапливались дубли компонента.
-        var hoverHandler = GetComponent<BuildingButtonHover>();
-        if (hoverHandler == null)
+        if (button != null)
         {
-            hoverHandler = gameObject.AddComponent<BuildingButtonHover>();
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(OnButtonClicked);
         }
-        hoverHandler.Initialize(button, tooltipObject, backgroundImage, hoverColor);
 
-        // Обновляем доступность
+        var hoverHandler = GetComponent<BuildingButtonHover>();
+        if (hoverHandler == null) hoverHandler = gameObject.AddComponent<BuildingButtonHover>();
+        if (button != null) hoverHandler.Initialize(button, stateHover, backgroundImage);
+
         UpdateAvailability();
     }
 
-    private void SetupTooltipAndCost(BuildingData data)
+    private static string FormatCost(BuildingData data)
     {
-        string costString = "";
-        if (data.ConstructionCost != null)
+        if (data.ConstructionCost == null || data.ConstructionCost.Length == 0) return "Бесплатно";
+
+        var builder = new System.Text.StringBuilder();
+        for (int i = 0; i < data.ConstructionCost.Length; i++)
         {
-            foreach (var res in data.ConstructionCost)
-            {
-                costString += $"{res.Type}: {res.Amount}";
-            }
+            if (i > 0) builder.Append("  ");
+            builder.Append(data.ConstructionCost[i].Type).Append(": ").Append(data.ConstructionCost[i].Amount);
         }
 
-        if (costText != null) costText.text = string.IsNullOrEmpty(costString) ? "Бесплатно" : costString;
-
-        if (tooltipText != null && tooltipObject != null)
-        {
-            tooltipText.text = $"<b>{data.DisplayName}</b>\nРазмер: {data.Width}x{data.Height}";
-            tooltipObject.SetActive(false);
-        }
+        return builder.ToString();
     }
 
     private void OnButtonClicked()
     {
-        if (_buildingData == null) return;
+        if (_buildingData == null || !IsUnlocked) return;
 
         var kernel = GameKernel.Instance;
         if (kernel == null) return;
@@ -89,39 +84,64 @@ public class BuildingButtonUI : MonoBehaviour
             builder.StartPlacement(_buildingData);
         }
 
-        if (_parentPanel != null)
+        // Окно закрывается, чтобы не перекрывать поле во время постройки.
+        if (kernel.TryGetSystem(out UISystem ui) && ui.Manager != null)
         {
-            _parentPanel.SetBuildingsVisible(false);
+            ui.Manager.CloseMenus();
+        }
+        else if (_parentPanel != null)
+        {
+            _parentPanel.Close();
         }
     }
 
-    /// <summary>
-    /// Обновляет доступность кнопки в зависимости от ресурсов
-    /// </summary>
+    /// <summary>Обновляет вид кнопки: замок исследования и доступность по ресурсам.</summary>
     public void UpdateAvailability()
     {
         if (_buildingData == null) return;
 
+        bool unlocked = IsUnlocked;
+
         Player player = null;
         var kernel = GameKernel.Instance;
-        if (kernel != null && kernel.TryGetSystem(out UISystem uiSystem))
-        {
-            player = uiSystem.LocalPlayer;
-        }
+        if (kernel != null && kernel.TryGetSystem(out UISystem uiSystem)) player = uiSystem.LocalPlayer;
 
         bool canAfford = player != null && player.Resources.HasResources(_buildingData.ConstructionCost);
 
-        // Визуальная индикация доступности
-        if (iconImage != null) iconImage.color = canAfford ? affordableColor : unaffordableColor;
+        if (nameText != null)
+        {
+            nameText.text = unlocked ? _buildingData.DisplayName : "🔒 " + _buildingData.DisplayName;
+            nameText.color = unlocked ? Color.white : lockedTextColor;
+        }
 
-        if (button != null) button.interactable = canAfford;
+        if (costText != null)
+        {
+            costText.text = unlocked ? _costString : "Нужно исследование";
+            costText.color = unlocked
+                ? (canAfford ? new Color(0.72f, 0.86f, 0.72f, 1f) : new Color(0.86f, 0.56f, 0.5f, 1f))
+                : lockedTextColor;
+        }
 
-        // TODO: Можно добавить дополнительные эффекты для недоступных зданий
-        //if (!canAfford)
-        //{
-        //    // Например, добавить затемнение
-        //    if (backgroundImage != null)
-        //        backgroundImage.color = new Color(0.3f, 0.3f, 0.3f, 0.7f);
-        //}
+        if (iconImage != null) iconImage.color = unlocked ? (canAfford ? affordableIconColor : unaffordableIconColor) : unaffordableIconColor;
+
+        if (button != null) button.interactable = unlocked && canAfford;
+
+        ApplyBackgroundSprite(!unlocked ? stateLocked : (canAfford ? stateNormal : stateUnaffordable));
+    }
+
+    private void ApplyBackgroundSprite(Sprite sprite)
+    {
+        if (backgroundImage == null) return;
+
+        if (sprite != null)
+        {
+            backgroundImage.sprite = sprite;
+            backgroundImage.type = Image.Type.Sliced;
+            backgroundImage.color = Color.white;
+        }
+        else
+        {
+            backgroundImage.color = new Color(1f, 1f, 1f, 0.9f);
+        }
     }
 }

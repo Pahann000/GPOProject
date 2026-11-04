@@ -2,193 +2,112 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
-using System.Text;
 
-public class BuildingPanelUI : MonoBehaviour
+/// <summary>
+/// Окно строительства: список доступных зданий с ценой и замками для
+/// неоткрытых исследований.
+/// </summary>
+public class BuildingPanelUI : UIPanelBase
 {
-    [Header("Настройки")]
+    [Header("Список зданий")]
     [SerializeField] private GameObject buildingButtonPrefab;
     [SerializeField] private Transform buttonsContainer;
-    [SerializeField] private GameObject panel;
-    [SerializeField] private Button toggleButton;
-    [SerializeField] private TextMeshProUGUI toggleButtonText;
-
-    [Header("Доступные здания")]
     [SerializeField] private List<BuildingData> availableBuildings = new List<BuildingData>();
 
-    private BuilderSystem _builderSystem;
-    private bool _isPanelOpen = false;
+    [Header("Подвал окна")]
+    [SerializeField] private TextMeshProUGUI hintText;
+    [SerializeField] private string defaultHint = "Клик по зданию — начать постройку. ПКМ или Esc — отмена.";
 
-    private Dictionary<BuildingData, Button> _buildingButtons = new Dictionary<BuildingData, Button>();
+    private readonly Dictionary<BuildingData, BuildingButtonUI> _buttons = new Dictionary<BuildingData, BuildingButtonUI>();
+    private int _researchRevision = int.MinValue;
 
-    /// <summary>
-    /// BuilderSystem берётся лениво: он регистрируется в своём Start(), а порядок
-    /// вызова Start у объектов недетерминирован — раньше ссылка навсегда оставалась null.
-    /// </summary>
-    private BuilderSystem Builder
+    public override string PanelTitle => "Строительство";
+
+    /// <summary>Доступные для постройки данные (только чтение).</summary>
+    public IReadOnlyList<BuildingData> AvailableBuildings => availableBuildings;
+
+    protected override void Awake()
     {
-        get
-        {
-            if (_builderSystem == null)
-            {
-                var kernel = GameKernel.Instance;
-                if (kernel != null && kernel.TryGetSystem(out BuilderSystem builder))
-                {
-                    _builderSystem = builder;
-                }
-            }
+        base.Awake();
 
-            return _builderSystem;
-        }
+        if (hintText != null) hintText.text = defaultHint;
     }
 
-    void Start()
+    /// <summary>Создаёт кнопки один раз (список зданий не меняется на лету).</summary>
+    private void EnsureButtons()
     {
-        var kernel = GameKernel.Instance;
-        if (kernel != null)
-        {
-            kernel.EventBus.Subscribe<ResourceChangedEvent>(OnResourceChangedBus);
-        }
-
-        if (toggleButton != null)
-            toggleButton.onClick.AddListener(TogglePanel);
-        
-        InitializeButtons();
-        
-        // Закрываем панель по умолчанию
-        if (panel != null)
-            panel.SetActive(false);
-    }
-    
-    void InitializeButtons()
-    {
+        if (_buttons.Count > 0) return;
         if (buttonsContainer == null || buildingButtonPrefab == null)
         {
-            Debug.LogError("Не назначен buttonsContainer или buildingButtonPrefab!");
+            Debug.LogError("[BuildingPanelUI] Не назначены buttonsContainer или buildingButtonPrefab!");
             return;
         }
-        
-        // Очищаем старые кнопки
-        foreach (Transform child in buttonsContainer)
-            Destroy(child.gameObject);
-        
-        // Создаем новые кнопки
-        foreach (BuildingData buildingData in availableBuildings)
+
+        for (int i = buttonsContainer.childCount - 1; i >= 0; i--)
         {
-            if (buildingData == null) continue;
-            
-            CreateButtonForBuilding(buildingData);
+            Transform child = buttonsContainer.GetChild(i);
+            if (child.GetComponent<BuildingButtonUI>() != null) Destroy(child.gameObject);
         }
-    }
-    
-    void CreateButtonForBuilding(BuildingData buildingData)
-    {
-        // Создаем кнопку
-        GameObject buttonGO = Instantiate(buildingButtonPrefab, buttonsContainer);
-        
-        // Инициализируем контроллер кнопки
-        BuildingButtonUI buttonUI = buttonGO.GetComponent<BuildingButtonUI>();
-        if (buttonUI != null)
+
+        foreach (BuildingData data in availableBuildings)
         {
-            buttonUI.Initialize(buildingData, this);
-            _buildingButtons[buildingData] = buttonUI.GetComponent<Button>();
-        }
-    }
-    
-    void TogglePanel()
-    {
-        _isPanelOpen = !_isPanelOpen;
-        
-        if (panel != null)
-            panel.SetActive(_isPanelOpen);
-    }
-    
-    private void UpdateButtonAvailability(BuildingData data, Button button)
-    {
-        if (button == null || data == null) return;
+            if (data == null) continue;
 
-        // Проверяем, есть ли стоимость строительства
-        bool hasCost = data.ConstructionCost != null && data.ConstructionCost.Length > 0;
+            GameObject instance = Instantiate(buildingButtonPrefab, buttonsContainer);
+            BuildingButtonUI button = instance.GetComponent<BuildingButtonUI>();
+            if (button == null) continue;
 
-        if (hasCost)
-        {
-            Player player = null;
-            var kernel = GameKernel.Instance;
-            if (kernel != null && kernel.TryGetSystem(out UISystem uiSystem))
-            {
-                player = uiSystem.LocalPlayer;
-            }
-
-            // Раньше здесь был GetSystem<UISystem>().LocalPlayer без проверок — NRE.
-            bool canAfford = player != null && player.Resources.HasResources(data.ConstructionCost);
-            button.interactable = canAfford;
-
-            // Визуальная индикация
-            Image buttonImage = button.GetComponent<Image>();
-            if (buttonImage != null)
-            {
-                buttonImage.color = canAfford ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            }
-        }
-        else
-        {
-            // Если здание бесплатное, кнопка всегда активна
-            button.interactable = true;
+            button.Initialize(data, this);
+            _buttons[data] = button;
         }
     }
 
-    private void OnResourceChangedBus(ResourceChangedEvent evt)
+    public override void Refresh()
     {
-        // Обновляем доступность всех кнопок при изменении ресурсов
-        foreach (var kvp in _buildingButtons)
+        EnsureButtons();
+
+        // Доступность зависит и от ресурсов, и от открытых исследований.
+        bool researchChanged = _researchRevision != ResearchClientState.Revision;
+        _researchRevision = ResearchClientState.Revision;
+
+        foreach (var pair in _buttons)
         {
-            UpdateButtonAvailability(kvp.Key, kvp.Value);
+            if (pair.Value != null) pair.Value.UpdateAvailability();
         }
+
+        if (researchChanged && hintText != null) hintText.text = defaultHint;
     }
 
-    private void UpdateToggleButtonText()
-    {
-        if (toggleButtonText != null)
-            toggleButtonText.text = _isPanelOpen ? "❌ Закрыть" : "🏗️ Строительство";
-    }
-
-    private void OnDestroy()
-    {
-        if (GameKernel.Instance != null)
-        {
-            GameKernel.Instance.EventBus.Unsubscribe<ResourceChangedEvent>(OnResourceChangedBus);
-        }
-    }
-
-    // Публичные методы
-    public void AddBuilding(BuildingData buildingData)
-    {
-        if (!availableBuildings.Contains(buildingData))
-        {
-            availableBuildings.Add(buildingData);
-            CreateButtonForBuilding(buildingData);
-        }
-    }
-
-    public void RemoveBuilding(BuildingData buildingData)
-    {
-        if (availableBuildings.Contains(buildingData))
-        {
-            availableBuildings.Remove(buildingData);
-
-            if (_buildingButtons.ContainsKey(buildingData))
-            {
-                Destroy(_buildingButtons[buildingData].gameObject);
-                _buildingButtons.Remove(buildingData);
-            }
-        }
-    }
-
+    /// <summary>
+    /// Совместимость со старым вызовом из кнопки здания: после выбора здания
+    /// окно закрывается, чтобы не перекрывать поле.
+    /// </summary>
     public void SetBuildingsVisible(bool visible)
     {
-        if (panel != null)
-            panel.SetActive(visible);
-        _isPanelOpen = visible;
-        UpdateToggleButtonText();
+        if (visible) Open();
+        else Close();
+    }
+
+    /// <summary>Добавляет здание в список (расширяемость: моды, награды, события).</summary>
+    public void AddBuilding(BuildingData buildingData)
+    {
+        if (buildingData == null || availableBuildings.Contains(buildingData)) return;
+
+        availableBuildings.Add(buildingData);
+        _buttons.Clear();
+        EnsureButtons();
+    }
+
+    /// <summary>Убирает здание из списка.</summary>
+    public void RemoveBuilding(BuildingData buildingData)
+    {
+        if (buildingData == null || !availableBuildings.Remove(buildingData)) return;
+
+        if (_buttons.TryGetValue(buildingData, out BuildingButtonUI button) && button != null)
+        {
+            Destroy(button.gameObject);
+        }
+
+        _buttons.Remove(buildingData);
     }
 }

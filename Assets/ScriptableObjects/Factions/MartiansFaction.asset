@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eac46d78cf4270d488fe5418b8ebf0c8, type: 3}
+  m_Name: MartiansFaction
+  m_EditorClassIdentifier: 
+  Faction: 2
+  DisplayName: "\u041C\u0430\u0440\u0441\u0438\u0430\u043D\u0435"
+  PrimaryColor: {r: 0.48, g: 0.83, b: 0.54, a: 1}
+  SecondaryColor: {r: 0.77, g: 1, b: 0.55, a: 1}
+  SpawnsOnSurface: 0
+  UndergroundDepth: 18
+  ClearHalfWidth: 6
+  ClearHeight: 4
+  BaseMapFraction: 0.72
+  FloorBlock: 2
+  CeilingBlock: 2
+  UnitVisuals:
+  - Type: 2
+    Frames:
+    - {fileID: 21300000, guid: 2e2293a2b63e9664dbc1b3d1d968b772, type: 3}
+    - {fileID: 21300000, guid: dffd310aec3578446bc3e320553ae666, type: 3}
+    - {fileID: 21300000, guid: 556ada10aa91d2743bbf0d357352c1d6, type: 3}
+    Icon: {fileID: 21300000, guid: 2e2293a2b63e9664dbc1b3d1d968b772, type: 3}
+  - Type: 0
+    Frames:
+    - {fileID: 21300000, guid: 67a8325b529e1e947b7f09d2d0bbddf3, type: 3}
+    - {fileID: 21300000, guid: 807c53d7c13142441b24fcf3f3900fc1, type: 3}
+    - {fileID: 21300000, guid: 5f25c35b9d9c2f948b6a8764bb0efebb, type: 3}
+    Icon: {fileID: 21300000, guid: 67a8325b529e1e947b7f09d2d0bbddf3, type: 3}
+  - Type: 1
+    Frames:
+    - {fileID: 21300000, guid: 7190dd71afbbf6b4baaef0314f610518, type: 3}
+    - {fileID: 21300000, guid: 5302427821425ac419f5069e417e7576, type: 3}
+    - {fileID: 21300000, guid: 5b624d64951ef73458601e587f189066, type: 3}
+    Icon: {fileID: 21300000, guid: 7190dd71afbbf6b4baaef0314f610518, type: 3}
+  BuildingVisuals:
+  - Type: 0
+    Sprite: {fileID: 21300000, guid: 576bbf13204869c4baedf81c00bfcf90, type: 3}
+  - Type: 1
+    Sprite: {fileID: 21300000, guid: d5adffafb8bb3cc4595d7fbab9573e38, type: 3}
+  - Type: 2
+    Sprite: {fileID: 21300000, guid: a3355c275735dda4d8970ea579efaaad, type: 3}
+  - Type: 3
+    Sprite: {fileID: 21300000, guid: 8ec560f082c2d334294180b69bad7009, type: 3}
+  - Type: 4
+    Sprite: {fileID: 21300000, guid: d05846bcf9455b243a07edb22aef8b53, type: 3}
+  - Type: 5
+    Sprite: {fileID: 21300000, guid: f0339176b2e16964eb11dd045814554c, type: 3}
+  - Type: 6
+    Sprite: {fileID: 21300000, guid: e5d9698c3daedb44dbc6980b552eef46, type: 3}
+  - Type: 7
+    Sprite: {fileID: 21300000, guid: 30bdd7d5da29de3469432c8d47815f5a, type: 3}
+  - Type: 8
+    Sprite: {fileID: 21300000, guid: 6a2a1e03f3f44ac429ac84ee6a2a8acb, type: 3}
+  - Type: 9
+    Sprite: {fileID: 21300000, guid: 3e461c0fbcc90f74b98f9f34e9b1315c, type: 3}
+  BaseSprite: {fileID: 21300000, guid: 51dd9d2c2d6a8cd4f98d724a18e868e3, type: 3}
+  StartingResources:
+  - Type: 0
+    Amount: 90
+  - Type: 2
+    Amount: 200
+  - Type: 1
+    Amount: 80
+  - Type: 3
+    Amount: 60
+  - Type: 4
+    Amount: 40
+  FramesPerSecond: 6
+  BobAmplitude: 0.08
+  BobFrequency: 1.4
+  PulseSpeed: 1.2
+  PulseAmount: 0.45

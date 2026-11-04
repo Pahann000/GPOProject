@@ -2,59 +2,85 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Класс, представляющий исследовательский проект в системе технологий.
-/// Наследуется от ScriptableObject для создания через меню редактора Unity.
+/// Исследование в древе технологий: цена в ресурсах, время изучения,
+/// требования и эффекты (разблокировка зданий/юнитов, бонусы).
 /// </summary>
+/// <remarks>
+/// Раньше у проекта было только имя и «научные очки», а состояние завершённости
+/// хранилось в самом ассете (<c>IsCompleted</c>). Ассет общий для всех игроков
+/// и сессий, поэтому так хранить прогресс нельзя: теперь состояние живёт в
+/// <see cref="ResearchSystem"/> на сервере, а ассет описывает только правила.
+/// </remarks>
 [CreateAssetMenu(fileName = "ResearchProject", menuName = "Research/Project")]
 public class ResearchProject : ScriptableObject
 {
-    /// <summary>
-    /// Название исследовательского проекта.
-    /// </summary>
+    [Header("Описание")]
     public string projectName;
 
-    /// <summary>
-    /// Описание проекта и его эффектов.
-    /// </summary>
+    [TextArea(2, 6)]
     public string description;
 
-    /// <summary>
-    /// Количество научных очков, необходимых для завершения исследования.
-    /// </summary>
-    public int requiredSciencePoints;
+    [Tooltip("Иконка для UI.")]
+    public Sprite icon;
+
+    [Header("Стоимость и время")]
+    [Tooltip("Ресурсы, которые списываются при старте исследования.")]
+    public ResourcePair[] cost;
+
+    [Tooltip("Сколько секунд идёт исследование при скорости 100%.")]
+    public float durationSeconds = 30f;
+
+    [Header("Требования")]
+    [Tooltip("Исследования, которые должны быть завершены раньше.")]
+    public List<ResearchProject> requiredPrerequisites = new List<ResearchProject>();
+
+    [Header("Что открывает")]
+    [Tooltip("Типы зданий, доступные после изучения.")]
+    public BuildingTypeNames[] unlockBuildings;
+
+    [Tooltip("Типы юнитов, доступные после изучения.")]
+    public UnitTypeName[] unlockUnits;
+
+    [Header("Улучшения")]
+    [Tooltip("Прибавка к производству зданий владельца, %.")]
+    public float productionBonusPercent;
+
+    [Tooltip("Прибавка к урону юнитов владельца, %.")]
+    public float unitDamageBonusPercent;
+
+    [Tooltip("Прибавка к здоровью новых юнитов владельца, %.")]
+    public float unitHealthBonusPercent;
+
+    [Tooltip("Прибавка к скорости исследований владельца, %.")]
+    public float researchSpeedBonusPercent;
+
+    /// <summary>Отображаемое имя исследования (с запасным вариантом).</summary>
+    public string DisplayName => string.IsNullOrEmpty(projectName) ? name : projectName;
+
+    /// <summary>Длительность исследования с защитой от нуля и отрицательных значений.</summary>
+    public float Duration => Mathf.Max(0.1f, durationSeconds);
 
     /// <summary>
-    /// Список исследований, которые должны быть завершены перед началом этого проекта.
+    /// Проверяет, что все требования выполнены.
     /// </summary>
-    public List<ResearchProject> requiredPrerequisites;
-
-    /// <summary>
-    /// Флаг, указывающий на завершенность исследования.
-    /// </summary>
-    public bool IsCompleted { get; private set; }
-
-    /// <summary>
-    /// Завершает исследовательский проект и применяет его эффекты.
-    /// </summary>
-    /// <remarks>
-    /// Устанавливает флаг IsCompleted в true и вызывает метод ApplyEffects().
-    /// </remarks>
-    public void Complete()
+    /// <param name="completed">Индексы уже завершённых исследований в атласе.</param>
+    /// <param name="atlas">Атлас, по которому определяются индексы требований.</param>
+    public bool ArePrerequisitesMet(ICollection<int> completed, ResearchAtlas atlas)
     {
-        IsCompleted = true;
-        ApplyEffects();
-    }
+        if (atlas == null) return true;
+        if (requiredPrerequisites == null || requiredPrerequisites.Count == 0) return true;
+        if (completed == null) return false;
 
-    /// <summary>
-    /// Применяет эффекты завершенного исследования.
-    /// </summary>
-    /// <remarks>
-    /// Виртуальный метод, может быть переопределен в дочерних классах для реализации специфических эффектов.
-    /// По умолчанию выводит в лог сообщение о применении эффектов.
-    /// </remarks>
-    protected virtual void ApplyEffects()
-    {
-        // Применяем эффекты исследования
-        Debug.Log($"Applying effects for {projectName}");
+        for (int i = 0; i < requiredPrerequisites.Count; i++)
+        {
+            ResearchProject prerequisite = requiredPrerequisites[i];
+            if (prerequisite == null) continue;
+
+            int index = atlas.IndexOf(prerequisite);
+            if (index < 0) continue;          // требование не входит в атлас — игнорируем
+            if (!completed.Contains(index)) return false;
+        }
+
+        return true;
     }
 }

@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 114a5bae1c577e7418a0c5610e62b19f, type: 3}
+  m_Name: FactionAtlas
+  m_EditorClassIdentifier: 
+  Humans: {fileID: 11400000, guid: 2cbadeabc77e6874db29b64414441334, type: 2}
+  Martians: {fileID: 11400000, guid: c5f1c6f0cdb94814db450db2bc32ae23, type: 2}

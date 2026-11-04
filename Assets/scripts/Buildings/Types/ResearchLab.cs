@@ -1,96 +1,62 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 /// <summary>
-/// Специальное здание — научная лаборатория, занимающаяся исследованиями технологий.
-/// Наследует функциональность базового здания и добавляет систему исследований.
+/// Научная лаборатория: ускоряет исследования своего владельца.
 /// </summary>
+/// <remarks>
+/// Раньше лаборатория сама хранила текущий проект и прогресс, но у здания
+/// (сетевого объекта) нет «игрока», а состояние исследований должно быть
+/// серверным и общим для всех лабораторий игрока. Теперь лаборатория только
+/// регистрируется в <see cref="ResearchSystem"/> как ускоритель.
+/// </remarks>
 public class ResearchLab : Building
 {
-    [Header("Research Settings")]
-    [Tooltip("Список доступных для исследования проектов в этой лаборатории.")]
-    [SerializeField] private List<ResearchProject> availableProjects = new List<ResearchProject>();
+    [Header("Исследования")]
+    [Tooltip("Прибавка к скорости исследований владельца, %.")]
+    [SerializeField] private float researchSpeedPercent = 25f;
 
-    [Tooltip("Множитель скорости исследования (1 = нормальная скорость).")]
-    [SerializeField] private float researchSpeed = 1f;
+    /// <summary>Прибавка к скорости исследований, которую даёт эта лаборатория.</summary>
+    public float ResearchSpeedPercent => Mathf.Max(0f, researchSpeedPercent);
 
-    [Tooltip("Количество научных очков, производимых лабораторией за день.")]
-    [SerializeField] private int sciencePointsPerDay = 10;
+    private ResearchSystem _research;
+    private bool _registered;
 
-    private ResearchProject _currentProject;
-    private float _researchProgress = 0f;
-
-    /// <summary>Доступные проекты (только чтение).</summary>
-    public IReadOnlyList<ResearchProject> AvailableProjects => availableProjects;
-
-    /// <summary>Текущий исследуемый проект или null.</summary>
-    public ResearchProject CurrentProject => _currentProject;
-
-    /// <summary>
-    /// Обновление состояния лаборатории каждый кадр.
-    /// </summary>
     public override void Update()
     {
-        if (!isServer) return;
-
-        // Производство базового класса не теряем.
         base.Update();
 
-        if (State != BuildingState.Operational || _currentProject == null) return;
+        if (!isServer) return;
+        if (_registered) return;
 
-        // Прогресс идёт непрерывно. Раньше ResearchTick() вызывался раз в секунду,
-        // а внутри умножался на Time.deltaTime одного кадра — фактическая скорость
-        // исследования зависела от FPS.
-        _researchProgress += sciencePointsPerDay * researchSpeed * Time.deltaTime;
+        // Владелец назначается после спавна, поэтому регистрируемся при первой возможности.
+        if (Owner == null) return;
+        if (GameKernel.Instance == null) return;
+        if (!GameKernel.Instance.TryGetSystem(out _research)) return;
 
-        if (_researchProgress >= _currentProject.requiredSciencePoints)
-        {
-            CompleteResearch();
-        }
+        _research.RegisterLab(Owner, this);
+        _registered = true;
+
+        Debug.Log($"[ResearchLab] {name}: ускоряет исследования владельца на {ResearchSpeedPercent:F0}%.");
     }
 
-    /// <summary>
-    /// Начинает новый исследовательский проект.
-    /// </summary>
-    /// <param name="project">Проект для исследования</param>
-    public void StartResearch(ResearchProject project)
+    protected override void DestroyBuilding()
     {
-        if (project == null)
-        {
-            Debug.LogWarning("[ResearchLab] Проект не передан.");
-            return;
-        }
+        Unregister();
 
-        if (project.IsCompleted)
-        {
-            Debug.LogWarning($"[ResearchLab] Проект {project.projectName} уже завершён.");
-            return;
-        }
-
-        _currentProject = project;
-        _researchProgress = 0f;
+        base.DestroyBuilding();
     }
 
-    /// <summary>
-    /// Завершает текущее исследование и применяет его эффекты.
-    /// </summary>
-    private void CompleteResearch()
+    private void OnDestroy()
     {
-        ResearchProject completed = _currentProject;
-
-        _currentProject = null;
-        _researchProgress = 0f;
-
-        completed.Complete();
-        Debug.Log($"[ResearchLab] Исследование завершено: {completed.projectName}");
+        Unregister();
     }
 
-    /// <summary>
-    /// Улучшает лабораторию, увеличивая производство научных очков.
-    /// </summary>
-    /// <param name="additionalSciencePoints">Дополнительные очки науки в день</param>
-    public void UpgradeLab(int additionalSciencePoints)
+    private void Unregister()
     {
-        sciencePointsPerDay += additionalSciencePoints;
+        if (!_registered) return;
+
+        if (_research != null) _research.UnregisterLab(Owner, this);
+
+        _registered = false;
     }
 }

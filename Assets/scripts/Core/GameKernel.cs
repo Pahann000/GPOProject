@@ -136,6 +136,9 @@ public class GameKernel : NetworkBehaviour
         RegisterSystem(new ResourceSystem());
         RegisterSystem(new UnitSystem());
 
+        // Древо исследований: прогресс, открытия и бонусы считает только сервер.
+        RegisterSystem(new ResearchSystem());
+
         // Сохранение серверное: файл пишет только сервер, клиенты получают мир по сиду.
         RegisterSystem(new DataCollectorSystem());
         RegisterSystem(new SavingSystem());

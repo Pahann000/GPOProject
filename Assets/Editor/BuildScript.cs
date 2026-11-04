@@ -22,6 +22,15 @@ using UnityEngine;
 ///   BuildScript.RequestAllBuilds();   // ставит сервер и клиент в очередь
 ///   BuildScript.GetReport();          // состояние и результат
 /// </code>
+///
+/// ВАЖНО (Burst AOT): для StandaloneWindows64 в проекте выключена Burst-компиляция
+/// (<c>ProjectSettings/BurstAotSettings_StandaloneWindows.json</c>,
+/// <c>EnableBurstCompilation: false</c>). Иначе сборка падает на шаге
+/// <c>GenerateNativePluginsForAssemblies</c>: <c>bcl.exe</c> не может создать
+/// временный response-файл и получает <c>UnauthorizedAccessException</c>
+/// (нет доступа к %TEMP% для этого процесса). Проект не использует Burst/Jobs,
+/// поэтому на игру это не влияет; если доступ к %TEMP% на машине починят, флаг
+/// можно вернуть (Jobs → Burst → Enable Compilation на платформе Windows).
 /// </remarks>
 public static class BuildScript
 {

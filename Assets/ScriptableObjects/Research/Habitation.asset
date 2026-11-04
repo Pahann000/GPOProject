@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cf11f852c0749f458d5c8e7b07a2531, type: 3}
+  m_Name: Habitation
+  m_EditorClassIdentifier: 
+  projectName: "\u0416\u0438\u043B\u044B\u0435 \u043C\u043E\u0434\u0443\u043B\u0438"
+  description: "\u041A\u043E\u043C\u0444\u043E\u0440\u0442\u043D\u043E\u0435 \u0436\u0438\u043B\u044C\u0451
+    \u043A\u043E\u043B\u043E\u043D\u0438\u0438. \u041E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442
+    \u0436\u0438\u043B\u043E\u0439 \u043C\u043E\u0434\u0443\u043B\u044C \u0438 \u043F\u043E\u0432\u044B\u0448\u0430\u0435\u0442
+    \u0432\u044B\u043D\u043E\u0441\u043B\u0438\u0432\u043E\u0441\u0442\u044C \u044E\u043D\u0438\u0442\u043E\u0432."
+  icon: {fileID: 21300000, guid: 6e7f834e4bfad51488899503fdad6e31, type: 3}
+  cost:
+  - Type: 2
+    Amount: 120
+  - Type: 0
+    Amount: 60
+  durationSeconds: 40
+  requiredPrerequisites:
+  - {fileID: 11400000, guid: 98035aac8887fba4ba60930db8928f4a, type: 2}
+  unlockBuildings: 08000000
+  unlockUnits: 
+  productionBonusPercent: 0
+  unitDamageBonusPercent: 0
+  unitHealthBonusPercent: 10
+  researchSpeedBonusPercent: 0

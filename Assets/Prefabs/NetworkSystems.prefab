@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: -6212166580965338596}
   - component: {fileID: 9013324120776404428}
   - component: {fileID: -7256634266488198385}
+  - component: {fileID: 7558210923420606173}
+  - component: {fileID: 3616213005884007984}
   m_Layer: 0
   m_Name: NetworkSystems
   m_TagString: NetworkSystems
@@ -69,6 +71,8 @@ MonoBehaviour:
   syncInterval: 0
   unitPrefab: {fileID: 438654078453454141, guid: ff1672acd23bdf94aa0663f4bc4e1f9a, type: 3}
   unitAtlas: {fileID: 11400000, guid: 1c182a2b8e932794a8c51263e7fa24e0, type: 2}
+  unitSpawnOffsetX: 2
+  unitSpawnSearchRadius: 6
 --- !u!114 &9013324120776404428
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -100,3 +104,37 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   _buildingAtlas: {fileID: 11400000, guid: d8c10c04efdf14d4a8792af85e46a25f, type: 2}
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 0
+--- !u!114 &7558210923420606173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3889290135136103836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87099c974124ef14dbc06077cb8af906, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  factionBasePrefab: {fileID: 6910665778471775553, guid: a971d649af08a0d40b1b63dc5eccab07, type: 3}
+--- !u!114 &3616213005884007984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3889290135136103836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01a773292a9171d4799174e9e961cbed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0

@@ -1,62 +1,49 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
+/// <summary>
+/// Подсветка строки списка при наведении: подменяет спрайт фона на «hover»
+/// и возвращает исходный при уходе курсора.
+/// </summary>
+/// <remarks>
+/// Раньше компонент перекрашивал фон в белый, из-за чего пропадала
+/// стилизация строки (9-slice спрайт). Теперь меняется спрайт, а исходный
+/// запоминается.
+/// </remarks>
 public class BuildingButtonHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    private Button button;
-    private GameObject tooltipObject;
-    private Image backgroundImage;
-    private Color originalColor;
-    private Color hoverColor;
+    [SerializeField] private Sprite hoverSprite;
 
-    public void Initialize(Button btn, GameObject tooltip, Image background, Color hoverCol)
+    private Button button;
+    private Image backgroundImage;
+    private Sprite originalSprite;
+
+    /// <summary>
+    /// Инициализация из кода списка: фон подсвечивается спрайтом <paramref name="hover"/>.
+    /// </summary>
+    public void Initialize(Button btn, Sprite hover, Image background)
     {
         button = btn;
-        tooltipObject = tooltip;
+        hoverSprite = hover;
         backgroundImage = background;
-        hoverColor = hoverCol;
 
-        if (backgroundImage != null)
-            originalColor = backgroundImage.color;
+        if (backgroundImage != null) originalSprite = backgroundImage.sprite;
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        // Подсветка фона при наведении
-        if (backgroundImage != null && button.interactable)
-        {
-            backgroundImage.color = hoverColor;
-        }
+        if (backgroundImage == null || hoverSprite == null) return;
+        if (button != null && !button.interactable) return;
 
-        // Показываем тултип
-        if (tooltipObject != null && button.interactable)
-        {
-            tooltipObject.SetActive(true);
-
-            // Позиционируем тултип рядом с кнопкой
-            RectTransform tooltipRect = tooltipObject.GetComponent<RectTransform>();
-            if (tooltipRect != null)
-            {
-                Vector3[] corners = new Vector3[4];
-                GetComponent<RectTransform>().GetWorldCorners(corners);
-                tooltipRect.position = new Vector3(corners[2].x + 10, corners[2].y, corners[2].z);
-            }
-        }
+        backgroundImage.sprite = hoverSprite;
+        backgroundImage.type = Image.Type.Sliced;
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        // Возвращаем исходный цвет
-        if (backgroundImage != null)
-        {
-            backgroundImage.color = originalColor;
-        }
+        if (backgroundImage == null) return;
 
-        // Скрываем тултип
-        if (tooltipObject != null)
-        {
-            tooltipObject.SetActive(false);
-        }
+        backgroundImage.sprite = originalSprite;
     }
 }

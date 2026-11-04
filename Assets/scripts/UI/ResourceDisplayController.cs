@@ -239,6 +239,11 @@ public class ResourceDisplayController : MonoBehaviour
     /// <summary>
     /// Эффект пульсации для низкого уровня ресурсов
     /// </summary>
+    /// <remarks>
+    /// Альфа меняется в диапазоне 0.7..1.0, а не 0.3..1.0: стартовые ресурсы —
+    /// это несколько процентов от лимита, поэтому «низкий уровень» горит почти
+    /// всегда, а при прозрачности 0.3 цифры в HUD становились нечитаемыми.
+    /// </remarks>
     private void UpdatePulseEffect()
     {
         if (!enablePulseEffect || !isLow || amountText == null) return;
@@ -247,7 +252,7 @@ public class ResourceDisplayController : MonoBehaviour
         float alpha = (Mathf.Sin(pulseTimer) + 1f) * 0.5f; // От 0 до 1
 
         Color currentColor = amountText.color;
-        currentColor.a = Mathf.Lerp(0.3f, 1f, alpha);
+        currentColor.a = Mathf.Lerp(0.7f, 1f, alpha);
         amountText.color = currentColor;
 
         // Пульсация для иконки предупреждения

@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 280324369426370052}
   - component: {fileID: 8739472105315783788}
   - component: {fileID: 7312479116434324678}
+  - component: {fileID: 4259735275038049850}
   m_Layer: 0
   m_Name: unit
   m_TagString: Untagged
@@ -53,6 +54,9 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  jumpHeight: 1.25
+  jumpHorizontalSpeed: 3.5
+  jumpCooldown: 0.6
   groundMask:
     serializedVersion: 2
     m_Bits: 0
@@ -272,3 +276,15 @@ MonoBehaviour:
   rotationSensitivity: 0.01
   positionPrecision: 0.01
   scalePrecision: 0.01
+--- !u!114 &4259735275038049850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 438654078453454141}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccb094c766658924a884777e26f79069, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
